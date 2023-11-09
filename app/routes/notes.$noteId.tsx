@@ -8,7 +8,7 @@ import {
 } from "@remix-run/react";
 import invariant from "tiny-invariant";
 
-import { deleteNote, getRecipe } from "~/models/note.server";
+import { deleteRecipe, getRecipe } from "~/models/note.server";
 import { requireUserId } from "~/session.server";
 
 /** TODO: Rename this to recipes.$recipeId and then change the param */
@@ -28,7 +28,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   const userId = await requireUserId(request);
   invariant(params.noteId, "noteId not found");
 
-  await deleteNote({ id: params.noteId, userId });
+  await deleteRecipe({ id: params.noteId, userId });
 
   return redirect("/notes");
 };

@@ -10,7 +10,7 @@ export function getRecipe({
 }) {
   return prisma.recipe.findFirst({
     select: { id: true, description: true, title: true, preparationSteps: true, submittedBy: true, user: true },
-    where: { id, submittedBy:userId },
+    where: { id, submittedBy: userId },
   });
 }
 
@@ -30,14 +30,14 @@ export function getSubmittedRecipes({ userId }: { userId: User["id"] }) {
 export async function createRecipe({
   description,
   title,
-  userId,
+  submittedBy,
   preparationSteps,
   tags,
   ingredients,
-}: Recipe
+}: Omit<Recipe, 'id'>
   & { tags: string[] }
   & { ingredients: (Pick<RecipeIngredient, 'quantity' | 'unit' | 'note'> & { name: string })[] }
-  & { userId: User["id"] }) {
+) {
 
   // Try to insert tags - get the inserted tags back
   const insertedTags = await Promise.all(tags.map(async (name) => {
@@ -63,7 +63,7 @@ export async function createRecipe({
       title,
       description,
       preparationSteps,
-      submittedBy: userId,
+      submittedBy,
     },
   });
 
@@ -93,11 +93,11 @@ export async function createRecipe({
   return recipe;
 }
 
-export function deleteNote({
+export function deleteRecipe({
   id,
   userId,
-}: Pick<Note, "id"> & { userId: User["id"] }) {
-  return prisma.note.deleteMany({
-    where: { id, userId },
+}: Pick<Recipe, "id"> & { userId: User["id"] }) {
+  return prisma.recipe.deleteMany({
+    where: { id, submittedBy: userId },
   });
 }
