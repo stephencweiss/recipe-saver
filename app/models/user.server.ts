@@ -10,18 +10,23 @@ export async function getUserById(id: User["id"]) {
 }
 
 export async function getUserByEmail(email: User["email"]) {
+  if (!email) { return null };
   return prisma.user.findUnique({ where: { email } });
 }
 
-export async function createUser(email: User["email"], password: string) {
+export async function createEmailUser(email: User["email"], password: string) {
   const hashedPassword = await bcrypt.hash(password, 10);
 
+  if (!email || !hashedPassword) {
+    throw new Error("Cannot create email user if email and password are missing");
+  }
   return prisma.user.create({
     data: {
+      username: email,
       email,
       password: {
         create: {
-          hash: hashedPassword,
+          encryptedPassword: hashedPassword,
         },
       },
     },
@@ -34,8 +39,11 @@ export async function deleteUserByEmail(email: User["email"]) {
 
 export async function verifyLogin(
   email: User["email"],
-  password: Password["hash"],
+  password: Password["encryptedPassword"],
 ) {
+  if (!email || !password) {
+    return null;
+  }
   const userWithPassword = await prisma.user.findUnique({
     where: { email },
     include: {
@@ -43,13 +51,13 @@ export async function verifyLogin(
     },
   });
 
-  if (!userWithPassword || !userWithPassword.password) {
+  if (!userWithPassword?.password) {
     return null;
   }
 
   const isValid = await bcrypt.compare(
     password,
-    userWithPassword.password.hash,
+    userWithPassword.password.encryptedPassword,
   );
 
   if (!isValid) {

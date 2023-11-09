@@ -8,18 +8,20 @@ import {
 } from "@remix-run/react";
 import invariant from "tiny-invariant";
 
-import { deleteNote, getNote } from "~/models/note.server";
+import { deleteNote, getRecipe } from "~/models/note.server";
 import { requireUserId } from "~/session.server";
+
+/** TODO: Rename this to recipes.$recipeId and then change the param */
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
   invariant(params.noteId, "noteId not found");
 
-  const note = await getNote({ id: params.noteId, userId });
-  if (!note) {
+  const recipe = await getRecipe({ id: params.noteId, userId });
+  if (!recipe) {
     throw new Response("Not Found", { status: 404 });
   }
-  return json({ note });
+  return json({ recipe });
 };
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
@@ -31,13 +33,33 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   return redirect("/notes");
 };
 
+const parseSteps = (steps: string): string[] => {
+  const parsedSteps = JSON.parse(steps);
+  if (!Array.isArray(parsedSteps)) {
+    return [];
+  }
+  return parsedSteps;
+};
+
 export default function NoteDetailsPage() {
   const data = useLoaderData<typeof loader>();
+  const steps = parseSteps(data.recipe.preparationSteps);
 
   return (
     <div>
-      <h3 className="text-2xl font-bold">{data.note.title}</h3>
-      <p className="py-6">{data.note.body}</p>
+      <h3 className="text-2xl font-bold">{data.recipe.title}</h3>
+      <p className="py-6">{data.recipe.description}</p>
+      <ul>
+        {/*TODO:
+        This feels like a good opportunity to move the steps into a component for styling
+        and come up with a global way for handling lists. */}
+        {steps.map((step, index) => (
+          <li key={step}>
+            <p className="py-6">{index+1}.&nbsp;{step}</p>
+          </li>
+        ))}
+      </ul>
+      <p className="py-6">Submitted by: {data.recipe.user?.username}</p>
       <hr className="my-4" />
       <Form method="post">
         <button
