@@ -27,6 +27,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
+  // TODO: update the form to actually have all of these fields
   const note = await createRecipe({
     description: body,
     title,
