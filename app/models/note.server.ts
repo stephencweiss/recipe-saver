@@ -34,7 +34,7 @@ export async function createRecipe({
   preparationSteps,
   tags,
   ingredients,
-}: Omit<Recipe, 'id'>
+}: Omit<Recipe, 'id'|'createdDate'|'updatedDate'>
   & { tags: string[] }
   & { ingredients: (Pick<RecipeIngredient, 'quantity' | 'unit' | 'note'> & { name: string })[] }
 ) {

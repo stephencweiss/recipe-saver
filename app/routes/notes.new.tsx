@@ -27,7 +27,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  const note = await createRecipe({ body, title, userId });
+  const note = await createRecipe({
+    description: body,
+    title,
+    preparationSteps: JSON.stringify([]),
+    ingredients: [],
+    tags: [],
+    submittedBy: userId,
+    source: '',
+    sourceUrl: '',
+  });
 
   return redirect(`/notes/${note.id}`);
 };
