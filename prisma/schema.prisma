@@ -83,6 +83,8 @@ model RecipeIngredient {
   quantity     Float?
   unit         String?
   note         String?
+  createdDate  DateTime?  @default(now()) @map("created_date")
+  updatedDate  DateTime?  @default(now()) @map("updated_date")
   ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   recipe       Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
@@ -95,6 +97,7 @@ model RecipeRating {
   recipeId      String // Foreign key for Recipe
   submittedBy   String // Foreign key for User
   submittedDate DateTime? @default(now()) @map("submitted_date")
+  updatedDate   DateTime? @default(now()) @map("updated_date")
   rating        Int
   recipe        Recipe    @relation(fields: [recipeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   user          User      @relation("UserRecipeRatings", fields: [submittedBy], references: [id])
@@ -103,20 +106,28 @@ model RecipeRating {
 }
 
 model RecipeTag {
-  recipeId String // Foreign key for Recipe
-  tagId    String // Foreign key for Tag
-  recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  tag      Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  recipeId    String // Foreign key for Recipe
+  tagId       String // Foreign key for Tag
+  addedBy     String? // Foreign key for User
+  createdDate DateTime? @default(now()) @map("created_date")
+  updatedDate DateTime? @default(now()) @map("updated_date")
+  recipe      Recipe    @relation(fields: [recipeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  tag         Tag       @relation(fields: [tagId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  User        User?     @relation(fields: [addedBy], references: [id])
 
   @@id([recipeId, tagId])
   @@map("recipe_tags")
 }
 
 model MenuTag {
-  menuId String // Foreign key for Menu
-  tagId  String // Foreign key for Tag
-  menu   Menu   @relation(fields: [menuId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  menuId      String // Foreign key for Menu
+  tagId       String // Foreign key for Tag
+  addedBy     String // Foreign key for User
+  createdDate DateTime? @default(now()) @map("created_date")
+  updatedDate DateTime? @default(now()) @map("updated_date")
+  menu        Menu      @relation(fields: [menuId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  tag         Tag       @relation(fields: [tagId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user        User?     @relation(fields: [addedBy], references: [id])
 
   @@id([menuId, tagId])
   @@map("menu_tags")
@@ -131,6 +142,7 @@ model Recipe {
   sourceUrl         String?            @map("source_url")
   submittedBy       String? // Foreign key for User
   createdDate       DateTime?          @default(now()) @map("created_date")
+  updatedDate       DateTime?          @default(now()) @map("updated_date")
   user              User?              @relation("UserSubmittedRecipes", fields: [submittedBy], references: [id])
   menuRecipes       MenuRecipe[]
   recipeRatings     RecipeRating[]
@@ -145,6 +157,7 @@ model Tag {
   id          String      @id @default(uuid())
   name        String      @unique
   createdDate DateTime?   @default(now()) @map("created_date")
+  updatedDate DateTime?   @default(now()) @map("updated_date")
   RecipeTag   RecipeTag[]
   MenuTag     MenuTag[]
 
@@ -198,12 +211,16 @@ model User {
   Menu             Menu[]
   UserInvite       UserInvite[]
   password         Password?
+  MenuTag          MenuTag[]
+  RecipeTag        RecipeTag[]
 
   @@map("users")
 }
 
 model Password {
-  encryptedPassword String @map("encrypted_password")
-  user              User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  userId            String @unique
+  encryptedPassword String    @map("encrypted_password")
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId            String    @unique
+  createdDate       DateTime? @default(now()) @map("created_date")
+  updatedDate       DateTime? @default(now()) @map("updated_date")
 }

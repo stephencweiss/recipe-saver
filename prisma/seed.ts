@@ -234,6 +234,7 @@ async function createCaesarSaladRecipe(submitter: { id: string }) {
 };
 
 /** Useful if we need to start fresh, but most of the time, this can be left off */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function wipeSeededDatabase() {
   await prisma.recipeIngredient.deleteMany({});
   await prisma.recipeTag.deleteMany({});
