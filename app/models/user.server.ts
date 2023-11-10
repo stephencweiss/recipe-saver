@@ -34,7 +34,14 @@ export async function createEmailUser(email: User["email"], password: string) {
 }
 
 export async function deleteUserByEmail(email: User["email"]) {
+  if (!email) {
+    throw new Error("Cannot delete user by email if email is missing");
+  }
   return prisma.user.delete({ where: { email } });
+}
+
+export async function deleteUserByUsername(username: User["username"]) {
+  return prisma.user.delete({ where: { username } });
 }
 
 export async function verifyLogin(
