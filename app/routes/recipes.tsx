@@ -2,7 +2,7 @@ import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Form, Link, NavLink, Outlet, useLoaderData } from "@remix-run/react";
 
-import { getSubmittedRecipes } from "~/models/note.server";
+import { getSubmittedRecipes } from "~/models/recipe.server";
 import { requireUserId } from "~/session.server";
 import { useUser } from "~/utils";
 
