@@ -89,12 +89,15 @@ jobs:
       - name: ⎔ Setup node
         uses: actions/setup-node@v4
         with:
-          cache: npm
+          cache: 'npm'  # Here we use npm for caching, as GitHub Actions does not natively support pnpm caching yet.
           cache-dependency-path: ./package.json
           node-version: 18
 
-      - name: 📥 Install deps
-        run: npm install
+      - name: 📥 Install PNPM
+        run: npm install -g pnpm
+
+      - name: 📥 Install deps using PNPM
+        run: pnpm install
 
       - name: 🛠 Setup Database
         run: npx prisma migrate reset --force
