@@ -28,7 +28,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   // TODO: update the form to actually have all of these fields
-  const note = await createRecipe({
+  const recipe = await createRecipe({
     description: body,
     title,
     preparationSteps: JSON.stringify([]),
@@ -39,10 +39,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     sourceUrl: '',
   });
 
-  return redirect(`/notes/${note.id}`);
+  return redirect(`/recipes/${recipe.id}`);
 };
 
-export default function NewNotePage() {
+export default function NewRecipePage() {
   const actionData = useActionData<typeof action>();
   const titleRef = useRef<HTMLInputElement>(null);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
