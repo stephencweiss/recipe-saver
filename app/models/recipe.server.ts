@@ -34,8 +34,9 @@ export async function createRecipe({
   preparationSteps,
   tags,
   ingredients,
-}: Omit<Recipe, 'id'|'createdDate'|'updatedDate'>
+}: Omit<Recipe, 'id' | 'createdDate' | 'updatedDate' | 'preparationSteps'>
   & { tags: string[] }
+  & { preparationSteps: string[] }
   & { ingredients: (Pick<RecipeIngredient, 'quantity' | 'unit' | 'note'> & { name: string })[] }
 ) {
 
@@ -62,7 +63,8 @@ export async function createRecipe({
     data: {
       title,
       description,
-      preparationSteps,
+      // Defer stringifying until record creation.
+      preparationSteps: JSON.stringify(preparationSteps),
       submittedBy,
     },
   });
