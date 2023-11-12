@@ -33,8 +33,8 @@ export default function NotesPage() {
         </Form>
       </header>
 
-      <main className="flex h-full bg-white">
-        <div className="h-full w-80 border-r bg-gray-50">
+      <main className="flex ">
+        <div className="w-80 max-h-screen overflow-scroll border-r bg-blue-50 min-w-150">
           <Link to="new" className="block p-4 text-xl text-blue-500">
             + New Note
           </Link>

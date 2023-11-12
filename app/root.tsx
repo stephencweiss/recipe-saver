@@ -10,11 +10,13 @@ import {
   ScrollRestoration,
 } from "@remix-run/react";
 
+import globalStylesheet from "~/global.css";
 import { getUser } from "~/session.server";
 import stylesheet from "~/tailwind.css";
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesheet },
+  { rel: "stylesheet", href: globalStylesheet },
   ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
 ];
 
