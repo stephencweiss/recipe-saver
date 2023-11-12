@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Form, Link, NavLink, Outlet, useLoaderData } from "@remix-run/react";
+import { useEffect, useState } from "react";
 
 import { getSubmittedRecipes } from "~/models/recipe.server";
 import { requireUserId } from "~/session.server";
@@ -15,6 +16,22 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export default function NotesPage() {
   const data = useLoaderData<typeof loader>();
   const user = useUser();
+
+  const [search, setSearch] = useState<string>("");
+  const [notes, setNotes] = useState(data.noteListItems);
+
+  useEffect(() => {
+    if (search.length == 0) {
+      setNotes(data.noteListItems);
+    }
+    const regExp = new RegExp(search, "i");
+    const filteredNotes = data.noteListItems.filter((i) =>
+      regExp.test(i.title),
+    );
+    setNotes(filteredNotes);
+  }, [search.length, search, data.noteListItems]);
+
+  const handleSearch = (value: string) => setSearch(value);
 
   return (
     <div className="flex h-full min-h-screen flex-col">
@@ -40,25 +57,35 @@ export default function NotesPage() {
           </Link>
 
           <hr />
+          <input
+            className="block p-4 w-full text-xl"
+            onChange={(e) => handleSearch(e.target.value)}
+            placeholder="Search..."
+          />
+          <hr />
 
-          {data.noteListItems.length === 0 ? (
-            <p className="p-4">No notes yet</p>
-          ) : (
-            <ol>
-              {data.noteListItems.map((note) => (
-                <li key={note.id}>
-                  <NavLink
-                    className={({ isActive }) =>
-                      `block border-b p-4 text-xl ${isActive ? "bg-white" : ""}`
-                    }
-                    to={note.id}
-                  >
-                    📝 {note.title}
-                  </NavLink>
-                </li>
-              ))}
-            </ol>
-          )}
+          <div className="flex-1">
+            {notes.length === 0 ? (
+              <p className="p-4">No notes yet</p>
+            ) : (
+              <ol>
+                {notes.map((note) => (
+                  <li key={note.id}>
+                    <NavLink
+                      className={({ isActive }) =>
+                        `block border-b p-4 text-xl ${
+                          isActive ? "bg-blue-500" : ""
+                        }`
+                      }
+                      to={note.id}
+                    >
+                      📝 {note.title}
+                    </NavLink>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
         </div>
 
         <div className="flex-1 p-6">
