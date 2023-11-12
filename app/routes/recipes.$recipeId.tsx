@@ -26,9 +26,18 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   const userId = await requireUserId(request);
   invariant(params.recipeId, "recipeId not found");
 
-  await deleteRecipe({ id: params.recipeId, userId });
+  const formData = await request.formData();
+  const action = formData.get("action");
 
-  return redirect("/notes");
+  switch (action) {
+    case "delete":
+      await deleteRecipe({ id: params.recipeId, userId });
+      return redirect("/recipes");
+    case "edit":
+      return redirect(`/recipes/${params.recipeId}/edit`);
+    default:
+      throw new Error(`Unsupported action: ${action}`);
+  }
 };
 
 const parseSteps = (steps: string): string[] => {
@@ -53,7 +62,9 @@ export default function NoteDetailsPage() {
         and come up with a global way for handling lists. */}
         {steps.map((step, index) => (
           <li key={step}>
-            <p className="py-6">{index+1}.&nbsp;{step}</p>
+            <p className="py-6">
+              {index + 1}.&nbsp;{step}
+            </p>
           </li>
         ))}
       </ul>
@@ -62,6 +73,16 @@ export default function NoteDetailsPage() {
       <Form method="post">
         <button
           type="submit"
+          value="edit"
+          name="action"
+          className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400 mr-2"
+        >
+          Edit [Coming Soon]
+        </button>
+        <button
+          type="submit"
+          value="delete"
+          name="action"
           className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
         >
           Delete
