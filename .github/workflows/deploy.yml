@@ -23,6 +23,11 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
 
+      - name: ⎔ Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
       - name: ⎔ Setup node
         uses: actions/setup-node@v4
         with:
@@ -42,6 +47,11 @@ jobs:
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
+
+      - name: ⎔ Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
 
       - name: ⎔ Setup node
         uses: actions/setup-node@v4
@@ -63,6 +73,11 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
 
+      - name: ⎔ Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
       - name: ⎔ Setup node
         uses: actions/setup-node@v4
         with:
@@ -83,8 +98,18 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
 
-      - name: 🏄 Copy test env vars
-        run: cp .env.example .env
+      # - name: 🏄 Copy test env vars
+      #   run: cp .env.example .env
+
+      - name: ⎔ Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: ⎔ Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
 
       - name: ⎔ Setup node
         uses: actions/setup-node@v4
@@ -94,8 +119,8 @@ jobs:
           node-version: 20
           cache: 'pnpm'
 
-      - name: 📥 Install PNPM
-        run: npm install -g pnpm
+      # - name: 📥 Install PNPM
+      #   run: npm install -g pnpm
 
       - name: 📥 Install deps using PNPM
         run: pnpm install
@@ -121,8 +146,13 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
 
-      - name: 🏄 Copy test env vars
-        run: cp .env.example .env
+      # - name: 🏄 Copy test env vars
+      #   run: cp .env.example .env
+
+      - name: ⎔ Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
 
       - name: ⎔ Setup node
         uses: actions/setup-node@v4
