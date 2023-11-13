@@ -19,9 +19,6 @@ jobs:
   lint:
     name: ⬣ ESLint
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [20]
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
@@ -30,7 +27,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           cache-dependency-path: ./package.json
-          node-version: ${{ matrix.node-version }}
+          node-version: 20
           cache: 'pnpm'
 
       - name: 📥 Install deps
@@ -50,7 +47,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           cache-dependency-path: ./package.json
-          node-version: ${{ matrix.node-version }}
+          node-version: 20
           cache: 'pnpm'
 
       - name: 📥 Install deps
@@ -70,7 +67,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           cache-dependency-path: ./package.json
-          node-version: ${{ matrix.node-version }}
+          node-version: 20
           cache: 'pnpm'
 
       - name: 📥 Install deps
@@ -94,7 +91,7 @@ jobs:
         with:
           # cache: 'npm'  # Here we use npm for caching, as GitHub Actions does not natively support pnpm caching yet.
           cache-dependency-path: ./package.json
-          node-version: ${{ matrix.node-version }}
+          node-version: 20
           cache: 'pnpm'
 
       - name: 📥 Install PNPM
@@ -131,7 +128,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           cache-dependency-path: ./package.json
-          node-version: ${{ matrix.node-version }}
+          node-version: 20
           cache: 'pnpm'
 
       - name: 📥 Install deps
