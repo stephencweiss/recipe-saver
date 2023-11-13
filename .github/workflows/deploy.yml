@@ -36,10 +36,10 @@ jobs:
           cache: 'pnpm'
 
       - name: 📥 Install deps
-        run: npm install
+        run: pnpm install
 
       - name: 🔬 Lint
-        run: npm run lint
+        run: pnpm run lint
 
   typecheck:
     name: ʦ TypeScript
@@ -61,10 +61,10 @@ jobs:
           cache: 'pnpm'
 
       - name: 📥 Install deps
-        run: npm install
+        run: pnpm install
 
       - name: 🔎 Type check
-        run: npm run typecheck --if-present
+        run: pnpm run typecheck --if-present
 
   vitest:
     name: ⚡ Vitest
@@ -86,10 +86,10 @@ jobs:
           cache: 'pnpm'
 
       - name: 📥 Install deps
-        run: npm install
+        run: pnpm install
 
       - name: ⚡ Run vitest
-        run: npm run test -- --coverage
+        run: pnpm run test -- --coverage
 
   cypress:
     name: 🌳 Cypress
@@ -120,7 +120,7 @@ jobs:
           cache: 'pnpm'
 
       # - name: 📥 Install PNPM
-      #   run: npm install -g pnpm
+      #   run: pnpm install -g pnpm
 
       - name: 📥 Install deps using PNPM
         run: pnpm install
@@ -129,12 +129,12 @@ jobs:
         run: npx prisma migrate reset --force
 
       - name: ⚙️ Build
-        run: npm run build
+        run: pnpm run build
 
       - name: 🌳 Cypress run
         uses: cypress-io/github-action@v6
         with:
-          start: npm run start:mocks
+          start: pnpm run start:mocks
           wait-on: http://localhost:8811
         env:
           PORT: 8811
@@ -162,7 +162,7 @@ jobs:
           cache: 'pnpm'
 
       - name: 📥 Install deps
-        run: npm install
+        run: pnpm install
 
       - name: 👟 Run Prisma Migrate
         run: npx prisma migrate deploy
