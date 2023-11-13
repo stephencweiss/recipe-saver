@@ -63,6 +63,9 @@ jobs:
       - name: 📥 Install deps
         run: pnpm install
 
+      - name: 🛠 Setup Database
+        run: npx prisma migrate reset --force
+
       - name: 🔎 Type check
         run: npm run typecheck --if-present
 
