@@ -63,6 +63,9 @@ jobs:
       - name: 📥 Install deps
         run: pnpm install
 
+      - name: 🏄 Copy test env vars
+        run: cp .env.example .env
+
       - name: 🛠 Setup Database
         run: npx prisma migrate reset --force
 
