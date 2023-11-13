@@ -34,7 +34,7 @@ jobs:
         run: pnpm install
 
       - name: 👔 Format
-        run: pnpm run format:repo
+        run: pnpm format:repo
 
       - name: 💪 Commit
         run: |
