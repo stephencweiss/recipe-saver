@@ -19,6 +19,9 @@ jobs:
   lint:
     name: ⬣ ESLint
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20]
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
@@ -26,9 +29,9 @@ jobs:
       - name: ⎔ Setup node
         uses: actions/setup-node@v4
         with:
-          cache: npm
           cache-dependency-path: ./package.json
-          node-version: 18
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
 
       - name: 📥 Install deps
         run: npm install
@@ -46,9 +49,9 @@ jobs:
       - name: ⎔ Setup node
         uses: actions/setup-node@v4
         with:
-          cache: npm
           cache-dependency-path: ./package.json
-          node-version: 18
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
 
       - name: 📥 Install deps
         run: npm install
@@ -66,9 +69,9 @@ jobs:
       - name: ⎔ Setup node
         uses: actions/setup-node@v4
         with:
-          cache: npm
           cache-dependency-path: ./package.json
-          node-version: 18
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
 
       - name: 📥 Install deps
         run: npm install
@@ -89,9 +92,10 @@ jobs:
       - name: ⎔ Setup node
         uses: actions/setup-node@v4
         with:
-          cache: 'npm'  # Here we use npm for caching, as GitHub Actions does not natively support pnpm caching yet.
+          # cache: 'npm'  # Here we use npm for caching, as GitHub Actions does not natively support pnpm caching yet.
           cache-dependency-path: ./package.json
-          node-version: 18
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
 
       - name: 📥 Install PNPM
         run: npm install -g pnpm
@@ -126,9 +130,9 @@ jobs:
       - name: ⎔ Setup node
         uses: actions/setup-node@v4
         with:
-          cache: npm
           cache-dependency-path: ./package.json
-          node-version: 18
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
 
       - name: 📥 Install deps
         run: npm install
