@@ -8,14 +8,14 @@ import {
 } from "@remix-run/react";
 import invariant from "tiny-invariant";
 
-import { deleteRecipe, getRecipe } from "~/models/recipe.server";
+import { deleteRecipe, getRecipeWithIngredients } from "~/models/recipe.server";
 import { requireUserId } from "~/session.server";
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  const userId = await requireUserId(request);
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+  // const userId = await requireUserId(request);
   invariant(params.recipeId, "recipeId not found");
 
-  const recipe = await getRecipe({ id: params.recipeId, userId });
+  const recipe = await getRecipeWithIngredients({ id: params.recipeId, });
   if (!recipe) {
     throw new Response("Not Found", { status: 404 });
   }
@@ -51,7 +51,7 @@ const parseSteps = (steps: string): string[] => {
 export default function NoteDetailsPage() {
   const data = useLoaderData<typeof loader>();
   const steps = parseSteps(data.recipe.preparationSteps);
-
+  console.log({data})
   return (
     <div>
       <h3 className="text-2xl font-bold">{data.recipe.title}</h3>
