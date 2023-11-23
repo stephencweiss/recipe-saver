@@ -2,6 +2,11 @@ import type { User, Recipe, RecipeIngredient } from "@prisma/client";
 
 import { prisma } from "~/db.server";
 
+export type IngredientEntry = Partial<(Pick<RecipeIngredient, "quantity" | "unit" | "note">
+& { name: string; })>
+
+
+
 export function getRecipe({
   id,
   userId,
@@ -14,6 +19,29 @@ export function getRecipe({
   });
 }
 
+// TODO: This is not yet working - need to tie ingredients to recipe with their name.
+export async function getRecipeWithIngredients({ id }: Pick<Recipe, "id">) {
+  console.log({id})
+  const ingredients = await prisma.recipeIngredient.findMany({select: {recipeId: true, ingredientId: true, quantity: true, unit: true, note: true}, where: {recipeId: id}})
+  const ingredientNames = await prisma.ingredient.findMany({select: {id:true, name: true}, where: {id: {in: ingredients.map(ingredient => ingredient.ingredientId)}}})
+// TODO: tie ingredients to recipe with their name.
+  // console.log({ingredients});
+  console.log({ingredients, ingredientNames});
+  const recipes = await prisma.recipe.findFirst({
+    select: {
+      id: true,
+      description: true,
+      title: true,
+      preparationSteps: true,
+      submittedBy: true,
+      user: true,
+    },
+    where: { id },
+  });
+
+  return recipes;
+}
+
 export function getSubmittedRecipes({ userId }: { userId: User["id"] }) {
   return prisma.recipe.findMany({
     where: { submittedBy: userId },
@@ -21,6 +49,7 @@ export function getSubmittedRecipes({ userId }: { userId: User["id"] }) {
     orderBy: { createdDate: "desc" },
   });
 }
+
 
 /**
  * TODO: need to figure out how we want to handle a few things:
@@ -38,8 +67,7 @@ export async function createRecipe({
   & { tags: string[] }
   & { preparationSteps: string[] }
   & {
-    ingredients: (Pick<RecipeIngredient, "quantity" | "unit" | "note">
-      & { name: string; })[];
+    ingredients: IngredientEntry[];
   }) {
   // Try to insert tags - get the inserted tags back
   const insertedTags = await Promise.all(
