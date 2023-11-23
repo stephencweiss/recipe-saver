@@ -53,6 +53,11 @@ function faux() {
     `npx ts-node -r tsconfig-paths/register ./cypress/support/faux.ts "hello"`,
   ).then(({ stdout }) => {
     cy.log(stdout);
+
+    cy.then(() => {
+      console.log({email: faker.internet.email({ provider: "example.com" })})
+    }).as("user")
+  return cy.get("@user");
   });
 }
 
