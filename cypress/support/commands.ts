@@ -44,11 +44,13 @@ declare global {
 }
 
 function login({
-  email = faker.internet.email(undefined, undefined, "example.com"),
+  email = faker.internet.email({provider:"example.com"}),
 }: {
   email?: string;
 } = {}) {
-  cy.then(() => ({ email })).as("user");
+  cy.then(() => {
+    console.log("email", email)
+    return ({ email })}).as("user");
   cy.exec(
     `npx ts-node -r tsconfig-paths/register ./cypress/support/create-user.ts "${email}"`,
   ).then(({ stdout }) => {

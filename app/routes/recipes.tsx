@@ -53,7 +53,7 @@ export default function NotesPage() {
       <main className="flex ">
         <div className="w-80 max-h-screen overflow-scroll border-r bg-blue-50 min-w-150">
           <Link to="new" className="block p-4 text-xl text-blue-500">
-            + New Note
+            + New Recipe
           </Link>
 
           <hr />
@@ -66,7 +66,7 @@ export default function NotesPage() {
 
           <div className="flex-1">
             {notes.length === 0 ? (
-              <p className="p-4">No notes yet</p>
+              <p className="p-4">No recipes yet</p>
             ) : (
               <ol>
                 {notes.map((note) => (

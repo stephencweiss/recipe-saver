@@ -5,7 +5,6 @@
 // as that new user.
 
 import { installGlobals } from "@remix-run/node";
-// @ts-expect-error - cookie is vanilla js and does not expose types
 import { parse } from "cookie";
 
 import { createEmailUser } from "~/models/user.server";
