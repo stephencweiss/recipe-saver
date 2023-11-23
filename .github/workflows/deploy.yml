@@ -119,12 +119,12 @@ jobs:
         run: npx prisma migrate reset --force
 
       - name: ⚙️ Build
-        run: npm run build
+        run: pnpm build
 
       - name: 🌳 Cypress run
         uses: cypress-io/github-action@v6
         with:
-          start: npm run start:mocks
+          start: pnpm test:e2e:run
           wait-on: http://localhost:8811
         env:
           PORT: 8811
