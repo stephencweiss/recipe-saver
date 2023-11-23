@@ -23,23 +23,17 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
 
-      - name: ⎔ Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 7
-
       - name: ⎔ Setup node
         uses: actions/setup-node@v4
         with:
           cache-dependency-path: ./package.json
           node-version: 20
-          cache: 'pnpm'
 
       - name: 📥 Install deps
-        run: pnpm install
+        run: npm install
 
       - name: 🔬 Lint
-        run: pnpm lint
+        run: npm run lint
 
   typecheck:
     name: ʦ TypeScript
@@ -48,20 +42,14 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
 
-      - name: ⎔ Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 7
-
       - name: ⎔ Setup node
         uses: actions/setup-node@v4
         with:
           cache-dependency-path: ./package.json
           node-version: 20
-          cache: 'pnpm'
 
       - name: 📥 Install deps
-        run: pnpm install
+        run: npm install
 
       - name: 🏄 Copy test env vars
         run: cp .env.example .env
@@ -79,20 +67,14 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
 
-      - name: ⎔ Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 7
-
       - name: ⎔ Setup node
         uses: actions/setup-node@v4
         with:
           cache-dependency-path: ./package.json
           node-version: 20
-          cache: 'pnpm'
 
       - name: 📥 Install deps
-        run: pnpm install
+        run: npm install
 
       - name: ⚡ Run vitest
         run: npm run test -- --coverage
@@ -107,31 +89,25 @@ jobs:
       - name: 🏄 Copy test env vars
         run: cp .env.example .env
 
-      - name: ⎔ Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 7
-
       - name: ⎔ Setup node
         uses: actions/setup-node@v4
         with:
           cache-dependency-path: ./package.json
           node-version: 20
-          cache: 'pnpm'
 
-      - name: 📥 Install deps using PNPM
-        run: pnpm install
+      - name: 📥 Install deps
+        run: npm install
 
       - name: 🛠 Setup Database
         run: npx prisma migrate reset --force
 
       - name: ⚙️ Build
-        run: pnpm build
+        run: npm run build
 
       - name: 🌳 Cypress run
         uses: cypress-io/github-action@v6
         with:
-          start: pnpm start:mocks
+          start: npm run start:mocks
           wait-on: http://localhost:8811
         env:
           PORT: 8811
@@ -146,20 +122,14 @@ jobs:
       - name: 🏄 Copy test env vars
         run: cp .env.example .env
 
-      - name: ⎔ Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 7
-
       - name: ⎔ Setup node
         uses: actions/setup-node@v4
         with:
           cache-dependency-path: ./package.json
           node-version: 20
-          cache: 'pnpm'
 
       - name: 📥 Install deps
-        run: pnpm install
+        run: npm install
 
       - name: 👟 Run Prisma Migrate
         run: npx prisma migrate deploy
@@ -188,6 +158,18 @@ jobs:
 
       - name: 🎈 Setup Fly
         uses: superfly/flyctl-actions/setup-flyctl@v1.4
+
+      - name: 🏄 Copy test env vars
+        run: cp .env.example .env
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v4
+        with:
+          cache-dependency-path: ./package.json
+          node-version: 20
+
+      - name: 📥 Install deps
+        run: npm install
 
       - name: 🚀 Deploy Staging
         if: ${{ github.ref == 'refs/heads/dev' }}
