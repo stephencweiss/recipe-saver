@@ -118,9 +118,6 @@ jobs:
       - name: 🛠 Setup Database
         run: npx prisma migrate reset --force
 
-      - name: ⚙️ Build
-        run: pnpm build
-
       - name: 🌳 Cypress run
         uses: cypress-io/github-action@v6
         with:
@@ -129,6 +126,20 @@ jobs:
           wait-on: http://localhost:8811
         env:
           PORT: 8811
+
+      - name: 📸 Upload screenshots
+        uses: actions/upload-artifact@v2
+        if: failure()
+        with:
+          name: cypress-screenshots
+          path: ./cypress/screenshots
+
+      - name: 📹 Upload videos
+        uses: actions/upload-artifact@v2
+        if: failure()
+        with:
+          name: cypress-videos
+          path: ./cypress/videos
 
   update-database:
     name: 🪶 Update Database
