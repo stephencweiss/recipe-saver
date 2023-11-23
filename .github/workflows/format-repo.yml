@@ -18,15 +18,19 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
 
-      - name: ⎔ Setup node
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: ⎔ Setup node ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
-          cache: npm
-          cache-dependency-path: ./package.json
-          node-version: 20
+          cache: 'pnpm'
+          node-version: ${{ matrix.node-version }}
 
       - name: 📥 Install deps
-        run: npm install
+        run: pnpm install
 
       - name: 👔 Format
         run: npm run format:repo

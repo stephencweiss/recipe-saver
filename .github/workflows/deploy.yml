@@ -19,22 +19,29 @@ jobs:
   lint:
     name: ⬣ ESLint
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20]
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
 
-      - name: ⎔ Setup node
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: ⎔ Setup node ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
-          cache: npm
-          cache-dependency-path: ./package.json
-          node-version: 20
+          cache: 'pnpm'
+          node-version: ${{ matrix.node-version }}
 
       - name: 📥 Install deps
-        run: npm install
+        run: pnpm install
 
       - name: 🔬 Lint
-        run: npm run lint
+        run: pnpm lint
 
   typecheck:
     name: ʦ TypeScript
@@ -43,15 +50,19 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
 
-      - name: ⎔ Setup node
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: ⎔ Setup node ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
-          cache: npm
-          cache-dependency-path: ./package.json
-          node-version: 20
+          cache: 'pnpm'
+          node-version: ${{ matrix.node-version }}
 
       - name: 📥 Install deps
-        run: npm install
+        run: pnpm install
 
       - name: 🔎 Type check
         run: npm run typecheck --if-present
@@ -63,15 +74,19 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
 
-      - name: ⎔ Setup node
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: ⎔ Setup node ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
-          cache: npm
-          cache-dependency-path: ./package.json
-          node-version: 20
+          cache: 'pnpm'
+          node-version: ${{ matrix.node-version }}
 
       - name: 📥 Install deps
-        run: npm install
+        run: pnpm install
 
       - name: ⚡ Run vitest
         run: npm run test -- --coverage
@@ -83,35 +98,48 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
 
-      - name: 🏄 Copy test env vars
-        run: cp .env.example .env
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
 
-      - name: ⎔ Setup node
+      - name: ⎔ Setup node ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
-          cache: 'npm'  # Here we use npm for caching, as GitHub Actions does not natively support pnpm caching yet.
-          cache-dependency-path: ./package.json
-          node-version: 20
+          cache: 'pnpm'
+          node-version: ${{ matrix.node-version }}
 
-      - name: 📥 Install PNPM
-        run: npm install -g pnpm
-
-      - name: 📥 Install deps using PNPM
+      - name: 📥 Install deps
         run: pnpm install
+
+      - name: 🏄 Copy test env vars
+        run: cp .env.example .env
 
       - name: 🛠 Setup Database
         run: npx prisma migrate reset --force
 
-      - name: ⚙️ Build
-        run: npm run build
-
       - name: 🌳 Cypress run
         uses: cypress-io/github-action@v6
         with:
-          start: npm run start:mocks
+          build: pnpm build
+          start: pnpm start:mocks
           wait-on: http://localhost:8811
         env:
           PORT: 8811
+
+      - name: 📸 Upload screenshots
+        uses: actions/upload-artifact@v2
+        if: failure()
+        with:
+          name: cypress-screenshots
+          path: ./cypress/screenshots
+
+      - name: 📹 Upload videos
+        uses: actions/upload-artifact@v2
+        if: failure()
+        with:
+          name: cypress-videos
+          path: ./cypress/videos
 
   update-database:
     name: 🪶 Update Database
@@ -120,18 +148,19 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
 
-      - name: 🏄 Copy test env vars
-        run: cp .env.example .env
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
 
-      - name: ⎔ Setup node
+      - name: ⎔ Setup node ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
-          cache: npm
-          cache-dependency-path: ./package.json
-          node-version: 20
+          cache: 'pnpm'
+          node-version: ${{ matrix.node-version }}
 
       - name: 📥 Install deps
-        run: npm install
+        run: pnpm install
 
       - name: 👟 Run Prisma Migrate
         run: npx prisma migrate deploy

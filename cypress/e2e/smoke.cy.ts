@@ -51,4 +51,12 @@ describe("smoke tests", () => {
     cy.findByRole("button", { name: /delete/i }).click();
     cy.findByText("No recipes yet");
   });
+
+  it('calls the faux script', () => {
+    cy.faux();
+  });
+  it("should intentionally fail", () => {
+    cy.login();
+    cy.visitAndCheck("/a-path-that-does-not-exist");
+  })
 });
