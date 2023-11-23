@@ -16,7 +16,8 @@ export default function Index() {
               <img
                 className="h-full w-full object-cover"
                 src="https://images.unsplash.com/photo-1615937722923-67f6deaf2cc9?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-                alt="Grilled Meat on Black Pan by Maddie Hilton -https://unsplash.com/@mham3816. https://unsplash.com/photos/grilled-meat-on-black-pan-Q9yr-cvJr30?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash"              />
+                alt="Grilled Meat on Black Pan by Maddie Hilton -https://unsplash.com/@mham3816. https://unsplash.com/photos/grilled-meat-on-black-pan-Q9yr-cvJr30?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash"
+              />
               <div className="absolute inset-0 bg-[color:rgb(247, 242, 145)] mix-blend-multiply" />
             </div>
             <div className="relative px-4 pb-8 pt-16 sm:px-6 sm:pb-14 sm:pt-24 lg:px-8 lg:pb-20 lg:pt-32">
@@ -26,11 +27,9 @@ export default function Index() {
                 </span>
               </h1>
               <p className="mx-auto mt-6 max-w-lg text-center text-xl bg-white text-yellow-500 rounded border-2 p-5 text-base sm:max-w-3xl">
-
-                Find your next favorite recipe or share one of your own.
-                Make a menu and plan your next party.
-                Keep a journal of your favorite meals and the memories they bring.
-
+                Find your next favorite recipe or share one of your own. Make a
+                menu and plan your next party. Keep a journal of your favorite
+                meals and the memories they bring.
               </p>
               <div className="mx-auto mt-10 max-w-sm sm:flex sm:max-w-none sm:justify-center">
                 {user ? (
@@ -59,13 +58,12 @@ export default function Index() {
               </div>
               <h2 className="pt-16 text-center text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
                 <span className="block uppercase text-yellow-500 drop-shadow-md">
-                Eat well. Make memories.
+                  Eat well. Make memories.
                 </span>
               </h2>
             </div>
           </div>
         </div>
-
       </div>
     </main>
   );

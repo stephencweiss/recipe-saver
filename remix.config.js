@@ -5,5 +5,5 @@ module.exports = {
   serverModuleFormat: "cjs",
   future: {
     v3_fetcherPersist: true,
-  }
+  },
 };

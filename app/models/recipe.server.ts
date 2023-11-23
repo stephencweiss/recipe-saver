@@ -34,30 +34,36 @@ export async function createRecipe({
   preparationSteps,
   tags,
   ingredients,
-}: Omit<Recipe, 'id' | 'createdDate' | 'updatedDate' | 'preparationSteps'>
+}: Omit<Recipe, "id" | "createdDate" | "updatedDate" | "preparationSteps">
   & { tags: string[] }
   & { preparationSteps: string[] }
-  & { ingredients: (Pick<RecipeIngredient, 'quantity' | 'unit' | 'note'> & { name: string })[] }
-) {
-
+  & {
+    ingredients: (Pick<RecipeIngredient, "quantity" | "unit" | "note">
+      & { name: string; })[];
+  }) {
   // Try to insert tags - get the inserted tags back
-  const insertedTags = await Promise.all(tags.map(async (name) => {
-    const tag = await prisma.tag.findUnique({ where: { name } });
-    if (tag) {
-      return tag;
-    }
-    return await prisma.tag.create({ data: { name } });
-
-  }));
+  const insertedTags = await Promise.all(
+    tags.map(async (name) => {
+      const tag = await prisma.tag.findUnique({ where: { name } });
+      if (tag) {
+        return tag;
+      }
+      return await prisma.tag.create({ data: { name } });
+    }),
+  );
 
   // Add ingredients to global list
-  const insertedIngredients = await Promise.all(ingredients.map(async ({ name }) => {
-    const ingredient = await prisma.ingredient.findUnique({ where: { name } });
-    if (ingredient) {
-      return ingredient;
-    }
-    return await prisma.ingredient.create({ data: { name } });
-  }));
+  const insertedIngredients = await Promise.all(
+    ingredients.map(async ({ name }) => {
+      const ingredient = await prisma.ingredient.findUnique({
+        where: { name },
+      });
+      if (ingredient) {
+        return ingredient;
+      }
+      return await prisma.ingredient.create({ data: { name } });
+    }),
+  );
 
   const recipe = await prisma.recipe.create({
     data: {
@@ -70,27 +76,33 @@ export async function createRecipe({
   });
 
   // Associate the recipe with the tags
-  await Promise.all(insertedTags.map(tag => {
-    return prisma.recipeTag.create({
-      data: {
-        recipeId: recipe.id,
-        tagId: tag.id,
-      },
-    });
-  }));
+  await Promise.all(
+    insertedTags.map((tag) => {
+      return prisma.recipeTag.create({
+        data: {
+          recipeId: recipe.id,
+          tagId: tag.id,
+        },
+      });
+    }),
+  );
 
-  await Promise.all(insertedIngredients.map(ingredient => {
-    const ingredientObj = ingredients.find(obj => obj.name === ingredient.name);
-    return prisma.recipeIngredient.create({
-      data: {
-        recipeId: recipe.id,
-        ingredientId: ingredient.id,
-        quantity: ingredientObj?.quantity ?? null,
-        unit: ingredientObj?.unit ?? null,
-        note: ingredientObj?.note ?? null,
-      },
-    });
-  }));
+  await Promise.all(
+    insertedIngredients.map((ingredient) => {
+      const ingredientObj = ingredients.find(
+        (obj) => obj.name === ingredient.name,
+      );
+      return prisma.recipeIngredient.create({
+        data: {
+          recipeId: recipe.id,
+          ingredientId: ingredient.id,
+          quantity: ingredientObj?.quantity ?? null,
+          unit: ingredientObj?.unit ?? null,
+          note: ingredientObj?.note ?? null,
+        },
+      });
+    }),
+  );
 
   return recipe;
 }

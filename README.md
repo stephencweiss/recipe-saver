@@ -68,8 +68,6 @@ Docs are [here](https://www.prisma.io/docs).
 
 Prototyping changes: use `prisma db push`.
 
-
-
 #### Connecting to the Database
 
 Via the command line:

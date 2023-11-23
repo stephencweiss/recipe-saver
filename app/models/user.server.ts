@@ -10,7 +10,9 @@ export async function getUserById(id: User["id"]) {
 }
 
 export async function getUserByEmail(email: User["email"]) {
-  if (!email) { return null };
+  if (!email) {
+    return null;
+  }
   return prisma.user.findUnique({ where: { email } });
 }
 
@@ -18,7 +20,9 @@ export async function createEmailUser(email: User["email"], password: string) {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   if (!email || !hashedPassword) {
-    throw new Error("Cannot create email user if email and password are missing");
+    throw new Error(
+      "Cannot create email user if email and password are missing",
+    );
   }
   return prisma.user.create({
     data: {
