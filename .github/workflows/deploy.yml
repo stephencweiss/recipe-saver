@@ -124,6 +124,7 @@ jobs:
       - name: 🌳 Cypress run
         uses: cypress-io/github-action@v6
         with:
+          build: pnpm build
           start: pnpm start:mocks
           wait-on: http://localhost:8811
         env:
