@@ -5,6 +5,11 @@ declare global {
   namespace Cypress {
     interface Chainable {
       /**
+       * @returns {typeof faux}
+       */
+      faux: typeof faux;
+
+      /**
        * Logs in with a random user. Yields the user and adds an alias to the user
        *
        * @returns {typeof login}
@@ -43,22 +48,38 @@ declare global {
   }
 }
 
+function faux() {
+  cy.exec(
+    `npx ts-node -r tsconfig-paths/register ./cypress/support/faux.ts "hello"`,
+  ).then(({ stdout }) => {
+    cy.log(stdout);
+  });
+}
+
 function login({
-  email = faker.internet.email({provider:"example.com"}),
+  email = faker.internet.email({ provider: "example.com" }),
 }: {
   email?: string;
 } = {}) {
   cy.then(() => {
     console.log("email", email)
-    return ({ email })}).as("user");
-  cy.exec(
-    `npx ts-node -r tsconfig-paths/register ./cypress/support/create-user.ts "${email}"`,
-  ).then(({ stdout }) => {
-    const cookieValue = stdout
-      .replace(/.*<cookie>(?<cookieValue>.*)<\/cookie>.*/s, "$<cookieValue>")
-      .trim();
-    cy.setCookie("__session", cookieValue);
-  });
+    return ({ email })
+  }).as("user");
+  try {
+    cy.exec(
+      `npx ts-node -r tsconfig-paths/register ./cypress/support/create-user.ts "${email}"`,
+    ).then(({ stdout }) => {
+      const cookieValue = stdout
+        .replace(/.*<cookie>(?<cookieValue>.*)<\/cookie>.*/s, "$<cookieValue>")
+        .trim();
+      cy.setCookie("__session", cookieValue);
+    })
+  } catch (e) {
+    cy.log('Caught the error')
+    cy.log(JSON.stringify(e));
+    cy.log('Caught the error')
+    throw e;
+  }
   return cy.get("@user");
 }
 
