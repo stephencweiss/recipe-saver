@@ -5,38 +5,33 @@ import { prisma } from "~/db.server";
 export type IngredientEntry = Partial<(Pick<RecipeIngredient, "quantity" | "unit" | "note">
 & { name: string; })>
 
-
-
-export function getRecipe({
-  id,
-  userId,
-}: Pick<Recipe, "id"> & {
-  userId: User["id"];
-}) {
-  return prisma.recipe.findFirst({
-    select: { id: true, description: true, title: true, preparationSteps: true, submittedBy: true, user: true },
-    where: { id, submittedBy: userId },
-  });
-}
-
-// TODO: This is not yet working - need to tie ingredients to recipe with their name.
-export async function getRecipeWithIngredients({ id }: Pick<Recipe, "id">) {
-  const ingredients = await prisma.recipeIngredient.findMany({select: {recipeId: true, ingredientId: true, quantity: true, unit: true, note: true}, where: {recipeId: id}})
-  const ingredientNames = await prisma.ingredient.findMany({select: {id:true, name: true}, where: {id: {in: ingredients.map(ingredient => ingredient.ingredientId)}}})
-// TODO: tie ingredients to recipe with their name.
-  const recipes = await prisma.recipe.findFirst({
+export async function getRecipeDetails({  id,}: Pick<Recipe, "id">) {
+  return await prisma.recipe.findFirst({
     select: {
       id: true,
       description: true,
-      title: true,
       preparationSteps: true,
+      source: true,
+      sourceUrl: true,
+      title: true,
       submittedBy: true,
       user: true,
     },
     where: { id },
   });
-  console.log({recipes, ingredients, ingredientNames});
-  return recipes;
+}
+
+export async function getIngredientsForRecipe({ id }: Pick<Recipe, "id">) {
+  const ingredientsDetails = await prisma.recipeIngredient.findMany({select: {recipeId: true, ingredientId: true, quantity: true, unit: true, note: true}, where: {recipeId: id}})
+  const ingredientNames = await prisma.ingredient.findMany({select: {id:true, name: true}, where: {id: {in: ingredientsDetails.map(ingredient => ingredient.ingredientId)}}})
+  const ingredients = ingredientNames.map(iName => ({...iName, ...ingredientsDetails.find(ingredient => ingredient.ingredientId === iName.id)}))
+  return ingredients;
+}
+
+export async function getRecipeWithIngredients({ id }: Pick<Recipe, "id">) {
+  const recipeDetails = await getRecipeDetails({id})
+  const fullRecipe = {...recipeDetails, ingredients: await getIngredientsForRecipe({id})}
+  return fullRecipe;
 }
 
 export function getSubmittedRecipes({ userId }: { userId: User["id"] }) {
