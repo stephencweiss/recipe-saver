@@ -53,11 +53,11 @@ jobs:
       - name: ⎔ Setup node ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
-          cache: 'pnpm'
+          cache: 'npm'
           node-version: ${{ matrix.node-version }}
 
       - name: 📥 Install deps
-        run: pnpm install
+        run: npm install
 
       - name: 🔎 Type check
         run: npm run typecheck --if-present
