@@ -10,17 +10,14 @@ const SUPPORTED_SUBMISSION_STYLES = ["manual"];
 
 type Ingredients = IngredientEntry[];
 function extractIngredientsFromFormData(formData: FormData): Ingredients {
-  const ingredientEntryData =  Array.from(formData.keys())
+  const ingredientEntryData = Array.from(formData.keys());
   if (!Array.isArray(ingredientEntryData)) {
-    throw createJSONErrorResponse(
-      "ingredients",
-      "Ingredients are required",
-    );
+    throw createJSONErrorResponse("ingredients", "Ingredients are required");
   }
 
   return ingredientEntryData
     .filter((k) => k.startsWith("ingredients["))
-    .reduce((acc, k) => {
+    .reduce((acc: Ingredients, k) => {
       // Regular expression to match the pattern and capture the number and name
       const pattern = /ingredients\[(\d+)\]\[(\w+)\]/;
       const match = k.match(pattern);
@@ -33,11 +30,12 @@ function extractIngredientsFromFormData(formData: FormData): Ingredients {
           acc[index] = {};
         }
         // Add the property to the object at this index
-        acc[index][name] = String(formData.get(k));
+        const value = String(formData.get(k) || "");
+        acc[index] = { ...acc[index], [name]: value };
       }
 
       return acc;
-    }, [] as Ingredients)
+    }, [])
     .map((ingredient) => ({
       ...ingredient,
       quantity: Number(ingredient.quantity),
@@ -49,7 +47,12 @@ const createJSONErrorResponse = (
   errorMessage: string,
   status = 400,
 ) => {
-  const defaultErrors = { global: null, title: null, preparationSteps: null, ingredients: null };
+  const defaultErrors = {
+    global: null,
+    title: null,
+    preparationSteps: null,
+    ingredients: null,
+  };
   return json(
     { errors: { ...defaultErrors, [errorKey]: errorMessage } },
     { status },
@@ -172,7 +175,7 @@ export default function NewRecipePage() {
       titleRef.current?.focus();
     } else if (actionData?.errors?.preparationSteps) {
       prepStepsRef.current?.focus();
-    }  else if (actionData?.errors?.ingredients) {
+    } else if (actionData?.errors?.ingredients) {
       ingredientRefs.current[0]?.focus();
     }
   }, [actionData]);

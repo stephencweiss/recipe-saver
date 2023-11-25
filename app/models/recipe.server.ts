@@ -89,6 +89,7 @@ export async function createRecipe({
       if (ingredient) {
         return ingredient;
       }
+      if (!name) throw new Error("Ingredient name is required");
       return await prisma.ingredient.create({ data: { name } });
     }),
   );
