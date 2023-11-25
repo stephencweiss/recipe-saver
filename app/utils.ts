@@ -28,6 +28,17 @@ export function safeRedirect(
 }
 
 /**
+ * parsePreparationSteps takes a stringified Array and converts it into a JS Array
+ */
+export const parsePreparationSteps = (steps: string): string[] => {
+  const parsedSteps = JSON.parse(steps);
+  if (!Array.isArray(parsedSteps)) {
+    return [];
+  }
+  return parsedSteps;
+};
+
+/**
  * This base hook is used in other hooks to quickly search for specific data
  * across all loader data using useMatches.
  * @param {string} id The route id

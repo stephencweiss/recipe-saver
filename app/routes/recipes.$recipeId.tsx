@@ -11,13 +11,18 @@ import invariant from "tiny-invariant";
 import { List } from "~/components/lists";
 import { deleteRecipe, getRecipeWithIngredients } from "~/models/recipe.server";
 import { requireUserId } from "~/session.server";
+import { parsePreparationSteps } from "~/utils";
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
   invariant(params.recipeId, "recipeId not found");
 
-  const recipe = await getRecipeWithIngredients({ id: params.recipeId });
-  if (!recipe) {
+  const rawRecipe = await getRecipeWithIngredients({ id: params.recipeId });
+  const recipe = {
+    ...rawRecipe,
+    preparationSteps: parsePreparationSteps(rawRecipe.preparationSteps ?? ""),
+  }
+  if (!rawRecipe) {
     throw new Response("Not Found", { status: 404 });
   }
   return json({ recipe, userId });
@@ -41,17 +46,9 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   }
 };
 
-const parseSteps = (steps: string): string[] => {
-  const parsedSteps = JSON.parse(steps);
-  if (!Array.isArray(parsedSteps)) {
-    return [];
-  }
-  return parsedSteps;
-};
-
 export default function RecipeDetailsPage() {
   const data = useLoaderData<typeof loader>();
-  const steps = parseSteps(data.recipe.preparationSteps ?? "");
+  const steps = data.recipe.preparationSteps;
   const isUsersRecipe = data.userId === data.recipe.submittedBy;
   return (
     <div>
