@@ -8,18 +8,18 @@ import {
 } from "@remix-run/react";
 import invariant from "tiny-invariant";
 
-import { deleteRecipe, getRecipe } from "~/models/recipe.server";
+import { deleteRecipe, getRecipeWithIngredients } from "~/models/recipe.server";
 import { requireUserId } from "~/session.server";
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
   invariant(params.recipeId, "recipeId not found");
 
-  const recipe = await getRecipe({ id: params.recipeId, userId });
+  const recipe = await getRecipeWithIngredients({ id: params.recipeId, });
   if (!recipe) {
     throw new Response("Not Found", { status: 404 });
   }
-  return json({ recipe });
+  return json({ recipe, userId });
 };
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
@@ -34,7 +34,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       await deleteRecipe({ id: params.recipeId, userId });
       return redirect("/recipes");
     case "edit":
-      return redirect(`/recipes/${params.recipeId}/edit`);
+      return redirect(`/recipes/${params.recipeId}_/edit`);
     default:
       throw new Error(`Unsupported action: ${action}`);
   }
@@ -48,10 +48,10 @@ const parseSteps = (steps: string): string[] => {
   return parsedSteps;
 };
 
-export default function NoteDetailsPage() {
+export default function RecipeDetailsPage() {
   const data = useLoaderData<typeof loader>();
   const steps = parseSteps(data.recipe.preparationSteps);
-
+  const isUsersRecipe = data.userId === data.recipe.submittedBy;
   return (
     <div>
       <h3 className="text-2xl font-bold">{data.recipe.title}</h3>
@@ -76,6 +76,7 @@ export default function NoteDetailsPage() {
           value="edit"
           name="action"
           className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400 mr-2"
+          disabled={!isUsersRecipe}
         >
           Edit [Coming Soon]
         </button>
@@ -104,7 +105,7 @@ export function ErrorBoundary() {
   }
 
   if (error.status === 404) {
-    return <div>Note not found</div>;
+    return <div>Page not found</div>;
   }
 
   return <div>An unexpected error occurred: {error.statusText}</div>;

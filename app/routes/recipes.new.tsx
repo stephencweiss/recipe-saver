@@ -3,17 +3,58 @@ import { json, redirect } from "@remix-run/node";
 import { Form, useActionData } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 
-import { createRecipe } from "~/models/recipe.server";
+import { IngredientEntry, createRecipe } from "~/models/recipe.server";
 import { requireUserId } from "~/session.server";
 
 const SUPPORTED_SUBMISSION_STYLES = ["manual"];
+
+type Ingredients = IngredientEntry[];
+function extractIngredientsFromFormData(formData: FormData): Ingredients {
+  const ingredientEntryData = Array.from(formData.keys());
+  if (!Array.isArray(ingredientEntryData)) {
+    throw createJSONErrorResponse("ingredients", "Ingredients are required");
+  }
+
+  return ingredientEntryData
+    .filter((k) => k.startsWith("ingredients["))
+    .reduce((acc: Ingredients, k) => {
+      // Regular expression to match the pattern and capture the number and name
+      const pattern = /ingredients\[(\d+)\]\[(\w+)\]/;
+      const match = k.match(pattern);
+
+      if (match) {
+        const index = Number(match[1]);
+        const name = match[2] as keyof IngredientEntry;
+        // Initialize the object at this index if it doesn't exist
+        if (!acc[index]) {
+          acc[index] = {};
+        }
+        // Add the property to the object at this index
+        const value = String(formData.get(k) || "");
+        acc[index] = { ...acc[index], [name]: value };
+      }
+
+      return acc;
+    }, [])
+    .map((ingredient) => ({
+      ...ingredient,
+      quantity: Number(ingredient.quantity),
+    }));
+}
 
 const createJSONErrorResponse = (
   errorKey: string,
   errorMessage: string,
   status = 400,
 ) => {
-  const defaultErrors = { global: null, title: null, preparationSteps: null };
+  const defaultErrors = {
+    global: null,
+    title: null,
+    source: null,
+    sourceUrl: null,
+    preparationSteps: null,
+    ingredients: null,
+  };
   return json(
     { errors: { ...defaultErrors, [errorKey]: errorMessage } },
     { status },
@@ -33,14 +74,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   if (formData.get("submissionType") === "manual") {
     const title = formData.get("title");
-    const description = String(formData.get("description"));
-    const preparationSteps = Array.from(formData.keys())
-      .filter((k) => k.startsWith("steps["))
-      .map((k) => String(formData.get(k)));
-
     if (typeof title !== "string" || title.length === 0) {
       return createJSONErrorResponse("title", "Title is required");
     }
+    const description = String(formData.get("description"));
+    const source = String(formData.get("source"));
+    const sourceUrl = String(formData.get("sourceUrl"));
+
+    const preparationSteps = Array.from(formData.keys())
+      .filter((k) => k.startsWith("steps["))
+      .map((k) => String(formData.get(k)));
 
     if (!Array.isArray(preparationSteps)) {
       return createJSONErrorResponse(
@@ -48,17 +91,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         "Preparation steps are required",
       );
     }
-
+    const ingredients = extractIngredientsFromFormData(formData);
     // TODO: update the form to actually have all of these fields
     const recipe = await createRecipe({
       description,
       title,
       preparationSteps,
-      ingredients: [],
+      ingredients,
       tags: [],
       submittedBy: userId,
-      source: "",
-      sourceUrl: "",
+      source,
+      sourceUrl,
     });
     return redirect(`/recipes/${recipe.id}`);
   }
@@ -75,7 +118,9 @@ interface Ingredient {
 export default function NewRecipePage() {
   const actionData = useActionData<typeof action>();
   const titleRef = useRef<HTMLInputElement>(null);
-  const descriptionyRef = useRef<HTMLTextAreaElement>(null);
+  const sourceRef = useRef<HTMLInputElement>(null);
+  const sourceUrlRef = useRef<HTMLInputElement>(null);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const prepStepsRef = useRef<HTMLDivElement>(null);
   const stepsRefs = useRef<HTMLInputElement[]>([]);
   const ingredientRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -136,6 +181,8 @@ export default function NewRecipePage() {
       titleRef.current?.focus();
     } else if (actionData?.errors?.preparationSteps) {
       prepStepsRef.current?.focus();
+    } else if (actionData?.errors?.ingredients) {
+      ingredientRefs.current[0]?.focus();
     }
   }, [actionData]);
 
@@ -194,12 +241,24 @@ export default function NewRecipePage() {
           <input
             ref={titleRef}
             name="title"
-            placeholder="Sweet Martha's Famous Chocolate Chip Cookies"
+            placeholder="Pumpkin Pie"
             className="flex-1 rounded-md border-2 border-blue-500 px-3 text-lg leading-loose"
             aria-invalid={actionData?.errors?.title ? true : undefined}
             aria-errormessage={
               actionData?.errors?.title ? "title-error" : undefined
             }
+          />
+        </label>
+      </div>
+
+      <div>
+        <label className="flex w-full flex-col gap-2">
+          <span>Description [Optional]</span>
+          <textarea
+            ref={descriptionRef}
+            name="description"
+            rows={4}
+            className="w-full flex-1 rounded-md border-2 border-blue-500 px-3 py-2 text-lg leading-6"
           />
         </label>
       </div>
@@ -425,22 +484,52 @@ export default function NewRecipePage() {
       </fieldset>
       {/*
 
-    ingredients: [],
     tags: [],
-    submittedBy: userId,
-    source: '',
-    sourceUrl: '', */}
+*/}
+
       <div>
+        {actionData?.errors?.source ? (
+          <div className="pt-1 text-red-700" id="source-error">
+            {actionData.errors.source}
+          </div>
+        ) : null}
         <label className="flex w-full flex-col gap-2">
-          <span>Description [Optional]</span>
-          <textarea
-            ref={descriptionyRef}
-            name="description"
-            rows={8}
-            className="w-full flex-1 rounded-md border-2 border-blue-500 px-3 py-2 text-lg leading-6"
+          <span>Source</span>
+          <input
+            ref={sourceRef}
+            name="source"
+            placeholder="NYT Cooking"
+            className="flex-1 rounded-md border-2 border-blue-500 px-3 text-lg leading-loose"
+            aria-invalid={actionData?.errors?.source ? true : undefined}
+            aria-errormessage={
+              actionData?.errors?.source ? "source-error" : undefined
+            }
           />
         </label>
       </div>
+
+      <div>
+        {actionData?.errors?.sourceUrl ? (
+          <div className="pt-1 text-red-700" id="sourceUrl-error">
+            {actionData.errors.sourceUrl}
+          </div>
+        ) : null}
+        <label className="flex w-full flex-col gap-2">
+          <span>Source Url</span>
+          <input
+            ref={sourceUrlRef}
+            name="sourceUrl"
+            placeholder="https://cooking.nytimes.com/recipes/1015622-pumpkin-pie"
+            className="flex-1 rounded-md border-2 border-blue-500 px-3 text-lg leading-loose"
+            aria-invalid={actionData?.errors?.sourceUrl ? true : undefined}
+            aria-errormessage={
+              actionData?.errors?.sourceUrl ? "sourceUrl-error" : undefined
+            }
+          />
+        </label>
+      </div>
+
+
     </Form>
   );
 }

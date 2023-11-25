@@ -2,6 +2,11 @@ import type { User, Recipe, RecipeIngredient } from "@prisma/client";
 
 import { prisma } from "~/db.server";
 
+export type IngredientEntry = Partial<(Pick<RecipeIngredient, "quantity" | "unit" | "note">
+& { name: string; })>
+
+
+
 export function getRecipe({
   id,
   userId,
@@ -14,6 +19,26 @@ export function getRecipe({
   });
 }
 
+// TODO: This is not yet working - need to tie ingredients to recipe with their name.
+export async function getRecipeWithIngredients({ id }: Pick<Recipe, "id">) {
+  const ingredients = await prisma.recipeIngredient.findMany({select: {recipeId: true, ingredientId: true, quantity: true, unit: true, note: true}, where: {recipeId: id}})
+  const ingredientNames = await prisma.ingredient.findMany({select: {id:true, name: true}, where: {id: {in: ingredients.map(ingredient => ingredient.ingredientId)}}})
+// TODO: tie ingredients to recipe with their name.
+  const recipes = await prisma.recipe.findFirst({
+    select: {
+      id: true,
+      description: true,
+      title: true,
+      preparationSteps: true,
+      submittedBy: true,
+      user: true,
+    },
+    where: { id },
+  });
+  console.log({recipes, ingredients, ingredientNames});
+  return recipes;
+}
+
 export function getSubmittedRecipes({ userId }: { userId: User["id"] }) {
   return prisma.recipe.findMany({
     where: { submittedBy: userId },
@@ -21,6 +46,7 @@ export function getSubmittedRecipes({ userId }: { userId: User["id"] }) {
     orderBy: { createdDate: "desc" },
   });
 }
+
 
 /**
  * TODO: need to figure out how we want to handle a few things:
@@ -34,12 +60,13 @@ export async function createRecipe({
   preparationSteps,
   tags,
   ingredients,
+  source,
+  sourceUrl
 }: Omit<Recipe, "id" | "createdDate" | "updatedDate" | "preparationSteps">
   & { tags: string[] }
   & { preparationSteps: string[] }
   & {
-    ingredients: (Pick<RecipeIngredient, "quantity" | "unit" | "note">
-      & { name: string; })[];
+    ingredients: IngredientEntry[];
   }) {
   // Try to insert tags - get the inserted tags back
   const insertedTags = await Promise.all(
@@ -61,6 +88,7 @@ export async function createRecipe({
       if (ingredient) {
         return ingredient;
       }
+      if (!name) throw new Error("Ingredient name is required");
       return await prisma.ingredient.create({ data: { name } });
     }),
   );
@@ -71,6 +99,8 @@ export async function createRecipe({
       description,
       // Defer stringifying until record creation.
       preparationSteps: JSON.stringify(preparationSteps),
+      source,
+      sourceUrl,
       submittedBy,
     },
   });
