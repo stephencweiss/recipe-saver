@@ -35,7 +35,7 @@ export async function getRecipeWithIngredients({ id }: Pick<Recipe, "id">) {
     },
     where: { id },
   });
-
+  console.log({recipes, ingredients, ingredientNames});
   return recipes;
 }
 
