@@ -3,13 +3,12 @@ import { json, redirect } from "@remix-run/node";
 import { Form, useActionData } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 
-import { IngredientEntry, createRecipe } from "~/models/recipe.server";
+import { IngredientFormEntry, createRecipe } from "~/models/recipe.server";
 import { requireUserId } from "~/session.server";
 
 const SUPPORTED_SUBMISSION_STYLES = ["manual"];
 
-type Ingredients = IngredientEntry[];
-function extractIngredientsFromFormData(formData: FormData): Ingredients {
+function extractIngredientsFromFormData(formData: FormData): IngredientFormEntry[] {
   const ingredientEntryData = Array.from(formData.keys());
   if (!Array.isArray(ingredientEntryData)) {
     throw createJSONErrorResponse("ingredients", "Ingredients are required");
@@ -17,14 +16,14 @@ function extractIngredientsFromFormData(formData: FormData): Ingredients {
 
   return ingredientEntryData
     .filter((k) => k.startsWith("ingredients["))
-    .reduce((acc: Ingredients, k) => {
+    .reduce((acc: IngredientFormEntry[], k) => {
       // Regular expression to match the pattern and capture the number and name
       const pattern = /ingredients\[(\d+)\]\[(\w+)\]/;
       const match = k.match(pattern);
 
       if (match) {
         const index = Number(match[1]);
-        const name = match[2] as keyof IngredientEntry;
+        const name = match[2] as keyof IngredientFormEntry;
         // Initialize the object at this index if it doesn't exist
         if (!acc[index]) {
           acc[index] = {};
@@ -108,11 +107,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   return createJSONErrorResponse("global", "Unknown submission type");
 };
 
-interface Ingredient {
+interface Ingredient extends IngredientFormEntry {
   name: string;
   quantity: number;
   unit?: string;
-  notes?: string;
+  note?: string;
 }
 
 export default function NewRecipePage() {
@@ -128,13 +127,13 @@ export default function NewRecipePage() {
   const [steps, setSteps] = useState<string[]>([""]);
 
   const [ingredients, setIngredients] = useState<Ingredient[]>([
-    { name: "", quantity: 0, unit: "", notes: "" },
+    { name: "", quantity: 0, unit: "", note: "" },
   ]);
 
   const addIngredient = () => {
     setIngredients([
       ...ingredients,
-      { name: "", quantity: 0, unit: "", notes: "" },
+      { name: "", quantity: 0, unit: "", note: "" },
     ]);
     // Ensure the refs array has the same length as the ingredients array
     ingredientRefs.current = [...ingredientRefs.current, null];
@@ -367,11 +366,11 @@ export default function NewRecipePage() {
                     Notes
                     <textarea
                       rows={4}
-                      name={`ingredients[${index}][notes]`}
-                      value={ingredient.notes}
+                      name={`ingredients[${index}][note]`}
+                      value={ingredient.note}
                       className="w-full p-2 border-2 rounded border-blue-500"
                       onChange={(e) =>
-                        updateIngredient(index, "notes", e.target.value)
+                        updateIngredient(index, "note", e.target.value)
                       }
                     />
                   </label>
@@ -453,10 +452,10 @@ export default function NewRecipePage() {
                   <td className="">
                     <input
                       type="text"
-                      name={`ingredients[${index}][notes]`}
-                      value={ingredient.notes}
+                      name={`ingredients[${index}][note]`}
+                      value={ingredient.note}
                       onChange={(e) =>
-                        updateIngredient(index, "notes", e.target.value)
+                        updateIngredient(index, "note", e.target.value)
                       }
                     />
                   </td>

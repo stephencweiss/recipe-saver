@@ -2,8 +2,11 @@ import type { User, Recipe, RecipeIngredient } from "@prisma/client";
 
 import { prisma } from "~/db.server";
 
-export type IngredientEntry = Partial<(Pick<RecipeIngredient, "quantity" | "unit" | "note">
-& { name: string; })>
+/** A composite entry which combines Recipe Ingredients with Ingredients */
+export type CompositeIngredient = Omit<RecipeIngredient, 'createdDate'> & Omit<Ingredient, 'createdDate'>;
+
+/** Used for User Inputs where data may be partial */
+export type IngredientFormEntry = Partial<CompositeIngredient>
 
 export async function getRecipeDetails({  id,}: Pick<Recipe, "id">) {
   return await prisma.recipe.findFirst({
