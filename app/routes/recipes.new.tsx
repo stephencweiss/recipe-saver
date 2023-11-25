@@ -50,6 +50,8 @@ const createJSONErrorResponse = (
   const defaultErrors = {
     global: null,
     title: null,
+    source: null,
+    sourceUrl: null,
     preparationSteps: null,
     ingredients: null,
   };
@@ -76,6 +78,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       return createJSONErrorResponse("title", "Title is required");
     }
     const description = String(formData.get("description"));
+    const source = String(formData.get("source"));
+    const sourceUrl = String(formData.get("sourceUrl"));
 
     const preparationSteps = Array.from(formData.keys())
       .filter((k) => k.startsWith("steps["))
@@ -96,8 +100,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       ingredients,
       tags: [],
       submittedBy: userId,
-      source: "",
-      sourceUrl: "",
+      source,
+      sourceUrl,
     });
     return redirect(`/recipes/${recipe.id}`);
   }
@@ -114,6 +118,8 @@ interface Ingredient {
 export default function NewRecipePage() {
   const actionData = useActionData<typeof action>();
   const titleRef = useRef<HTMLInputElement>(null);
+  const sourceRef = useRef<HTMLInputElement>(null);
+  const sourceUrlRef = useRef<HTMLInputElement>(null);
   const descriptionyRef = useRef<HTMLTextAreaElement>(null);
   const prepStepsRef = useRef<HTMLDivElement>(null);
   const stepsRefs = useRef<HTMLInputElement[]>([]);
@@ -235,12 +241,24 @@ export default function NewRecipePage() {
           <input
             ref={titleRef}
             name="title"
-            placeholder="Sweet Martha's Famous Chocolate Chip Cookies"
+            placeholder="Pumpkin Pie"
             className="flex-1 rounded-md border-2 border-blue-500 px-3 text-lg leading-loose"
             aria-invalid={actionData?.errors?.title ? true : undefined}
             aria-errormessage={
               actionData?.errors?.title ? "title-error" : undefined
             }
+          />
+        </label>
+      </div>
+
+      <div>
+        <label className="flex w-full flex-col gap-2">
+          <span>Description [Optional]</span>
+          <textarea
+            ref={descriptionyRef}
+            name="description"
+            rows={4}
+            className="w-full flex-1 rounded-md border-2 border-blue-500 px-3 py-2 text-lg leading-6"
           />
         </label>
       </div>
@@ -466,22 +484,52 @@ export default function NewRecipePage() {
       </fieldset>
       {/*
 
-    ingredients: [],
     tags: [],
-    submittedBy: userId,
-    source: '',
-    sourceUrl: '', */}
+*/}
+
       <div>
+        {actionData?.errors?.source ? (
+          <div className="pt-1 text-red-700" id="source-error">
+            {actionData.errors.source}
+          </div>
+        ) : null}
         <label className="flex w-full flex-col gap-2">
-          <span>Description [Optional]</span>
-          <textarea
-            ref={descriptionyRef}
-            name="description"
-            rows={8}
-            className="w-full flex-1 rounded-md border-2 border-blue-500 px-3 py-2 text-lg leading-6"
+          <span>Source</span>
+          <input
+            ref={sourceRef}
+            name="source"
+            placeholder="NYT Cooking"
+            className="flex-1 rounded-md border-2 border-blue-500 px-3 text-lg leading-loose"
+            aria-invalid={actionData?.errors?.source ? true : undefined}
+            aria-errormessage={
+              actionData?.errors?.source ? "source-error" : undefined
+            }
           />
         </label>
       </div>
+
+      <div>
+        {actionData?.errors?.sourceUrl ? (
+          <div className="pt-1 text-red-700" id="sourceUrl-error">
+            {actionData.errors.sourceUrl}
+          </div>
+        ) : null}
+        <label className="flex w-full flex-col gap-2">
+          <span>Source Url</span>
+          <input
+            ref={sourceUrlRef}
+            name="sourceUrl"
+            placeholder="https://cooking.nytimes.com/recipes/1015622-pumpkin-pie"
+            className="flex-1 rounded-md border-2 border-blue-500 px-3 text-lg leading-loose"
+            aria-invalid={actionData?.errors?.sourceUrl ? true : undefined}
+            aria-errormessage={
+              actionData?.errors?.sourceUrl ? "sourceUrl-error" : undefined
+            }
+          />
+        </label>
+      </div>
+
+
     </Form>
   );
 }

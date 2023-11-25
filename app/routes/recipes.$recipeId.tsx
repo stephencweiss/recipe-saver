@@ -48,10 +48,9 @@ const parseSteps = (steps: string): string[] => {
   return parsedSteps;
 };
 
-export default function NoteDetailsPage() {
+export default function RecipeDetailsPage() {
   const data = useLoaderData<typeof loader>();
   const steps = parseSteps(data.recipe.preparationSteps);
-  console.log({data})
   return (
     <div>
       <h3 className="text-2xl font-bold">{data.recipe.title}</h3>
@@ -104,7 +103,7 @@ export function ErrorBoundary() {
   }
 
   if (error.status === 404) {
-    return <div>Note not found</div>;
+    return <div>Page not found</div>;
   }
 
   return <div>An unexpected error occurred: {error.statusText}</div>;
