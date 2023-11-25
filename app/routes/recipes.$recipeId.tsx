@@ -34,7 +34,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       await deleteRecipe({ id: params.recipeId, userId });
       return redirect("/recipes");
     case "edit":
-      return redirect(`/recipes/${params.recipeId}/edit`);
+      return redirect(`/recipes/${params.recipeId}_/edit`);
     default:
       throw new Error(`Unsupported action: ${action}`);
   }
