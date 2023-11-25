@@ -120,7 +120,7 @@ export default function NewRecipePage() {
   const titleRef = useRef<HTMLInputElement>(null);
   const sourceRef = useRef<HTMLInputElement>(null);
   const sourceUrlRef = useRef<HTMLInputElement>(null);
-  const descriptionyRef = useRef<HTMLTextAreaElement>(null);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const prepStepsRef = useRef<HTMLDivElement>(null);
   const stepsRefs = useRef<HTMLInputElement[]>([]);
   const ingredientRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -255,7 +255,7 @@ export default function NewRecipePage() {
         <label className="flex w-full flex-col gap-2">
           <span>Description [Optional]</span>
           <textarea
-            ref={descriptionyRef}
+            ref={descriptionRef}
             name="description"
             rows={4}
             className="w-full flex-1 rounded-md border-2 border-blue-500 px-3 py-2 text-lg leading-6"

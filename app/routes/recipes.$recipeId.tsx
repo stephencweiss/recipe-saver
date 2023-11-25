@@ -11,15 +11,15 @@ import invariant from "tiny-invariant";
 import { deleteRecipe, getRecipeWithIngredients } from "~/models/recipe.server";
 import { requireUserId } from "~/session.server";
 
-export const loader = async ({ params }: LoaderFunctionArgs) => {
-  // const userId = await requireUserId(request);
+export const loader = async ({ params, request }: LoaderFunctionArgs) => {
+  const userId = await requireUserId(request);
   invariant(params.recipeId, "recipeId not found");
 
   const recipe = await getRecipeWithIngredients({ id: params.recipeId, });
   if (!recipe) {
     throw new Response("Not Found", { status: 404 });
   }
-  return json({ recipe });
+  return json({ recipe, userId });
 };
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
@@ -51,6 +51,7 @@ const parseSteps = (steps: string): string[] => {
 export default function RecipeDetailsPage() {
   const data = useLoaderData<typeof loader>();
   const steps = parseSteps(data.recipe.preparationSteps);
+  const isUsersRecipe = data.userId === data.recipe.submittedBy;
   return (
     <div>
       <h3 className="text-2xl font-bold">{data.recipe.title}</h3>
@@ -75,6 +76,7 @@ export default function RecipeDetailsPage() {
           value="edit"
           name="action"
           className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400 mr-2"
+          disabled={!isUsersRecipe}
         >
           Edit [Coming Soon]
         </button>
