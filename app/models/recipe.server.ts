@@ -1,7 +1,8 @@
-import type { User, Recipe, RecipeIngredient, Tag, Ingredient } from "@prisma/client";
+import { type User, type Recipe, type RecipeIngredient, type Tag, type Ingredient } from "@prisma/client";
 import invariant from "tiny-invariant";
 
 import { prisma } from "~/db.server";
+import { asyncFilter } from "~/utils";
 
 /** A composite entry which combines Recipe Ingredients with Ingredients */
 export type CompositeIngredient = Omit<RecipeIngredient, 'createdDate'> & Omit<Ingredient, 'createdDate'>;
@@ -68,6 +69,26 @@ async function associateIngredientsWithRecipe(recipe: Pick<Recipe, "id">, ingred
     const recipeIngredient = await upsertRecipeIngredient({ recipeId: recipe.id, ingredientId: updatedIngredient.id, quantity, unit, note })
     return { ingredient, recipeIngredient };
   }));
+}
+
+async function deleteRecipeIngredients(recipe: Pick<Recipe, "id">, ingredients: Pick<Ingredient, "id">[]) {
+  const ingredientIds = ingredients.map(ingredient => (ingredient.id));
+  return prisma.recipeIngredient.deleteMany({ where: { recipeId: recipe.id, ingredientId: { in: ingredientIds } } })
+}
+
+async function deleteOrphanedIngredients(ingredients: Pick<Ingredient, "id">[]) {
+  const ingredientIds = ingredients.map(ingredient => (ingredient.id));
+  const orphans = await asyncFilter(
+    ingredientIds,
+    async (ingredientId: string) =>
+      !await prisma.recipeIngredient.findFirst({ where: { ingredientId } })
+  )
+  return prisma.ingredient.deleteMany({ where: { id: { in: orphans } } })
+}
+
+export async function disassociateIngredientsFromRecipe(recipe: Pick<Recipe, "id">, ingredientIds: Pick<Ingredient, "id">[]) {
+  await deleteRecipeIngredients(recipe, ingredientIds);
+  await deleteOrphanedIngredients(ingredientIds);
 }
 
 async function upsertTags(tags: Tag[]) {
