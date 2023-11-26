@@ -18,7 +18,7 @@ import {
   upsertRecipeWithDetails,
 } from "~/models/recipe.server";
 import { requireUserId } from "~/session.server";
-import { parsePreparationSteps } from "~/utils";
+import { PLACEHOLDER_INGREDIENT, isNotPlaceholderIngredient, parsePreparationSteps } from "~/utils";
 
 // The recipe should be loaded in the loader function and passed to the loader data.
 // The recipeId should be a parameter in the route.
@@ -42,90 +42,61 @@ import { parsePreparationSteps } from "~/utils";
  */
 export const action = async ({ request }: ActionFunctionArgs) => {
   const userId = await requireUserId(request);
-
   const formData = await request.formData();
+
   const submissionType = String(formData.get("submissionType"));
   if (!SUPPORTED_SUBMISSION_STYLES.includes(submissionType)) {
     return createJSONErrorResponse(
       "global",
-      `Invalid submission type: ${submissionType}`,
+      `Unknown Submission: ${submissionType}`,
     );
   }
 
-  if (formData.get("submissionType") === "edit") {
-    const title = formData.get("title");
-    if (typeof title !== "string" || title.length === 0) {
-      return createJSONErrorResponse("title", "Title is required");
-    }
-    const description = String(formData.get("description"));
-    const source = String(formData.get("source"));
-    const id = String(formData.get("recipeId"));
-    const sourceUrl = String(formData.get("sourceUrl"));
-
-    const preparationSteps = Array.from(formData.keys())
+  const partialRecipe = {
+    description: String(formData.get("description")),
+    ingredients: extractIngredientsFromFormData(formData),
+    preparationSteps: Array.from(formData.keys())
       .filter((k) => k.startsWith("steps["))
-      .map((k) => String(formData.get(k)));
+      .map((k) => String(formData.get(k))),
+    source: String(formData.get("source")),
+    sourceUrl: String(formData.get("sourceUrl")),
+    submittedBy: userId,
+    tags: [], // TODO: Support tags
+    title: String(formData.get("title")),
+  };
 
-    if (!Array.isArray(preparationSteps)) {
-      return createJSONErrorResponse(
-        "preparationSteps",
-        "Preparation steps are required",
-      );
-    }
-    const ingredients = extractIngredientsFromFormData(formData);
-
-    // TODO: update the form to actually have all of these fields
-    const recipe = await upsertRecipeWithDetails({
-      id,
-      description,
-      title,
-      source,
-      sourceUrl,
-      preparationSteps,
-      tags: [],
-      userId,
-      ingredients,
-    });
-
-    const deletedIngredientIds =
-      extractDeletedIngredientIdsFromFormData(formData);
-    await disassociateIngredientsFromRecipe({ id }, deletedIngredientIds);
-    return redirect(`/recipes/${recipe.id}`);
+  if (partialRecipe.title.length === 0) {
+    return createJSONErrorResponse("title", "Title is required");
   }
-  if (formData.get("submissionType") === "manual") {
-    const title = formData.get("title");
-    if (typeof title !== "string" || title.length === 0) {
-      return createJSONErrorResponse("title", "Title is required");
-    }
-    const description = String(formData.get("description"));
-    const source = String(formData.get("source"));
-    const sourceUrl = String(formData.get("sourceUrl"));
-
-    const preparationSteps = Array.from(formData.keys())
-      .filter((k) => k.startsWith("steps["))
-      .map((k) => String(formData.get(k)));
-
-    if (!Array.isArray(preparationSteps)) {
-      return createJSONErrorResponse(
-        "preparationSteps",
-        "Preparation steps are required",
-      );
-    }
-    const ingredients = extractIngredientsFromFormData(formData);
-    // TODO: update the form to actually have all of these fields
-    const recipe = await createRecipe({
-      description,
-      title,
-      preparationSteps,
-      ingredients,
-      tags: [],
-      submittedBy: userId,
-      source,
-      sourceUrl,
-    });
-    return redirect(`/recipes/${recipe.id}`);
+  if (
+    !Array.isArray(partialRecipe.preparationSteps) ||
+    partialRecipe.preparationSteps.length === 0
+  ) {
+    return createJSONErrorResponse(
+      "preparationSteps",
+      "Preparation steps are required",
+    );
   }
-  return createJSONErrorResponse("global", "Unknown submission type");
+  switch (formData.get("submissionType")) {
+    case "create-manual": {
+      const recipe = await createRecipe(partialRecipe);
+      return redirect(`/recipes/${recipe.id}`);
+    }
+    case "edit": {
+      const id = String(formData.get("recipeId"));
+      await upsertRecipeWithDetails({
+        ...partialRecipe,
+        id,
+        userId,
+      });
+      const deletedIngredientIds =
+        extractDeletedIngredientIdsFromFormData(formData);
+      await disassociateIngredientsFromRecipe({ id }, deletedIngredientIds);
+      return redirect(`/recipes/${id}`);
+    }
+    default:
+      return createJSONErrorResponse("global", "Unknown submission type");
+  }
 };
 
 // The loader function should return a 404 if the recipe cannot be found.
@@ -152,7 +123,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 };
 
 const SUPPORTED_SUBMISSION_STYLES = [
-  // "manual", // Only on the new page
+  "create-manual", // Only on the new page
   "edit", // Only on the edit page
 ];
 
@@ -215,10 +186,12 @@ function extractIngredientsFromFormData(
       /ingredients\[(\d+)\]\[(\w+)\]/,
     );
 
-  return ingredientEntryData.map((ingredient) => ({
-    ...ingredient,
-    quantity: Number(ingredient.quantity),
-  }));
+  return ingredientEntryData
+    .map((ingredient) => ({
+      ...ingredient,
+      quantity: Number(ingredient.quantity),
+    }))
+    .filter(isNotPlaceholderIngredient);
 }
 
 const createJSONErrorResponse = (
@@ -262,17 +235,14 @@ export default function RecipeEditPage() {
   );
 
   const [ingredients, setIngredients] = useState<IngredientFormEntry[]>(
-    loadedIngredients ?? [{ name: "", quantity: 0, unit: "", note: "" }],
+    loadedIngredients ?? [PLACEHOLDER_INGREDIENT],
   );
-  const [deletedIngredients, setDeletedIngredients] = useState<IngredientFormEntry[]>(
-    [],
-  );
+  const [deletedIngredients, setDeletedIngredients] = useState<
+    IngredientFormEntry[]
+  >([]);
 
   const addIngredient = () => {
-    setIngredients([
-      ...ingredients,
-      { name: "", quantity: 0, unit: "", note: "" },
-    ]);
+    setIngredients([...ingredients, PLACEHOLDER_INGREDIENT]);
     // Ensure the refs array has the same length as the ingredients array
     ingredientRefs.current = [...ingredientRefs.current, null];
   };
