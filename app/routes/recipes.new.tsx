@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { IngredientFormEntry, createRecipe } from "~/models/recipe.server";
 import { requireUserId } from "~/session.server";
 
-const SUPPORTED_SUBMISSION_STYLES = ["manual"];
+const SUPPORTED_SUBMISSION_STYLES = ["create-manual"];
 
 function extractIngredientsFromFormData(formData: FormData): IngredientFormEntry[] {
   const ingredientEntryData = Array.from(formData.keys());
@@ -71,7 +71,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  if (formData.get("submissionType") === "manual") {
+  if (formData.get("submissionType") === "create-manual") {
     const title = formData.get("title");
     if (typeof title !== "string" || title.length === 0) {
       return createJSONErrorResponse("title", "Title is required");
@@ -228,7 +228,7 @@ export default function NewRecipePage() {
           Save
         </button>
       </div>
-      <input type="hidden" name="submissionType" value="manual" />
+      <input type="hidden" name="submissionType" value="create-manual" />
       <div>
         {actionData?.errors?.title ? (
           <div className="pt-1 text-red-700" id="title-error">

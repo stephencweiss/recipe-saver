@@ -130,18 +130,18 @@ export async function upsertRecipeWithDetails({
   preparationSteps,
   source,
   sourceUrl,
+  submittedBy,
   tags,
   ingredients,
   userId,
-}: Omit<Recipe, "createdDate" | "updatedDate" | "preparationSteps" | "submittedBy">
+}: Omit<Recipe, "createdDate" | "updatedDate" | "preparationSteps">
   & { preparationSteps: string[] }
   & { userId: User["id"] }
   & { tags: Tag[] }
   & { ingredients: Partial<CompositeIngredient>[] }) {
-
   invariant(userId, "User ID is required when upserting a recipe")
-
-  const recipe = await upsertRecipe({ id, description, title, preparationSteps, source, sourceUrl, submittedBy: userId });
+  invariant(userId === submittedBy, "User ID must match submittedBy when upserting a recipe")
+  const recipe = await upsertRecipe({ id, description, title, preparationSteps, source, sourceUrl, submittedBy });
   await associateTagsWithRecipe(recipe, tags, userId);
   await associateIngredientsWithRecipe(recipe, ingredients);
   return recipe;

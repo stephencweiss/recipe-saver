@@ -1,9 +1,13 @@
+
 import { useMatches } from "@remix-run/react";
 import { useMemo } from "react";
 
 import type { User } from "~/models/user.server";
 
+import { IngredientFormEntry } from "./models/recipe.server";
+
 const DEFAULT_REDIRECT = "/";
+
 
 /**
  * This should be used any time the redirect path is user-provided
@@ -29,21 +33,31 @@ export function safeRedirect(
 
 /**
  * parsePreparationSteps takes a stringified Array and converts it into a JS Array
+ * Removes empty strings from the array
  */
 export const parsePreparationSteps = (steps: string): string[] => {
   const parsedSteps = JSON.parse(steps);
   if (!Array.isArray(parsedSteps)) {
     return [];
   }
-  return parsedSteps;
+  return parsedSteps.filter((step) => step !== "");
 };
 
+export const PLACEHOLDER_INGREDIENT = { name: "", quantity: 0, unit: "", note: "" };
+
+/** Predicate to determine if an ingredient is the placeholder ingredient */
+export const isNotPlaceholderIngredient = (ingredient: IngredientFormEntry): boolean => !(
+  ingredient.name === PLACEHOLDER_INGREDIENT.name &&
+  ingredient.quantity === PLACEHOLDER_INGREDIENT.quantity &&
+  ingredient.unit === PLACEHOLDER_INGREDIENT.unit &&
+  ingredient.note === PLACEHOLDER_INGREDIENT.note
+);
 /**
- * This base hook is used in other hooks to quickly search for specific data
- * across all loader data using useMatches.
- * @param {string} id The route id
- * @returns {JSON|undefined} The router data or undefined if not found
- */
+* This base hook is used in other hooks to quickly search for specific data
+* across all loader data using useMatches.
+* @param {string} id The route id
+* @returns {JSON|undefined} The router data or undefined if not found
+*/
 export function useMatchesData(
   id: string,
 ): Record<string, unknown> | undefined {

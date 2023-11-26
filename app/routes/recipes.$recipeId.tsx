@@ -11,7 +11,7 @@ import invariant from "tiny-invariant";
 import { List } from "~/components/lists";
 import { deleteRecipe, getRecipeWithIngredients } from "~/models/recipe.server";
 import { requireUserId } from "~/session.server";
-import { parsePreparationSteps } from "~/utils";
+import { isNotPlaceholderIngredient, parsePreparationSteps } from "~/utils";
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
@@ -20,8 +20,9 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const rawRecipe = await getRecipeWithIngredients({ id: params.recipeId });
   const recipe = {
     ...rawRecipe,
+    ingredients: rawRecipe.ingredients.filter(isNotPlaceholderIngredient) ?? [],
     preparationSteps: parsePreparationSteps(rawRecipe.preparationSteps ?? ""),
-  }
+  };
   if (!rawRecipe) {
     throw new Response("Not Found", { status: 404 });
   }
@@ -48,22 +49,30 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
 export default function RecipeDetailsPage() {
   const data = useLoaderData<typeof loader>();
-  const steps = data.recipe.preparationSteps;
+
   const isUsersRecipe = data.userId === data.recipe.submittedBy;
   return (
     <div>
       <h2 className="text-4xl font-bold">{data.recipe.title}</h2>
-      <List title="Description" items={[data.recipe.description || 'No Description']} />
+      <List
+        title="Description"
+        items={[data.recipe.description || "No Description"]}
+      />
 
-      <List title="Steps" items={steps} ListType="ol" />
+      <List
+        title="Steps"
+        items={data.recipe.preparationSteps}
+        ListType="ol"
+      />
       <List
         title="Ingredients"
-        items={data.recipe.ingredients.map(
-          (ingredient) =>
-            `${ingredient.quantity} ${ingredient.unit} ${ingredient.name} ${
-              ingredient.note !== "" ? "" : ` -- ${ingredient.note}`
-            }`,
-        )}
+        items={data.recipe.ingredients
+          .map(
+            (ingredient) =>
+              `${ingredient.quantity} ${ingredient.unit} ${ingredient.name} ${
+                ingredient.note !== "" ? "" : ` -- ${ingredient.note}`
+              }`,
+          )}
       />
       <h2 className="text-xl font-bold py-4">Additional Details</h2>
       <p className="pb-2">Source: {data.recipe.source || "User Submitted"}</p>
