@@ -85,3 +85,14 @@ export function useUser(): User {
 export function validateEmail(email: unknown): email is string {
   return typeof email === "string" && email.length > 3 && email.includes("@");
 }
+
+/** A helper function to handle asynchronous actions within a filter of a list */
+export async function asyncFilter<T>(arr: T[], predicate: (arg: T) => Promise<boolean>) {
+  const results = await Promise.all(arr.map(predicate));
+  return arr.filter((_v, index) => results[index]);
+}
+
+/** A helper function to handle asynchronous actions within a map of a list */
+export async function asyncMap<T>(arr: T[], predicate: (arg: T) => Promise<T>) {
+  return Promise.all(arr.map(predicate));
+}
