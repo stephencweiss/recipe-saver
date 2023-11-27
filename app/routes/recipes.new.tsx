@@ -1,64 +1,12 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
+import { redirect } from "@remix-run/node";
 import { Form, useActionData } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 
+import { createJSONErrorResponse, extractIngredientsFromFormData, SUPPORTED_SUBMISSION_STYLES } from "~/components/recipes";
 import { IngredientFormEntry, createRecipe } from "~/models/recipe.server";
 import { requireUserId } from "~/session.server";
 
-const SUPPORTED_SUBMISSION_STYLES = ["create-manual"];
-
-function extractIngredientsFromFormData(formData: FormData): IngredientFormEntry[] {
-  const ingredientEntryData = Array.from(formData.keys());
-  if (!Array.isArray(ingredientEntryData)) {
-    throw createJSONErrorResponse("ingredients", "Ingredients are required");
-  }
-
-  return ingredientEntryData
-    .filter((k) => k.startsWith("ingredients["))
-    .reduce((acc: IngredientFormEntry[], k) => {
-      // Regular expression to match the pattern and capture the number and name
-      const pattern = /ingredients\[(\d+)\]\[(\w+)\]/;
-      const match = k.match(pattern);
-
-      if (match) {
-        const index = Number(match[1]);
-        const name = match[2] as keyof IngredientFormEntry;
-        // Initialize the object at this index if it doesn't exist
-        if (!acc[index]) {
-          acc[index] = {};
-        }
-        // Add the property to the object at this index
-        const value = String(formData.get(k) || "");
-        acc[index] = { ...acc[index], [name]: value };
-      }
-
-      return acc;
-    }, [])
-    .map((ingredient) => ({
-      ...ingredient,
-      quantity: Number(ingredient.quantity),
-    }));
-}
-
-const createJSONErrorResponse = (
-  errorKey: string,
-  errorMessage: string,
-  status = 400,
-) => {
-  const defaultErrors = {
-    global: null,
-    title: null,
-    source: null,
-    sourceUrl: null,
-    preparationSteps: null,
-    ingredients: null,
-  };
-  return json(
-    { errors: { ...defaultErrors, [errorKey]: errorMessage } },
-    { status },
-  );
-};
 export const action = async ({ request }: ActionFunctionArgs) => {
   const userId = await requireUserId(request);
 
