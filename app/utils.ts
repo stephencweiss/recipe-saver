@@ -110,3 +110,41 @@ export async function asyncFilter<T>(arr: T[], predicate: (arg: T) => Promise<bo
 export async function asyncMap<T>(arr: T[], predicate: (arg: T) => Promise<T>) {
   return Promise.all(arr.map(predicate));
 }
+
+/**
+ * Expects a fairly specific type of form data, where the keys are in the format:
+ *  - `formKeyPrefix[index][keyName]`
+ * - e.g. `ingredients[0][name]`
+ * This function will extract the data from the form data and return an array of
+ * objects with the key/value pairs.
+ * - e.g., `[{name: "foo"}, {name: "bar"}]`
+ */
+export function extractGenericDataFromFormData<T extends Record<string, unknown>>(
+  formData: FormData,
+  formKeyPrefix: string,
+  pattern: RegExp,
+): Partial<T>[] {
+  const formKeys = Array.from(formData.keys());
+  return formKeys
+    .filter((k) => k.startsWith(formKeyPrefix))
+    .reduce((acc: Partial<T>[], k) => {
+      // Regular expression to match the pattern and capture the number and name
+      // const pattern = /deletedIngredients\[(\d+)\]\[(\w+)\]/;
+      const match = k.match(pattern);
+
+      if (match) {
+        const index = Number(match[1]);
+        const name = match[2] as keyof T;
+        // Initialize the object at this index if it doesn't exist
+        if (!acc[index]) {
+          acc[index] = {};
+        }
+        // Add the property to the object at this index
+        const value = String(formData.get(k) || "");
+        acc[index] = { ...acc[index], [name]: value };
+      }
+
+      return acc;
+    }, [])
+    .filter((item) => Object.keys(item).length > 0);
+}

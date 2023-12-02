@@ -1,5 +1,4 @@
-import { as } from "vitest/dist/reporters-5f784f42";
-import { asyncFilter, asyncMap, validateEmail } from "./utils";
+import { asyncFilter, asyncMap, extractGenericDataFromFormData, validateEmail } from "./utils";
 
 test("validateEmail returns false for non-emails", () => {
   expect(validateEmail(undefined)).toBe(false);
@@ -39,3 +38,16 @@ describe("asyncMap", () => {
     expect(result).toEqual([2, 4, 6, 8, 10])
   })
 })
+
+describe("extractGenericDataFromFormData", () => {
+  test("returns an array with key and value when pattern matches", () => {
+    const formData = new FormData();
+    const prefix = "inputName"
+    formData.append(`${prefix}[1][id]`, "val-1");
+    formData.append(`${prefix}[2][id]`, "val-2");
+    const pattern = /inputName\[(\d+)\]\[(\w+)\]/;
+    const result = extractGenericDataFromFormData(formData, prefix , pattern);
+    console.log({pattern, prefix, result});
+    expect(result).toEqual([{id: "val-1"}, {id: "val-2"}]);
+  });
+});
