@@ -9,7 +9,7 @@ import { installGlobals } from "@remix-run/node";
 installGlobals();
 
 async function createAndLogin(arg: string) {
-  cy.log(`called the faux script with the arg: ${arg}`)
+  cy.log(`called the faux script with the arg: ${arg}`);
 }
 
 createAndLogin(process.argv[2]);

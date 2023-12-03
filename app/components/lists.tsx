@@ -6,7 +6,7 @@ interface ListProps {
 }
 
 const List = (props: ListProps) => {
-  const { title, items, HeaderLevel = 'h2', ListType = "ul" } = props;
+  const { title, items, HeaderLevel = "h2", ListType = "ul" } = props;
   return (
     <>
       <HeaderLevel className="text-xl font-bold py-4">{title}</HeaderLevel>

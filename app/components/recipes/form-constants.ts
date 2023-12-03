@@ -3,4 +3,4 @@ export const SUPPORTED_SUBMISSION_STYLES = [
   "edit", // Only on the edit page
 ] as const;
 
-export type SubmissionStyles = typeof SUPPORTED_SUBMISSION_STYLES[number];
+export type SubmissionStyles = (typeof SUPPORTED_SUBMISSION_STYLES)[number];

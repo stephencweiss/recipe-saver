@@ -1,38 +1,41 @@
-import React, { useEffect, useState, ReactNode } from 'react';
+import React, { useEffect, useState, ReactNode } from "react";
 
 interface VisuallyHiddenProps {
   children: ReactNode;
 }
 
 const inLineStyles = {
-  clipPath: 'path(0,0)',
+  clipPath: "path(0,0)",
   height: 1,
   width: 1,
   margin: -1,
   padding: 0,
   border: 0,
-}
+};
 
-const VisuallyHidden: React.FC<VisuallyHiddenProps> = ({ children, ...delegated }) => {
+const VisuallyHidden: React.FC<VisuallyHiddenProps> = ({
+  children,
+  ...delegated
+}) => {
   const [forceShow, setForceShow] = useState(false);
 
   useEffect(() => {
-    if (process.env.NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV !== "production") {
       const handleKeyDown = (ev: KeyboardEvent) => {
-        if (ev.key === 'Alt') {
+        if (ev.key === "Alt") {
           setForceShow(true);
         }
       };
       const handleKeyUp = (ev: KeyboardEvent) => {
-        if (ev.key === 'Alt') {
+        if (ev.key === "Alt") {
           setForceShow(false);
         }
       };
-      window.addEventListener('keydown', handleKeyDown);
-      window.addEventListener('keyup', handleKeyUp);
+      window.addEventListener("keydown", handleKeyDown);
+      window.addEventListener("keyup", handleKeyUp);
       return () => {
-        window.removeEventListener('keydown', handleKeyDown);
-        window.removeEventListener('keyup', handleKeyUp);
+        window.removeEventListener("keydown", handleKeyDown);
+        window.removeEventListener("keyup", handleKeyUp);
       };
     }
   }, []);

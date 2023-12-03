@@ -1,4 +1,3 @@
-
 import { Ingredient, Recipe } from "@prisma/client";
 import { useMatches } from "@remix-run/react";
 import { useMemo } from "react";
@@ -8,7 +7,6 @@ import type { User } from "~/models/user.server";
 import { IngredientFormEntry } from "./models/recipe.server";
 
 const DEFAULT_REDIRECT = "/";
-
 
 /**
  * This should be used any time the redirect path is user-provided
@@ -44,24 +42,31 @@ export const parsePreparationSteps = (steps: string): string[] => {
   return parsedSteps.filter((step) => step !== "");
 };
 
-export const createPlaceholderIngredient = () => ({ name: "", quantity: 0, unit: "", note: "" });
+export const createPlaceholderIngredient = () => ({
+  name: "",
+  quantity: 0,
+  unit: "",
+  note: "",
+});
 
 /** Predicate to determine if an ingredient is the placeholder ingredient */
-export const isNotPlaceholderIngredient = (ingredient: IngredientFormEntry): boolean => {
+export const isNotPlaceholderIngredient = (
+  ingredient: IngredientFormEntry,
+): boolean => {
   const placeholderIngredient = createPlaceholderIngredient();
   return !(
     ingredient.name === placeholderIngredient.name &&
     ingredient.quantity === placeholderIngredient.quantity &&
     ingredient.unit === placeholderIngredient.unit &&
     ingredient.note === placeholderIngredient.note
-  )
+  );
 };
 /**
-* This base hook is used in other hooks to quickly search for specific data
-* across all loader data using useMatches.
-* @param {string} id The route id
-* @returns {JSON|undefined} The router data or undefined if not found
-*/
+ * This base hook is used in other hooks to quickly search for specific data
+ * across all loader data using useMatches.
+ * @param {string} id The route id
+ * @returns {JSON|undefined} The router data or undefined if not found
+ */
 export function useMatchesData(
   id: string,
 ): Record<string, unknown> | undefined {
@@ -105,7 +110,10 @@ export function validateEmail(email: unknown): email is string {
 }
 
 /** A helper function to handle asynchronous actions within a filter of a list */
-export async function asyncFilter<T>(arr: T[], predicate: (arg: T) => Promise<boolean>) {
+export async function asyncFilter<T>(
+  arr: T[],
+  predicate: (arg: T) => Promise<boolean>,
+) {
   const results = await Promise.all(arr.map(predicate));
   return arr.filter((_v, index) => results[index]);
 }
@@ -123,11 +131,9 @@ export async function asyncMap<T>(arr: T[], predicate: (arg: T) => Promise<T>) {
  * objects with the key/value pairs.
  * - e.g., `[{name: "foo"}, {name: "bar"}]`
  */
-export function extractGenericDataFromFormData<T extends Record<string, unknown>>(
-  formData: FormData,
-  formKeyPrefix: string,
-  pattern: RegExp,
-): Partial<T>[] {
+export function extractGenericDataFromFormData<
+  T extends Record<string, unknown>,
+>(formData: FormData, formKeyPrefix: string, pattern: RegExp): Partial<T>[] {
   const formKeys = Array.from(formData.keys());
   return formKeys
     .filter((k) => k.startsWith(formKeyPrefix))

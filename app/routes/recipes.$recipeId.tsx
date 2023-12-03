@@ -59,20 +59,15 @@ export default function RecipeDetailsPage() {
         items={[data.recipe.description || "No Description"]}
       />
 
-      <List
-        title="Steps"
-        items={data.recipe.preparationSteps}
-        ListType="ol"
-      />
+      <List title="Steps" items={data.recipe.preparationSteps} ListType="ol" />
       <List
         title="Ingredients"
-        items={data.recipe.ingredients
-          .map(
-            (ingredient) =>
-              `${ingredient.quantity} ${ingredient.unit} ${ingredient.name} ${
-                ingredient.note !== "" ? "" : ` -- ${ingredient.note}`
-              }`,
-          )}
+        items={data.recipe.ingredients.map(
+          (ingredient) =>
+            `${ingredient.quantity} ${ingredient.unit} ${ingredient.name} ${
+              ingredient.note !== "" ? "" : ` -- ${ingredient.note}`
+            }`,
+        )}
       />
       <h2 className="text-xl font-bold py-4">Additional Details</h2>
       <p className="pb-2">Source: {data.recipe.source || "User Submitted"}</p>
