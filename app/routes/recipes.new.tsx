@@ -1,58 +1,84 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
-import { Form, useActionData } from "@remix-run/react";
+import { Ingredient, Recipe } from "@prisma/client";
+import { ActionFunctionArgs, redirect } from "@remix-run/node";
+import { useActionData, useLoaderData, Form } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 
-import { createJSONErrorResponse, extractIngredientsFromFormData, SUPPORTED_SUBMISSION_STYLES } from "~/components/recipes";
-import { IngredientFormEntry, createRecipe } from "~/models/recipe.server";
+import { FormTextAreaInput, FormTextInput } from "~/components/forms";
+import {
+  SUPPORTED_SUBMISSION_STYLES,
+  SubmissionStyles,
+  createJSONErrorResponse,
+  extractDeletedIngredientIdsFromFormData,
+  extractIngredientsFromFormData,
+} from "~/components/recipes";
+import VisuallyHidden from "~/components/visually-hidden";
+import {
+  IngredientFormEntry,
+  createRecipe,
+  disassociateIngredientsFromRecipe,
+  upsertRecipeWithDetails,
+} from "~/models/recipe.server";
 import { requireUserId } from "~/session.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const userId = await requireUserId(request);
-
   const formData = await request.formData();
+
   const submissionType = String(formData.get("submissionType"));
-  if (!SUPPORTED_SUBMISSION_STYLES.includes(submissionType)) {
+  if (
+    !SUPPORTED_SUBMISSION_STYLES.includes(submissionType as SubmissionStyles)
+  ) {
     return createJSONErrorResponse(
       "global",
-      `Invalid submission type: ${submissionType}`,
+      `Unknown Submission: ${submissionType}`,
     );
   }
 
-  if (formData.get("submissionType") === "create-manual") {
-    const title = formData.get("title");
-    if (typeof title !== "string" || title.length === 0) {
-      return createJSONErrorResponse("title", "Title is required");
-    }
-    const description = String(formData.get("description"));
-    const source = String(formData.get("source"));
-    const sourceUrl = String(formData.get("sourceUrl"));
-
-    const preparationSteps = Array.from(formData.keys())
+  const partialRecipe = {
+    description: String(formData.get("description")),
+    ingredients: extractIngredientsFromFormData(formData),
+    preparationSteps: Array.from(formData.keys())
       .filter((k) => k.startsWith("steps["))
-      .map((k) => String(formData.get(k)));
+      .map((k) => String(formData.get(k))),
+    source: String(formData.get("source")),
+    sourceUrl: String(formData.get("sourceUrl")),
+    submittedBy: userId,
+    tags: [],
+    title: String(formData.get("title")),
+  };
 
-    if (!Array.isArray(preparationSteps)) {
-      return createJSONErrorResponse(
-        "preparationSteps",
-        "Preparation steps are required",
-      );
-    }
-    const ingredients = extractIngredientsFromFormData(formData);
-    // TODO: update the form to actually have all of these fields
-    const recipe = await createRecipe({
-      description,
-      title,
-      preparationSteps,
-      ingredients,
-      tags: [],
-      submittedBy: userId,
-      source,
-      sourceUrl,
-    });
-    return redirect(`/recipes/${recipe.id}`);
+  if (partialRecipe.title.length === 0) {
+    return createJSONErrorResponse("title", "Title is required");
   }
-  return createJSONErrorResponse("global", "Unknown submission type");
+  if (
+    !Array.isArray(partialRecipe.preparationSteps) ||
+    partialRecipe.preparationSteps.length === 0
+  ) {
+    return createJSONErrorResponse(
+      "preparationSteps",
+      "Preparation steps are required",
+    );
+  }
+  switch (formData.get("submissionType")) {
+    case "create-manual": {
+      const recipe = await createRecipe(partialRecipe);
+      return redirect(`/recipes/${recipe.id}`);
+    }
+    case "edit": {
+      const id = String(formData.get("recipeId"));
+      await upsertRecipeWithDetails({
+        ...partialRecipe,
+        id,
+        userId,
+      });
+      const deletedIngredientIds =
+        extractDeletedIngredientIdsFromFormData(formData);
+      await disassociateIngredientsFromRecipe({ id }, deletedIngredientIds);
+      return redirect(`/recipes/${id}`);
+    }
+    default:
+      return createJSONErrorResponse("global", "Unknown submission type");
+  }
 };
 
 interface Ingredient extends IngredientFormEntry {
