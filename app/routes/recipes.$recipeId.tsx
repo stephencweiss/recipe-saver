@@ -8,15 +8,22 @@ import {
 } from "@remix-run/react";
 import invariant from "tiny-invariant";
 
+import { List } from "~/components/lists";
 import { deleteRecipe, getRecipeWithIngredients } from "~/models/recipe.server";
 import { requireUserId } from "~/session.server";
+import { isNotPlaceholderIngredient, parsePreparationSteps } from "~/utils";
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
   invariant(params.recipeId, "recipeId not found");
 
-  const recipe = await getRecipeWithIngredients({ id: params.recipeId, });
-  if (!recipe) {
+  const rawRecipe = await getRecipeWithIngredients({ id: params.recipeId });
+  const recipe = {
+    ...rawRecipe,
+    ingredients: rawRecipe.ingredients.filter(isNotPlaceholderIngredient) ?? [],
+    preparationSteps: parsePreparationSteps(rawRecipe.preparationSteps ?? ""),
+  };
+  if (!rawRecipe) {
     throw new Response("Not Found", { status: 404 });
   }
   return json({ recipe, userId });
@@ -34,41 +41,44 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
       await deleteRecipe({ id: params.recipeId, userId });
       return redirect("/recipes");
     case "edit":
-      return redirect(`/recipes/${params.recipeId}_/edit`);
+      return redirect(`/recipes/${params.recipeId}/edit`);
     default:
       throw new Error(`Unsupported action: ${action}`);
   }
 };
 
-const parseSteps = (steps: string): string[] => {
-  const parsedSteps = JSON.parse(steps);
-  if (!Array.isArray(parsedSteps)) {
-    return [];
-  }
-  return parsedSteps;
-};
-
 export default function RecipeDetailsPage() {
   const data = useLoaderData<typeof loader>();
-  const steps = parseSteps(data.recipe.preparationSteps);
+
   const isUsersRecipe = data.userId === data.recipe.submittedBy;
   return (
     <div>
-      <h3 className="text-2xl font-bold">{data.recipe.title}</h3>
-      <p className="py-6">{data.recipe.description}</p>
-      <ul>
-        {/*TODO:
-        This feels like a good opportunity to move the steps into a component for styling
-        and come up with a global way for handling lists. */}
-        {steps.map((step, index) => (
-          <li key={step}>
-            <p className="py-6">
-              {index + 1}.&nbsp;{step}
-            </p>
-          </li>
-        ))}
-      </ul>
-      <p className="py-6">Submitted by: {data.recipe.user?.username}</p>
+      <h2 className="text-4xl font-bold">{data.recipe.title}</h2>
+      <List
+        title="Description"
+        items={[data.recipe.description || "No Description"]}
+      />
+
+      <List
+        title="Steps"
+        items={data.recipe.preparationSteps}
+        ListType="ol"
+      />
+      <List
+        title="Ingredients"
+        items={data.recipe.ingredients
+          .map(
+            (ingredient) =>
+              `${ingredient.quantity} ${ingredient.unit} ${ingredient.name} ${
+                ingredient.note !== "" ? "" : ` -- ${ingredient.note}`
+              }`,
+          )}
+      />
+      <h2 className="text-xl font-bold py-4">Additional Details</h2>
+      <p className="pb-2">Source: {data.recipe.source || "User Submitted"}</p>
+      <p className="pb-2">URL: {data.recipe.sourceUrl || "N/A"}</p>
+      <p className="pb-2">Submitted by: {data.recipe.user?.username}</p>
+
       <hr className="my-4" />
       <Form method="post">
         <button

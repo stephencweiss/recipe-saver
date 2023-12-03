@@ -26,11 +26,12 @@ describe("smoke tests", () => {
     cy.findByRole("link", { name: /log in/i });
   });
 
-  it("should allow you to make a recipes", () => {
+  it("should allow you to make, edit, and delete a recipes", () => {
     const testNote = {
       title: faker.lorem.words(1),
       description: faker.lorem.sentences(1),
       preparationSteps: faker.lorem.sentences(1),
+      updatedTitle: faker.lorem.words(1),
     };
     cy.login();
 
@@ -48,15 +49,20 @@ describe("smoke tests", () => {
 
     cy.findAllByRole("link").contains(testNote.title).click();
 
+    cy.findByRole("button", { name: /edit/i }).click();
+    cy.findByRole("textbox", { name: /title/i }).type(testNote.updatedTitle);
+    cy.findByRole("button", { name: /save/i }).click();
+    cy.findAllByRole("link").contains(testNote.updatedTitle).click();
+
     cy.findByRole("button", { name: /delete/i }).click();
     cy.findByText("No recipes yet");
   });
 
-  it('calls the faux script', () => {
-    cy.faux();
-  });
-  it("should intentionally fail", () => {
-    cy.login();
-    cy.visitAndCheck("/a-path-that-does-not-exist");
-  })
+  // it('calls the faux script', () => {
+  //   cy.faux();
+  // });
+  // it("should intentionally fail", () => {
+  //   cy.login();
+  //   cy.visitAndCheck("/a-path-that-does-not-exist");
+  // })
 });

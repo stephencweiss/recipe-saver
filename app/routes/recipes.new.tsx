@@ -1,122 +1,105 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
-import { Form, useActionData } from "@remix-run/react";
+import { ActionFunctionArgs, redirect } from "@remix-run/node";
+import { useActionData, useLoaderData, Form } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 
-import { IngredientEntry, createRecipe } from "~/models/recipe.server";
+import { FormTextAreaInput, FormTextInput } from "~/components/forms";
+import {
+  SUPPORTED_SUBMISSION_STYLES,
+  SubmissionStyles,
+  createJSONErrorResponse,
+  extractDeletedIngredientIdsFromFormData,
+  extractIngredientsFromFormData,
+} from "~/components/recipes";
+import VisuallyHidden from "~/components/visually-hidden";
+import {
+  IngredientFormEntry,
+  createRecipe,
+  disassociateIngredientsFromRecipe,
+  upsertRecipeWithDetails,
+} from "~/models/recipe.server";
 import { requireUserId } from "~/session.server";
+import { createPlaceholderIngredient, getDefaultRecipeValues } from "~/utils";
 
-const SUPPORTED_SUBMISSION_STYLES = ["manual"];
+/**
+ * This loader is *unique* between recipes.new and recipes.edit
+ */
+export const loader = async () => null;
 
-type Ingredients = IngredientEntry[];
-function extractIngredientsFromFormData(formData: FormData): Ingredients {
-  const ingredientEntryData = Array.from(formData.keys());
-  if (!Array.isArray(ingredientEntryData)) {
-    throw createJSONErrorResponse("ingredients", "Ingredients are required");
-  }
-
-  return ingredientEntryData
-    .filter((k) => k.startsWith("ingredients["))
-    .reduce((acc: Ingredients, k) => {
-      // Regular expression to match the pattern and capture the number and name
-      const pattern = /ingredients\[(\d+)\]\[(\w+)\]/;
-      const match = k.match(pattern);
-
-      if (match) {
-        const index = Number(match[1]);
-        const name = match[2] as keyof IngredientEntry;
-        // Initialize the object at this index if it doesn't exist
-        if (!acc[index]) {
-          acc[index] = {};
-        }
-        // Add the property to the object at this index
-        const value = String(formData.get(k) || "");
-        acc[index] = { ...acc[index], [name]: value };
-      }
-
-      return acc;
-    }, [])
-    .map((ingredient) => ({
-      ...ingredient,
-      quantity: Number(ingredient.quantity),
-    }));
-}
-
-const createJSONErrorResponse = (
-  errorKey: string,
-  errorMessage: string,
-  status = 400,
-) => {
-  const defaultErrors = {
-    global: null,
-    title: null,
-    source: null,
-    sourceUrl: null,
-    preparationSteps: null,
-    ingredients: null,
-  };
-  return json(
-    { errors: { ...defaultErrors, [errorKey]: errorMessage } },
-    { status },
-  );
-};
+/**
+ * This action is shared between recipes.new and recipes.edit
+ * Keep them in sync!
+ */
 export const action = async ({ request }: ActionFunctionArgs) => {
   const userId = await requireUserId(request);
-
   const formData = await request.formData();
+
   const submissionType = String(formData.get("submissionType"));
-  if (!SUPPORTED_SUBMISSION_STYLES.includes(submissionType)) {
+  if (
+    !SUPPORTED_SUBMISSION_STYLES.includes(submissionType as SubmissionStyles)
+  ) {
     return createJSONErrorResponse(
       "global",
-      `Invalid submission type: ${submissionType}`,
+      `Unknown Submission: ${submissionType}`,
     );
   }
 
-  if (formData.get("submissionType") === "manual") {
-    const title = formData.get("title");
-    if (typeof title !== "string" || title.length === 0) {
-      return createJSONErrorResponse("title", "Title is required");
-    }
-    const description = String(formData.get("description"));
-    const source = String(formData.get("source"));
-    const sourceUrl = String(formData.get("sourceUrl"));
-
-    const preparationSteps = Array.from(formData.keys())
+  // TODO: Support tags
+  const partialRecipe = {
+    description: String(formData.get("description")),
+    ingredients: extractIngredientsFromFormData(formData),
+    preparationSteps: Array.from(formData.keys())
       .filter((k) => k.startsWith("steps["))
-      .map((k) => String(formData.get(k)));
+      .map((k) => String(formData.get(k))),
+    source: String(formData.get("source")),
+    sourceUrl: String(formData.get("sourceUrl")),
+    submittedBy: userId,
+    tags: [],
+    title: String(formData.get("title")),
+  };
 
-    if (!Array.isArray(preparationSteps)) {
-      return createJSONErrorResponse(
-        "preparationSteps",
-        "Preparation steps are required",
-      );
-    }
-    const ingredients = extractIngredientsFromFormData(formData);
-    // TODO: update the form to actually have all of these fields
-    const recipe = await createRecipe({
-      description,
-      title,
-      preparationSteps,
-      ingredients,
-      tags: [],
-      submittedBy: userId,
-      source,
-      sourceUrl,
-    });
-    return redirect(`/recipes/${recipe.id}`);
+  if (partialRecipe.title.length === 0) {
+    return createJSONErrorResponse("title", "Title is required");
   }
-  return createJSONErrorResponse("global", "Unknown submission type");
+  if (
+    !Array.isArray(partialRecipe.preparationSteps) ||
+    partialRecipe.preparationSteps.length === 0
+  ) {
+    return createJSONErrorResponse(
+      "preparationSteps",
+      "Preparation steps are required",
+    );
+  }
+  switch (formData.get("submissionType")) {
+    case "create-manual": {
+      const recipe = await createRecipe(partialRecipe);
+      return redirect(`/recipes/${recipe.id}`);
+    }
+    case "edit": {
+      const id = String(formData.get("recipeId"));
+      await upsertRecipeWithDetails({
+        ...partialRecipe,
+        id,
+        userId,
+      });
+      const deletedIngredientIds =
+        extractDeletedIngredientIdsFromFormData(formData);
+      await disassociateIngredientsFromRecipe({ id }, deletedIngredientIds);
+      return redirect(`/recipes/${id}`);
+    }
+    default:
+      return createJSONErrorResponse("global", "Unknown submission type");
+  }
 };
 
-interface Ingredient {
-  name: string;
-  quantity: number;
-  unit?: string;
-  notes?: string;
-}
-
 export default function NewRecipePage() {
+  /** The submissionType is the **only** unique value between recipes.new &
+   * recipes.edit */
+  const submissionType: SubmissionStyles = "create-manual";
+
+  /** From here through the return should be **identical** between recipes.new &
+   * recipes.edit */
   const actionData = useActionData<typeof action>();
+  const data = useLoaderData<typeof loader>();
   const titleRef = useRef<HTMLInputElement>(null);
   const sourceRef = useRef<HTMLInputElement>(null);
   const sourceUrlRef = useRef<HTMLInputElement>(null);
@@ -126,24 +109,24 @@ export default function NewRecipePage() {
   const ingredientRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const [steps, setSteps] = useState<string[]>([""]);
-
-  const [ingredients, setIngredients] = useState<Ingredient[]>([
-    { name: "", quantity: 0, unit: "", notes: "" },
-  ]);
+  const defaultValues = getDefaultRecipeValues(data);
+  const [ingredients, setIngredients] = useState<IngredientFormEntry[]>(
+    defaultValues.ingredients,
+  );
+  const [deletedIngredients, setDeletedIngredients] = useState<
+    IngredientFormEntry[]
+  >([]);
 
   const addIngredient = () => {
-    setIngredients([
-      ...ingredients,
-      { name: "", quantity: 0, unit: "", notes: "" },
-    ]);
+    setIngredients([...ingredients, createPlaceholderIngredient()]);
     // Ensure the refs array has the same length as the ingredients array
     ingredientRefs.current = [...ingredientRefs.current, null];
   };
 
-  const updateIngredient = <K extends keyof Ingredient>(
+  const updateIngredient = <K extends keyof IngredientFormEntry>(
     index: number,
     field: K,
-    value: Ingredient[K],
+    value: IngredientFormEntry[K],
   ) => {
     const newIngredients = [...ingredients];
     const ingredient = newIngredients[index];
@@ -153,7 +136,8 @@ export default function NewRecipePage() {
 
   const deleteIngredient = (index: number) => {
     const newIngredients = [...ingredients];
-    newIngredients.splice(index, 1);
+    const deletedIngredient = newIngredients.splice(index, 1);
+    setDeletedIngredients([...deletedIngredients, ...deletedIngredient]);
     setIngredients(newIngredients);
   };
 
@@ -212,15 +196,7 @@ export default function NewRecipePage() {
   }, []);
 
   return (
-    <Form
-      method="post"
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 8,
-        width: "100%",
-      }}
-    >
+    <Form method="post" className="flex flex-col gap-4 w-full">
       <div className="text-right">
         <button
           type="submit"
@@ -229,39 +205,31 @@ export default function NewRecipePage() {
           Save
         </button>
       </div>
-      <input type="hidden" name="submissionType" value="manual" />
-      <div>
-        {actionData?.errors?.title ? (
-          <div className="pt-1 text-red-700" id="title-error">
-            {actionData.errors.title}
-          </div>
-        ) : null}
-        <label className="flex w-full flex-col gap-2">
-          <span>Title</span>
-          <input
-            ref={titleRef}
-            name="title"
-            placeholder="Pumpkin Pie"
-            className="flex-1 rounded-md border-2 border-blue-500 px-3 text-lg leading-loose"
-            aria-invalid={actionData?.errors?.title ? true : undefined}
-            aria-errormessage={
-              actionData?.errors?.title ? "title-error" : undefined
-            }
-          />
+      <VisuallyHidden>
+        <label>
+          Submission Type&nbsp;
+          <input name="submissionType" readOnly={true} value={submissionType} />
         </label>
-      </div>
-
-      <div>
-        <label className="flex w-full flex-col gap-2">
-          <span>Description [Optional]</span>
-          <textarea
-            ref={descriptionRef}
-            name="description"
-            rows={4}
-            className="w-full flex-1 rounded-md border-2 border-blue-500 px-3 py-2 text-lg leading-6"
-          />
+      </VisuallyHidden>
+      <VisuallyHidden>
+        <label>
+          Recipe ID&nbsp;
+          <input name="recipeId" readOnly={true} value={defaultValues.id} />
         </label>
-      </div>
+      </VisuallyHidden>
+      <FormTextInput
+        ref={titleRef}
+        name="title"
+        placeholder="Pumpkin Pie"
+        error={actionData?.errors.title}
+        defaultValue={defaultValues.title}
+      />
+      <FormTextAreaInput
+        ref={descriptionRef}
+        name="description"
+        defaultValue={defaultValues.description ?? ""}
+        rows={4}
+      />
 
       <fieldset>
         <div className="flex w-full flex-col gap-2">
@@ -271,7 +239,7 @@ export default function NewRecipePage() {
             </div>
           ) : null}
 
-          <legend>Steps</legend>
+          <legend>{`${"Steps".toUpperCase()}`}</legend>
           <div id="stepsList" ref={prepStepsRef}>
             {steps.map((step, index) => (
               <div key={index} className="flex w-full flex-row gap-2 pt-2">
@@ -309,12 +277,31 @@ export default function NewRecipePage() {
       </fieldset>
 
       <fieldset>
+        <VisuallyHidden>
+          <legend>{`${"Deleted Ingredients".toUpperCase()}`}</legend>
+
+          {deletedIngredients.map((ingredient, index) => (
+            <input
+              key={ingredient.id}
+              name={`deletedIngredients[${index}][id]`}
+              value={ingredient.id}
+            />
+          ))}
+        </VisuallyHidden>
+      </fieldset>
+
+      <fieldset>
         {/* Mobile friendly layout */}
         <div className="md:hidden">
-          <legend>Ingredients</legend>
+          <legend>{`${"Ingredients".toUpperCase()}`}</legend>
           <div className="border-b border-gray-200 flex flex-col gap-2">
             {ingredients.map((ingredient, index) => (
               <div key={index}>
+                <input
+                  type="hidden"
+                  name={`ingredients[${index}][id]`}
+                  value={ingredient.id}
+                />
                 <div>
                   <label className="font-bold">
                     Name
@@ -340,7 +327,8 @@ export default function NewRecipePage() {
                     <input
                       type="number"
                       name={`ingredients[${index}][quantity]`}
-                      value={ingredient.quantity}
+                      defaultValue={String(ingredient.quantity)}
+                      value={String(ingredient.quantity)}
                       className="w-full p-2 border-2 rounded border-blue-500"
                       onChange={(e) =>
                         updateIngredient(
@@ -356,7 +344,7 @@ export default function NewRecipePage() {
                     <input
                       type="text"
                       name={`ingredients[${index}][unit]`}
-                      value={ingredient.unit}
+                      value={String(ingredient.unit)}
                       className="w-full p-2 border-2 rounded border-blue-500"
                       onChange={(e) =>
                         updateIngredient(index, "unit", e.target.value)
@@ -367,11 +355,11 @@ export default function NewRecipePage() {
                     Notes
                     <textarea
                       rows={4}
-                      name={`ingredients[${index}][notes]`}
-                      value={ingredient.notes}
+                      name={`ingredients[${index}][note]`}
+                      value={String(ingredient.note)}
                       className="w-full p-2 border-2 rounded border-blue-500"
                       onChange={(e) =>
-                        updateIngredient(index, "notes", e.target.value)
+                        updateIngredient(index, "note", e.target.value)
                       }
                     />
                   </label>
@@ -397,7 +385,7 @@ export default function NewRecipePage() {
           </div>
         </div>
         <div className="hidden md:block">
-          <legend>Ingredients</legend>
+          <legend>{`${"Ingredients".toUpperCase()}`}</legend>
           <table>
             <thead>
               <tr>
@@ -411,6 +399,16 @@ export default function NewRecipePage() {
               {ingredients.map((ingredient, index) => (
                 <tr key={index}>
                   <td className="">
+                    <VisuallyHidden>
+                      <label>
+                        Ingredient ID&nbsp;
+                        <input
+                          readOnly={true}
+                          name={`ingredients[${index}][id]`}
+                          value={ingredient.id}
+                        />
+                      </label>
+                    </VisuallyHidden>
                     <input
                       type="text"
                       name={`ingredients[${index}][name]`}
@@ -430,7 +428,8 @@ export default function NewRecipePage() {
                     <input
                       type="number"
                       name={`ingredients[${index}][quantity]`}
-                      value={ingredient.quantity}
+                      defaultValue={String(ingredient.quantity)}
+                      value={String(ingredient.quantity)}
                       onChange={(e) =>
                         updateIngredient(
                           index,
@@ -444,7 +443,8 @@ export default function NewRecipePage() {
                     <input
                       type="text"
                       name={`ingredients[${index}][unit]`}
-                      value={ingredient.unit}
+                      defaultValue={String(ingredient.unit)}
+                      value={String(ingredient.unit)}
                       onChange={(e) =>
                         updateIngredient(index, "unit", e.target.value)
                       }
@@ -453,10 +453,11 @@ export default function NewRecipePage() {
                   <td className="">
                     <input
                       type="text"
-                      name={`ingredients[${index}][notes]`}
-                      value={ingredient.notes}
+                      name={`ingredients[${index}][note]`}
+                      defaultValue={String(ingredient.note)}
+                      value={String(ingredient.note)}
                       onChange={(e) =>
-                        updateIngredient(index, "notes", e.target.value)
+                        updateIngredient(index, "note", e.target.value)
                       }
                     />
                   </td>
@@ -482,54 +483,24 @@ export default function NewRecipePage() {
           </button>
         </div>
       </fieldset>
-      {/*
+      {/* tags: [] */}
 
-    tags: [],
-*/}
+      <FormTextInput
+        ref={sourceRef}
+        name="source"
+        placeholder="NYT Cooking"
+        error={actionData?.errors.source}
+        defaultValue={defaultValues.source}
+      />
 
-      <div>
-        {actionData?.errors?.source ? (
-          <div className="pt-1 text-red-700" id="source-error">
-            {actionData.errors.source}
-          </div>
-        ) : null}
-        <label className="flex w-full flex-col gap-2">
-          <span>Source</span>
-          <input
-            ref={sourceRef}
-            name="source"
-            placeholder="NYT Cooking"
-            className="flex-1 rounded-md border-2 border-blue-500 px-3 text-lg leading-loose"
-            aria-invalid={actionData?.errors?.source ? true : undefined}
-            aria-errormessage={
-              actionData?.errors?.source ? "source-error" : undefined
-            }
-          />
-        </label>
-      </div>
-
-      <div>
-        {actionData?.errors?.sourceUrl ? (
-          <div className="pt-1 text-red-700" id="sourceUrl-error">
-            {actionData.errors.sourceUrl}
-          </div>
-        ) : null}
-        <label className="flex w-full flex-col gap-2">
-          <span>Source Url</span>
-          <input
-            ref={sourceUrlRef}
-            name="sourceUrl"
-            placeholder="https://cooking.nytimes.com/recipes/1015622-pumpkin-pie"
-            className="flex-1 rounded-md border-2 border-blue-500 px-3 text-lg leading-loose"
-            aria-invalid={actionData?.errors?.sourceUrl ? true : undefined}
-            aria-errormessage={
-              actionData?.errors?.sourceUrl ? "sourceUrl-error" : undefined
-            }
-          />
-        </label>
-      </div>
-
-
+      <FormTextInput
+        ref={sourceUrlRef}
+        name="sourceUrl"
+        label="Source URL"
+        placeholder="https://cooking.nytimes.com/recipes/1015622-pumpkin-pie"
+        error={actionData?.errors.sourceUrl}
+        defaultValue={defaultValues.sourceUrl}
+      />
     </Form>
   );
 }
