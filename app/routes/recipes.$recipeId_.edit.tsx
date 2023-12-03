@@ -15,6 +15,7 @@ import {
   extractDeletedIngredientIdsFromFormData,
   extractIngredientsFromFormData,
 } from "~/components/recipes";
+import VisuallyHidden from "~/components/visually-hidden";
 import {
   IngredientFormEntry,
   createRecipe,
@@ -23,14 +24,14 @@ import {
   upsertRecipeWithDetails,
 } from "~/models/recipe.server";
 import { requireUserId } from "~/session.server";
-import { PLACEHOLDER_INGREDIENT, parsePreparationSteps } from "~/utils";
+import { createPlaceholderIngredient, parsePreparationSteps } from "~/utils";
 
 const FormInput = ({
   ref,
   error,
   defaultValue,
   name,
-  placeholder
+  placeholder,
 }: {
   defaultValue: string | undefined;
   error: string | null | undefined;
@@ -182,14 +183,14 @@ export default function RecipeEditPage() {
   );
 
   const [ingredients, setIngredients] = useState<IngredientFormEntry[]>(
-    loadedIngredients ?? [PLACEHOLDER_INGREDIENT],
+    loadedIngredients ?? [createPlaceholderIngredient()],
   );
   const [deletedIngredients, setDeletedIngredients] = useState<
     IngredientFormEntry[]
   >([]);
 
   const addIngredient = () => {
-    setIngredients([...ingredients, PLACEHOLDER_INGREDIENT]);
+    setIngredients([...ingredients, createPlaceholderIngredient()]);
     // Ensure the refs array has the same length as the ingredients array
     ingredientRefs.current = [...ingredientRefs.current, null];
   };
@@ -353,15 +354,17 @@ export default function RecipeEditPage() {
       </fieldset>
 
       <fieldset>
-        <legend>Deleted Ingredients</legend>
-        {deletedIngredients.map((ingredient, index) => (
-          <input
-            key={ingredient.id}
-            type="hidden"
-            name={`deletedIngredients[${index}][id]`}
-            value={ingredient.id}
-          />
-        ))}
+        <VisuallyHidden>
+          <legend>Deleted Ingredients</legend>
+          {deletedIngredients.map((ingredient, index) => (
+            <input
+              key={ingredient.id}
+              // type="hidden"
+              name={`deletedIngredients[${index}][id]`}
+              value={ingredient.id}
+            />
+          ))}
+        </VisuallyHidden>
       </fieldset>
 
       <fieldset>

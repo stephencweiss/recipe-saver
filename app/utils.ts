@@ -43,15 +43,18 @@ export const parsePreparationSteps = (steps: string): string[] => {
   return parsedSteps.filter((step) => step !== "");
 };
 
-export const PLACEHOLDER_INGREDIENT = { name: "", quantity: 0, unit: "", note: "" };
+export const createPlaceholderIngredient = () => ({ name: "", quantity: 0, unit: "", note: "" });
 
 /** Predicate to determine if an ingredient is the placeholder ingredient */
-export const isNotPlaceholderIngredient = (ingredient: IngredientFormEntry): boolean => !(
-  ingredient.name === PLACEHOLDER_INGREDIENT.name &&
-  ingredient.quantity === PLACEHOLDER_INGREDIENT.quantity &&
-  ingredient.unit === PLACEHOLDER_INGREDIENT.unit &&
-  ingredient.note === PLACEHOLDER_INGREDIENT.note
-);
+export const isNotPlaceholderIngredient = (ingredient: IngredientFormEntry): boolean => {
+  const placeholderIngredient = createPlaceholderIngredient();
+  return !(
+    ingredient.name === placeholderIngredient.name &&
+    ingredient.quantity === placeholderIngredient.quantity &&
+    ingredient.unit === placeholderIngredient.unit &&
+    ingredient.note === placeholderIngredient.note
+  )
+};
 /**
 * This base hook is used in other hooks to quickly search for specific data
 * across all loader data using useMatches.
