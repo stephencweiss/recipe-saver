@@ -26,22 +26,18 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
-
       - name: ⎔ Setup node ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
-          cache: 'pnpm'
+          cache: npm
+          cache-dependency-path: ./package.json
           node-version: ${{ matrix.node-version }}
 
       - name: 📥 Install deps
-        run: pnpm install
+        run: npm install
 
       - name: 🔬 Lint
-        run: pnpm lint
+        run: npm lint
 
   typecheck:
     name: ʦ TypeScript
@@ -53,7 +49,8 @@ jobs:
       - name: ⎔ Setup node ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
-          cache: 'npm'
+          cache: npm
+          cache-dependency-path: ./package.json
           node-version: ${{ matrix.node-version }}
 
       - name: 📥 Install deps
@@ -69,19 +66,15 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
-
       - name: ⎔ Setup node ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
-          cache: 'pnpm'
+          cache: npm
+          cache-dependency-path: ./package.json
           node-version: ${{ matrix.node-version }}
 
       - name: 📥 Install deps
-        run: pnpm install
+        run: npm install
 
       - name: ⚡ Run vitest
         run: npm run test -- --coverage
@@ -93,19 +86,14 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
-
       - name: ⎔ Setup node ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
-          cache: 'pnpm'
+          cache: 'npm'
           node-version: ${{ matrix.node-version }}
 
       - name: 📥 Install deps
-        run: pnpm install
+        run: npm install
 
       - name: 🏄 Copy test env vars
         run: cp .env.example .env
@@ -116,8 +104,8 @@ jobs:
       - name: 🌳 Cypress run
         uses: cypress-io/github-action@v6
         with:
-          build: pnpm build
-          start: pnpm start:mocks
+          build: npm build
+          start: npm start:mocks
           wait-on: http://localhost:8811
         env:
           PORT: 8811
@@ -143,19 +131,15 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
-
       - name: ⎔ Setup node ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
-          cache: 'pnpm'
+          cache: npm
+          cache-dependency-path: ./package.json
           node-version: ${{ matrix.node-version }}
 
       - name: 📥 Install deps
-        run: pnpm install
+        run: npm install
 
       - name: 👟 Run Prisma Migrate
         run: npx prisma migrate deploy
