@@ -1,4 +1,5 @@
 
+import { Ingredient, Recipe } from "@prisma/client";
 import { useMatches } from "@remix-run/react";
 import { useMemo } from "react";
 
@@ -151,3 +152,26 @@ export function extractGenericDataFromFormData<T extends Record<string, unknown>
     }, [])
     .filter((item) => Object.keys(item).length > 0);
 }
+
+const isFullRecipe = (
+  data: unknown,
+): data is { recipe: Recipe & { ingredients: Ingredient[] } } => {
+  const typedData = data as { recipe: Recipe & { ingredients: Ingredient[] } };
+  return Boolean(typedData?.recipe && typedData?.recipe?.ingredients);
+};
+
+export const getDefaultRecipeValues = (data: unknown) => {
+  if (isFullRecipe(data)) {
+    return {
+      id: data.recipe.id,
+      title: data.recipe.title,
+      description: data.recipe.description ?? "",
+      source: data.recipe.source ?? "",
+      sourceUrl: data.recipe.sourceUrl ?? "",
+      ingredients: data.recipe.ingredients ?? [createPlaceholderIngredient()],
+    };
+  }
+  return {
+    ingredients: [createPlaceholderIngredient()],
+  };
+};
