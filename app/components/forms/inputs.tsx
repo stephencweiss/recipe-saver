@@ -5,6 +5,7 @@ export const FormTextInput = ({
   error,
   defaultValue,
   name,
+  label,
   placeholder,
   type,
 }: FormTextProps) => (
@@ -15,7 +16,7 @@ export const FormTextInput = ({
       </div>
     ) : null}
     <label className="flex w-full flex-col gap-2">
-      <span>{name.toUpperCase()}</span>
+      <span>{label != null ? label : name.toUpperCase()}</span>
       <input
         name={name}
         type={type}

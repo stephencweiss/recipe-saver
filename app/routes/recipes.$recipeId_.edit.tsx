@@ -1,16 +1,17 @@
-// A remix page that loads a recipe by the recipeId and displays the recipe title, description, and preparation steps.
 import {
   ActionFunctionArgs,
   LoaderFunctionArgs,
   json,
   redirect,
 } from "@remix-run/node";
-import { useLoaderData, Form, useActionData } from "@remix-run/react";
+import { useActionData, useLoaderData, Form } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 import invariant from "tiny-invariant";
 
+import { FormTextAreaInput, FormTextInput } from "~/components/forms";
 import {
   SUPPORTED_SUBMISSION_STYLES,
+  SubmissionStyles,
   createJSONErrorResponse,
   extractDeletedIngredientIdsFromFormData,
   extractIngredientsFromFormData,
@@ -24,74 +25,55 @@ import {
   upsertRecipeWithDetails,
 } from "~/models/recipe.server";
 import { requireUserId } from "~/session.server";
-import { createPlaceholderIngredient, parsePreparationSteps } from "~/utils";
-
-const FormInput = ({
-  ref,
-  error,
-  defaultValue,
-  name,
-  placeholder,
-}: {
-  defaultValue: string | undefined;
-  error: string | null | undefined;
-  name: string;
-  placeholder: string | undefined;
-  ref: React.RefObject<HTMLInputElement>;
-}) => (
-  <div>
-    {error ? (
-      <div className="pt-1 text-red-700" id={`${name}-error`}>
-        {error}
-      </div>
-    ) : null}
-    <label className="flex w-full flex-col gap-2">
-      <span>{name.toUpperCase()}</span>
-      <input
-        ref={ref}
-        name={name}
-        placeholder={placeholder}
-        defaultValue={defaultValue}
-        className="flex-1 rounded-md border-2 border-blue-500 px-3 text-lg leading-loose"
-        aria-invalid={error ? true : undefined}
-        aria-errormessage={error ? `${name}-error` : undefined}
-      />
-    </label>
-  </div>
-);
-
-// The recipe should be loaded in the loader function and passed to the loader data.
-// The recipeId should be a parameter in the route.
-// The recipeId should be a number.
-// The recipeId should be required.
-// The page should not render if the recipeId is missing.
-// The page should not render if the recipeId is not a number.
-// The page should not render if the recipeId is not found.
-// The page should not render if the recipe is not found.
-// The recipe should be loaded by the recipeId.
-// The recipeId should be extracted from the URL params and passed to the loader function.
-// The recipeId should be extracted from the URL params and passed to the action function.
+import {
+  createPlaceholderIngredient,
+  getDefaultRecipeValues,
+  parsePreparationSteps,
+} from "~/utils";
 
 /**
- * The action function should handle the form submission for the delete button.
- * The action function should handle the form submission for the edit button.
- * The action function should redirect to the recipes list after a successful delete.
- * The action function should throw an error if the action is not supported.
- * The action function should redirect to the login page if the user is not logged in.
- * The action function should redirect to the login page if the user is not the owner of the recipe.
+ * This loader is *unique* between recipes.new and recipes.edit
+ */
+export const loader = async ({ params, request }: LoaderFunctionArgs) => {
+  const userId = await requireUserId(request);
+  invariant(params.recipeId, "recipeId not found");
+
+  const rawRecipe = await getRecipeWithIngredients({ id: params.recipeId });
+  if (!rawRecipe) {
+    throw new Response("Not Found", { status: 404 });
+  }
+  if (rawRecipe.submittedBy !== userId) {
+    throw new Response("Not Found", { status: 404 });
+  }
+  const recipe = {
+    ...rawRecipe,
+    preparationSteps: parsePreparationSteps(rawRecipe.preparationSteps ?? ""),
+  };
+  if (!rawRecipe) {
+    throw new Response("Not Found", { status: 404 });
+  }
+  return json({ recipe, userId });
+};
+
+/**
+ * This action is shared between recipes.new and recipes.edit
+ * Keep them in sync!
  */
 export const action = async ({ request }: ActionFunctionArgs) => {
   const userId = await requireUserId(request);
   const formData = await request.formData();
 
   const submissionType = String(formData.get("submissionType"));
-  if (!SUPPORTED_SUBMISSION_STYLES.includes(submissionType)) {
+  if (
+    !SUPPORTED_SUBMISSION_STYLES.includes(submissionType as SubmissionStyles)
+  ) {
     return createJSONErrorResponse(
       "global",
       `Unknown Submission: ${submissionType}`,
     );
   }
 
+  // TODO: Support tags
   const partialRecipe = {
     description: String(formData.get("description")),
     ingredients: extractIngredientsFromFormData(formData),
@@ -101,7 +83,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     source: String(formData.get("source")),
     sourceUrl: String(formData.get("sourceUrl")),
     submittedBy: userId,
-    tags: [], // TODO: Support tags
+    tags: [],
     title: String(formData.get("title")),
   };
 
@@ -139,37 +121,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 };
 
-// The loader function should return a 404 if the recipe cannot be found.
-// The loader function should return a 404 if the recipe was not submitted by the logged in user.
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  const userId = await requireUserId(request);
-  invariant(params.recipeId, "recipeId not found");
 
-  const rawRecipe = await getRecipeWithIngredients({ id: params.recipeId });
-  if (!rawRecipe) {
-    throw new Response("Not Found", { status: 404 });
-  }
-  if (rawRecipe.submittedBy !== userId) {
-    throw new Response("Not Found", { status: 404 });
-  }
-  const recipe = {
-    ...rawRecipe,
-    preparationSteps: parsePreparationSteps(rawRecipe.preparationSteps ?? ""),
-  };
-  if (!rawRecipe) {
-    throw new Response("Not Found", { status: 404 });
-  }
-  return json({ recipe, userId });
-};
+export default function NewRecipePage() {
+  /** The submissionType is the **only** unique value between recipes.new &
+   * recipes.edit */
+  const submissionType: SubmissionStyles = "edit";
 
-// The recipe title should be displayed in an h3 element.
-// The recipe description should be displayed in a p element.
-// The recipe preparation steps should be displayed in an unordered list.
-// The recipe preparation steps should be displayed in an ordered list.
-export default function RecipeEditPage() {
-  const data = useLoaderData<typeof loader>();
+  /** From here through the return should be **identical** between recipes.new &
+   * recipes.edit */
   const actionData = useActionData<typeof action>();
-  const loadedIngredients = data.recipe.ingredients ?? [];
+  const data = useLoaderData<typeof loader>();
   const titleRef = useRef<HTMLInputElement>(null);
   const sourceRef = useRef<HTMLInputElement>(null);
   const sourceUrlRef = useRef<HTMLInputElement>(null);
@@ -178,12 +139,10 @@ export default function RecipeEditPage() {
   const stepsRefs = useRef<HTMLInputElement[]>([]);
   const ingredientRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  const [steps, setSteps] = useState<string[]>(
-    data.recipe.preparationSteps ?? [""],
-  );
-
+  const [steps, setSteps] = useState<string[]>([""]);
+  const defaultValues = getDefaultRecipeValues(data);
   const [ingredients, setIngredients] = useState<IngredientFormEntry[]>(
-    loadedIngredients ?? [createPlaceholderIngredient()],
+    defaultValues.ingredients,
   );
   const [deletedIngredients, setDeletedIngredients] = useState<
     IngredientFormEntry[]
@@ -268,15 +227,7 @@ export default function RecipeEditPage() {
   }, []);
 
   return (
-    <Form
-      method="post"
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 8,
-        width: "100%",
-      }}
-    >
+    <Form method="post" className="flex flex-col gap-4 w-full">
       <div className="text-right">
         <button
           type="submit"
@@ -285,28 +236,31 @@ export default function RecipeEditPage() {
           Save
         </button>
       </div>
-      <input type="hidden" name="submissionType" value="edit" />
-      <input type="hidden" name="recipeId" value={data.recipe.id} />
-      <FormInput
+      <VisuallyHidden>
+        <label>
+          Submission Type&nbsp;
+          <input name="submissionType" readOnly={true} value={submissionType} />
+        </label>
+      </VisuallyHidden>
+      <VisuallyHidden>
+        <label>
+          Recipe ID&nbsp;
+          <input name="recipeId" readOnly={true} value={defaultValues.id} />
+        </label>
+      </VisuallyHidden>
+      <FormTextInput
         ref={titleRef}
         name="title"
         placeholder="Pumpkin Pie"
         error={actionData?.errors.title}
-        defaultValue={data.recipe.title}
+        defaultValue={defaultValues.title}
       />
-
-      <div>
-        <label className="flex w-full flex-col gap-2">
-          <span>Description [Optional]</span>
-          <textarea
-            ref={descriptionRef}
-            defaultValue={data.recipe.description ?? ""}
-            name="description"
-            rows={4}
-            className="w-full flex-1 rounded-md border-2 border-blue-500 px-3 py-2 text-lg leading-6"
-          />
-        </label>
-      </div>
+      <FormTextAreaInput
+        ref={descriptionRef}
+        name="description"
+        defaultValue={defaultValues.description ?? ""}
+        rows={4}
+      />
 
       <fieldset>
         <div className="flex w-full flex-col gap-2">
@@ -316,7 +270,7 @@ export default function RecipeEditPage() {
             </div>
           ) : null}
 
-          <legend>Steps</legend>
+          <legend>{`${"Steps".toUpperCase()}`}</legend>
           <div id="stepsList" ref={prepStepsRef}>
             {steps.map((step, index) => (
               <div key={index} className="flex w-full flex-row gap-2 pt-2">
@@ -355,11 +309,11 @@ export default function RecipeEditPage() {
 
       <fieldset>
         <VisuallyHidden>
-          <legend>Deleted Ingredients</legend>
+          <legend>{`${"Deleted Ingredients".toUpperCase()}`}</legend>
+
           {deletedIngredients.map((ingredient, index) => (
             <input
               key={ingredient.id}
-              // type="hidden"
               name={`deletedIngredients[${index}][id]`}
               value={ingredient.id}
             />
@@ -370,7 +324,7 @@ export default function RecipeEditPage() {
       <fieldset>
         {/* Mobile friendly layout */}
         <div className="md:hidden">
-          <legend>Ingredients</legend>
+          <legend>{`${"Ingredients".toUpperCase()}`}</legend>
           <div className="border-b border-gray-200 flex flex-col gap-2">
             {ingredients.map((ingredient, index) => (
               <div key={index}>
@@ -462,7 +416,7 @@ export default function RecipeEditPage() {
           </div>
         </div>
         <div className="hidden md:block">
-          <legend>Ingredients</legend>
+          <legend>{`${"Ingredients".toUpperCase()}`}</legend>
           <table>
             <thead>
               <tr>
@@ -476,11 +430,16 @@ export default function RecipeEditPage() {
               {ingredients.map((ingredient, index) => (
                 <tr key={index}>
                   <td className="">
-                    <input
-                      type="hidden"
-                      name={`ingredients[${index}][id]`}
-                      value={ingredient.id}
-                    />
+                    <VisuallyHidden>
+                      <label>
+                        Ingredient ID&nbsp;
+                        <input
+                          readOnly={true}
+                          name={`ingredients[${index}][id]`}
+                          value={ingredient.id}
+                        />
+                      </label>
+                    </VisuallyHidden>
                     <input
                       type="text"
                       name={`ingredients[${index}][name]`}
@@ -555,54 +514,24 @@ export default function RecipeEditPage() {
           </button>
         </div>
       </fieldset>
-      {/*
+      {/* tags: [] */}
 
-    tags: [],
-*/}
+      <FormTextInput
+        ref={sourceRef}
+        name="source"
+        placeholder="NYT Cooking"
+        error={actionData?.errors.source}
+        defaultValue={defaultValues.source}
+      />
 
-      <div>
-        {actionData?.errors?.source ? (
-          <div className="pt-1 text-red-700" id="source-error">
-            {actionData.errors.source}
-          </div>
-        ) : null}
-        <label className="flex w-full flex-col gap-2">
-          <span>Source</span>
-          <input
-            ref={sourceRef}
-            name="source"
-            defaultValue={data.recipe.source ?? ""}
-            placeholder="NYT Cooking"
-            className="flex-1 rounded-md border-2 border-blue-500 px-3 text-lg leading-loose"
-            aria-invalid={actionData?.errors?.source ? true : undefined}
-            aria-errormessage={
-              actionData?.errors?.source ? "source-error" : undefined
-            }
-          />
-        </label>
-      </div>
-
-      <div>
-        {actionData?.errors?.sourceUrl ? (
-          <div className="pt-1 text-red-700" id="sourceUrl-error">
-            {actionData.errors.sourceUrl}
-          </div>
-        ) : null}
-        <label className="flex w-full flex-col gap-2">
-          <span>Source Url</span>
-          <input
-            ref={sourceUrlRef}
-            name="sourceUrl"
-            defaultValue={data.recipe.sourceUrl ?? ""}
-            placeholder="https://cooking.nytimes.com/recipes/1015622-pumpkin-pie"
-            className="flex-1 rounded-md border-2 border-blue-500 px-3 text-lg leading-loose"
-            aria-invalid={actionData?.errors?.sourceUrl ? true : undefined}
-            aria-errormessage={
-              actionData?.errors?.sourceUrl ? "sourceUrl-error" : undefined
-            }
-          />
-        </label>
-      </div>
+      <FormTextInput
+        ref={sourceUrlRef}
+        name="sourceUrl"
+        label="Source URL"
+        placeholder="https://cooking.nytimes.com/recipes/1015622-pumpkin-pie"
+        error={actionData?.errors.sourceUrl}
+        defaultValue={defaultValues.sourceUrl}
+      />
     </Form>
   );
 }

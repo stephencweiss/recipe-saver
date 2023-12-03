@@ -4,9 +4,10 @@ interface IFormInput {
 }
 
 export interface FormTextProps extends IFormInput {
-  error: string | null | undefined;
-  placeholder: string | undefined;
-  ref: React.RefObject<HTMLInputElement>;
+  error?: string | null;
+  label?: string;
+  placeholder?: string;
+  ref?: React.RefObject<HTMLInputElement> ;
   type?: string;
 }
 
