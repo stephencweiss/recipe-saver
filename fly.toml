@@ -6,6 +6,9 @@ processes = [ ]
 [env]
 FLY_REGION = "ord"
 
+[deploy]
+FLY_REGION = "ord"
+
 [experimental]
 allowed_public_ports = [ ]
 auto_rollback = true
