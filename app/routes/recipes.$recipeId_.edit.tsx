@@ -121,7 +121,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 };
 
-
 export default function NewRecipePage() {
   /** The submissionType is the **only** unique value between recipes.new &
    * recipes.edit */

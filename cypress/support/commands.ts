@@ -55,9 +55,9 @@ function faux() {
     cy.log(stdout);
 
     cy.then(() => {
-      console.log({email: faker.internet.email({ provider: "example.com" })})
-    }).as("user")
-  return cy.get("@user");
+      console.log({ email: faker.internet.email({ provider: "example.com" }) });
+    }).as("user");
+    return cy.get("@user");
   });
 }
 
@@ -67,8 +67,8 @@ function login({
   email?: string;
 } = {}) {
   cy.then(() => {
-    console.log("email", email)
-    return ({ email })
+    console.log("email", email);
+    return { email };
   }).as("user");
   try {
     cy.exec(
@@ -78,11 +78,11 @@ function login({
         .replace(/.*<cookie>(?<cookieValue>.*)<\/cookie>.*/s, "$<cookieValue>")
         .trim();
       cy.setCookie("__session", cookieValue);
-    })
+    });
   } catch (e) {
-    cy.log('Caught the error')
+    cy.log("Caught the error");
     cy.log(JSON.stringify(e));
-    cy.log('Caught the error')
+    cy.log("Caught the error");
     throw e;
   }
   return cy.get("@user");

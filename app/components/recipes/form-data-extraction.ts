@@ -1,7 +1,10 @@
 import type { Ingredient } from "@prisma/client";
 
 import { IngredientFormEntry } from "~/models/recipe.server";
-import { extractGenericDataFromFormData, isNotPlaceholderIngredient } from "~/utils";
+import {
+  extractGenericDataFromFormData,
+  isNotPlaceholderIngredient,
+} from "~/utils";
 
 export function extractDeletedIngredientIdsFromFormData(
   formData: FormData,

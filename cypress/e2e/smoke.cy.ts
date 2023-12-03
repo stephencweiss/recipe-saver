@@ -43,8 +43,12 @@ describe("smoke tests", () => {
     cy.findByRole("link", { name: /\+ new recipe/i }).click();
 
     cy.findByRole("textbox", { name: /title/i }).type(testNote.title);
-    cy.findByRole("textbox", { name: /description/i }).type(testNote.description);
-    cy.findByPlaceholderText(/describe the step/i).type(testNote.preparationSteps);
+    cy.findByRole("textbox", { name: /description/i }).type(
+      testNote.description,
+    );
+    cy.findByPlaceholderText(/describe the step/i).type(
+      testNote.preparationSteps,
+    );
     cy.findByRole("button", { name: /save/i }).click();
 
     cy.findAllByRole("link").contains(testNote.title).click();

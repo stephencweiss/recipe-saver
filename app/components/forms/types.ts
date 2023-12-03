@@ -7,7 +7,7 @@ export interface FormTextProps extends IFormInput {
   error?: string | null;
   label?: string;
   placeholder?: string;
-  ref?: React.RefObject<HTMLInputElement> ;
+  ref?: React.RefObject<HTMLInputElement>;
   type?: string;
 }
 
@@ -15,4 +15,3 @@ export interface FormTextAreaProps extends IFormInput {
   ref: React.RefObject<HTMLTextAreaElement>;
   rows?: number;
 }
-
