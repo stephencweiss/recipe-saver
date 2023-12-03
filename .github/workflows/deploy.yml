@@ -1,4 +1,4 @@
-name: 🚀 Deploy
+name: 🚀 Deploy!
 
 on:
   push:
@@ -37,7 +37,7 @@ jobs:
         run: npm install
 
       - name: 🔬 Lint
-        run: npm lint
+        run: npm run lint
 
   typecheck:
     name: ʦ TypeScript
@@ -104,8 +104,8 @@ jobs:
       - name: 🌳 Cypress run
         uses: cypress-io/github-action@v6
         with:
-          build: npm build
-          start: npm start:mocks
+          build: npm run build
+          start: npm run start:mocks
           wait-on: http://localhost:8811
         env:
           PORT: 8811
