@@ -1,55 +1,40 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { Form, Link, NavLink, Outlet, useLoaderData } from "@remix-run/react";
+import { Link, NavLink, Outlet, useLoaderData } from "@remix-run/react";
 import { useEffect, useState } from "react";
 
+import { Header } from "~/components/header";
 import { getSubmittedRecipes } from "~/models/recipe.server";
 import { requireUserId } from "~/session.server";
-import { useUser } from "~/utils";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
-  const noteListItems = await getSubmittedRecipes({ userId });
-  return json({ noteListItems });
+  const recipes = await getSubmittedRecipes({ userId });
+  return json({ recipes });
 };
 
-export default function NotesPage() {
+export default function RecipesPage() {
   const data = useLoaderData<typeof loader>();
-  const user = useUser();
 
   const [search, setSearch] = useState<string>("");
-  const [notes, setNotes] = useState(data.noteListItems);
+  const [state, setState] = useState(data.recipes);
 
   useEffect(() => {
     if (search.length == 0) {
-      setNotes(data.noteListItems);
+      setState(data.recipes);
     }
     const regExp = new RegExp(search, "i");
-    const filteredNotes = data.noteListItems.filter((i) =>
+    const filteredNotes = data.recipes.filter((i) =>
       regExp.test(i.title),
     );
-    setNotes(filteredNotes);
-  }, [search.length, search, data.noteListItems]);
+    setState(filteredNotes);
+  }, [search.length, search, data.recipes]);
 
   const handleSearch = (value: string) => setSearch(value);
 
   return (
     <div className="flex h-full min-h-screen flex-col">
-      <header className="flex items-center justify-between bg-slate-800 p-4 text-white">
-        <h1 className="text-3xl font-bold">
-          <Link to=".">Notes</Link>
-        </h1>
-        <p>{user.email}</p>
-        <Form action="/logout" method="post">
-          <button
-            type="submit"
-            className="rounded bg-slate-600 px-4 py-2 text-blue-100 hover:bg-blue-500 active:bg-blue-600"
-          >
-            Logout
-          </button>
-        </Form>
-      </header>
-
+      <Header title={"Recipes"} route={'.'} />
       <main className="flex ">
         <div className="w-80 max-h-screen overflow-scroll border-r bg-blue-50 min-w-150">
           <Link to="new" className="block p-4 text-xl text-blue-500">
@@ -65,21 +50,21 @@ export default function NotesPage() {
           <hr />
 
           <div className="flex-1">
-            {notes.length === 0 ? (
+            {state.length === 0 ? (
               <p className="p-4">No recipes yet</p>
             ) : (
               <ol>
-                {notes.map((note) => (
-                  <li key={note.id}>
+                {state.map((recipe) => (
+                  <li key={recipe.id}>
                     <NavLink
                       className={({ isActive }) =>
                         `block border-b p-4 text-xl ${
                           isActive ? "bg-blue-500" : ""
                         }`
                       }
-                      to={note.id}
+                      to={recipe.id}
                     >
-                      📝 {note.title}
+                      📝 {recipe.title}
                     </NavLink>
                   </li>
                 ))}

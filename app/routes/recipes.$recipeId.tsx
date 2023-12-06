@@ -71,7 +71,16 @@ export default function RecipeDetailsPage() {
       />
       <h2 className="text-xl font-bold py-4">Additional Details</h2>
       <p className="pb-2">Source: {data.recipe.source || "User Submitted"}</p>
-      <p className="pb-2">URL: {data.recipe.sourceUrl || "N/A"}</p>
+      <p className="pb-2">
+        URL:{" "}
+        {data.recipe.sourceUrl ? (
+          <a className="text-blue-700" href={data.recipe.sourceUrl}>
+            {data.recipe.sourceUrl}
+          </a>
+        ) : (
+          "N/A"
+        )}
+      </p>
       <p className="pb-2">Submitted by: {data.recipe.user?.username}</p>
 
       <hr className="my-4" />
