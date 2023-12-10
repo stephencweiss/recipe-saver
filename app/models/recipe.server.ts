@@ -18,17 +18,23 @@ export type CompositeIngredient = Omit<RecipeIngredient, "createdDate"> &
 export type IngredientFormEntry = Partial<CompositeIngredient>;
 
 /** Used for creating a new recipe */
-export type PartialRecipe = Omit<Recipe, "id" | "createdDate" | "updatedDate" | "preparationSteps"> & {
-  tags: string[];
-} & { preparationSteps: string[] } & {
-  ingredients: IngredientFormEntry[];
-}
+export type CreatableRecipe = Omit<Recipe, "id" | "createdDate" | "updatedDate" | "preparationSteps">
+  & { ingredients: IngredientFormEntry[] }
+  & { preparationSteps: string[] }
+  & { tags: Pick<Tag,'name'>[] }
+  & { id?: Recipe["id"] }
+  & { userId?: User["id"] }
 
-/** Used for updating an existing recipe */
-type UpsertRecipe = PartialRecipe
+  /** Used for updating an existing recipe */
+  type UpdatableRecipe = CreatableRecipe
   & { id: Recipe["id"] }
-  & { userId: User["id"] }
   & { tags: Tag[] }
+  & { userId: User["id"] }
+
+export const isUpdatableRecipe = (recipe: CreatableRecipe | UpdatableRecipe): recipe is UpdatableRecipe => {
+  if (recipe.id != null && recipe.userId != null) return true;
+  return false;
+}
 
 export async function getRecipeDetails({ id }: Pick<Recipe, "id">) {
   return await prisma.recipe.findFirst({
@@ -242,7 +248,7 @@ export async function updateRecipeWithDetails({
   tags,
   ingredients,
   userId,
-}: UpsertRecipe) {
+}: UpdatableRecipe) {
 
   // Catch the case where the user is trying to update an existing recipe which
   //  doesn't belong to them
@@ -280,15 +286,15 @@ export async function createRecipe({
   ingredients,
   source,
   sourceUrl,
-}: PartialRecipe) {
+}: CreatableRecipe) {
   // Try to insert tags - get the inserted tags back
   const insertedTags = await Promise.all(
-    tags.map(async (name) => {
-      const tag = await prisma.tag.findUnique({ where: { name } });
+    tags.map(async (t) => {
+      const tag = await prisma.tag.findUnique({ where: { name: t.name } });
       if (tag) {
         return tag;
       }
-      return await prisma.tag.create({ data: { name } });
+      return await prisma.tag.create({ data: { name: t.name } });
     }),
   );
 

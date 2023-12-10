@@ -2,33 +2,25 @@ import {
   ActionFunctionArgs,
   LoaderFunctionArgs,
   json,
-  redirect,
 } from "@remix-run/node";
 import { useActionData, useLoaderData, Form } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 import invariant from "tiny-invariant";
 
+import { recipeAction } from "~/api/recipe-actions";
 import { FormTextAreaInput, FormTextInput } from "~/components/forms";
 import {
-  SUPPORTED_SUBMISSION_STYLES,
   SubmissionStyles,
-  createJSONErrorResponse,
-  extractDeletedIngredientIdsFromFormData,
-  extractIngredientsFromFormData,
 } from "~/components/recipes";
 import VisuallyHidden from "~/components/visually-hidden";
 import {
   IngredientFormEntry,
-  createRecipe,
-  disassociateIngredientsFromRecipe,
   getRecipeWithIngredients,
-  updateRecipeWithDetails,
 } from "~/models/recipe.server";
 import { requireUserId } from "~/session.server";
 import {
   createPlaceholderIngredient,
   getDefaultRecipeValues,
-  parsePreparationSteps,
 } from "~/utils";
 
 /**
@@ -38,87 +30,19 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
   invariant(params.recipeId, "recipeId not found");
 
-  const rawRecipe = await getRecipeWithIngredients({ id: params.recipeId });
-  if (!rawRecipe) {
+  const recipe = await getRecipeWithIngredients({ id: params.recipeId });
+  if (!recipe) {
     throw new Response("Not Found", { status: 404 });
   }
-  if (rawRecipe.submittedBy !== userId) {
+  if (recipe.submittedBy !== userId) {
     throw new Response("Not Found", { status: 404 });
   }
-  const recipe = {
-    ...rawRecipe,
-    preparationSteps: parsePreparationSteps(rawRecipe.preparationSteps ?? ""),
-  };
-  if (!rawRecipe) {
-    throw new Response("Not Found", { status: 404 });
-  }
+
   return json({ recipe, userId });
 };
 
-/**
- * This action is shared between recipes.new and recipes.edit
- * Keep them in sync!
- */
-export const action = async ({ request }: ActionFunctionArgs) => {
-  const userId = await requireUserId(request);
-  const formData = await request.formData();
-
-  const submissionType = String(formData.get("submissionType"));
-  if (
-    !SUPPORTED_SUBMISSION_STYLES.includes(submissionType as SubmissionStyles)
-  ) {
-    return createJSONErrorResponse(
-      "global",
-      `Unknown Submission: ${submissionType}`,
-    );
-  }
-
-  // TODO: Support tags
-  const partialRecipe = {
-    description: String(formData.get("description")),
-    ingredients: extractIngredientsFromFormData(formData),
-    preparationSteps: Array.from(formData.keys())
-      .filter((k) => k.startsWith("steps["))
-      .map((k) => String(formData.get(k))),
-    source: String(formData.get("source")),
-    sourceUrl: String(formData.get("sourceUrl")),
-    submittedBy: userId,
-    tags: [],
-    title: String(formData.get("title")),
-  };
-
-  if (partialRecipe.title.length === 0) {
-    return createJSONErrorResponse("title", "Title is required");
-  }
-  if (
-    !Array.isArray(partialRecipe.preparationSteps) ||
-    partialRecipe.preparationSteps.length === 0
-  ) {
-    return createJSONErrorResponse(
-      "preparationSteps",
-      "Preparation steps are required",
-    );
-  }
-  switch (formData.get("submissionType")) {
-    case "create-manual": {
-      const recipe = await createRecipe(partialRecipe);
-      return redirect(`/recipes/${recipe.id}`);
-    }
-    case "edit": {
-      const id = String(formData.get("recipeId"));
-      await updateRecipeWithDetails({
-        ...partialRecipe,
-        id,
-        userId,
-      });
-      const deletedIngredientIds =
-        extractDeletedIngredientIdsFromFormData(formData);
-      await disassociateIngredientsFromRecipe({ id }, deletedIngredientIds);
-      return redirect(`/recipes/${id}`);
-    }
-    default:
-      return createJSONErrorResponse("global", "Unknown submission type");
-  }
+export const action = async (actionArgs: ActionFunctionArgs) => {
+  return await recipeAction(actionArgs);
 };
 
 export default function NewRecipePage() {
@@ -135,11 +59,11 @@ export default function NewRecipePage() {
   const sourceUrlRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const prepStepsRef = useRef<HTMLDivElement>(null);
-  const stepsRefs = useRef<HTMLInputElement[]>([]);
+  const stepsRefs = useRef<HTMLTextAreaElement[]>([]);
   const ingredientRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  const [steps, setSteps] = useState<string[]>([""]);
   const defaultValues = getDefaultRecipeValues(data);
+  const [steps, setSteps] = useState<string[]>(defaultValues.preparationSteps ?? []);
   const [ingredients, setIngredients] = useState<IngredientFormEntry[]>(
     defaultValues.ingredients,
   );
@@ -277,8 +201,7 @@ export default function NewRecipePage() {
           <div id="stepsList" ref={prepStepsRef}>
             {steps.map((step, index) => (
               <div key={index} className="flex w-full flex-row gap-2 pt-2">
-                <input
-                  type="text"
+                <textarea
                   className="grow rounded-md border-2 border-blue-500 px-3 text-lg leading-loose"
                   name={`steps[${index}]`}
                   placeholder="Describe the step"
@@ -361,7 +284,6 @@ export default function NewRecipePage() {
                     <input
                       type="number"
                       name={`ingredients[${index}][quantity]`}
-                      defaultValue={String(ingredient.quantity)}
                       value={String(ingredient.quantity)}
                       className="w-full p-2 border-2 rounded border-blue-500"
                       onChange={(e) =>
@@ -462,7 +384,6 @@ export default function NewRecipePage() {
                     <input
                       type="number"
                       name={`ingredients[${index}][quantity]`}
-                      defaultValue={String(ingredient.quantity)}
                       value={String(ingredient.quantity)}
                       onChange={(e) =>
                         updateIngredient(
@@ -477,7 +398,6 @@ export default function NewRecipePage() {
                     <input
                       type="text"
                       name={`ingredients[${index}][unit]`}
-                      defaultValue={String(ingredient.unit)}
                       value={String(ingredient.unit)}
                       onChange={(e) =>
                         updateIngredient(index, "unit", e.target.value)
@@ -488,7 +408,6 @@ export default function NewRecipePage() {
                     <input
                       type="text"
                       name={`ingredients[${index}][note]`}
-                      defaultValue={String(ingredient.note)}
                       value={String(ingredient.note)}
                       onChange={(e) =>
                         updateIngredient(index, "note", e.target.value)

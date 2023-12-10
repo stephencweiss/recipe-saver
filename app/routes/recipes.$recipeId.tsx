@@ -51,6 +51,15 @@ export default function RecipeDetailsPage() {
   const data = useLoaderData<typeof loader>();
 
   const isUsersRecipe = data.userId === data.recipe.submittedBy;
+
+  const parsedIngredients = data.recipe.ingredients.map((ingredient) => {
+    const { quantity, unit, name, note } = ingredient;
+    const q = quantity != null && quantity > 0 ? quantity: "";
+    const u = unit != null ? unit : "";
+    const nt = note != null ? note : "";
+    const nm = name != null ? name : "";
+    return `${q} ${u} ${nm} ${nt != '' ? `-- ${nt}` : ''}`;
+  });
   return (
     <div>
       <h2 className="text-4xl font-bold">{data.recipe.title}</h2>
@@ -62,12 +71,7 @@ export default function RecipeDetailsPage() {
       <List title="Steps" items={data.recipe.preparationSteps} ListType="ol" />
       <List
         title="Ingredients"
-        items={data.recipe.ingredients.map(
-          (ingredient) =>
-            `${ingredient.quantity} ${ingredient.unit} ${ingredient.name} ${
-              ingredient.note !== "" ? "" : ` -- ${ingredient.note}`
-            }`,
-        )}
+        items={parsedIngredients}
       />
       <h2 className="text-xl font-bold py-4">Additional Details</h2>
       <p className="pb-2">Source: {data.recipe.source || "User Submitted"}</p>
