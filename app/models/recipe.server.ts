@@ -17,6 +17,19 @@ export type CompositeIngredient = Omit<RecipeIngredient, "createdDate"> &
 /** Used for User Inputs where data may be partial */
 export type IngredientFormEntry = Partial<CompositeIngredient>;
 
+/** Used for creating a new recipe */
+export type PartialRecipe = Omit<Recipe, "id" | "createdDate" | "updatedDate" | "preparationSteps"> & {
+  tags: string[];
+} & { preparationSteps: string[] } & {
+  ingredients: IngredientFormEntry[];
+}
+
+/** Used for updating an existing recipe */
+type UpsertRecipe = PartialRecipe
+  & { id: Recipe["id"] }
+  & { userId: User["id"] }
+  & { tags: Tag[] }
+
 export async function getRecipeDetails({ id }: Pick<Recipe, "id">) {
   return await prisma.recipe.findFirst({
     select: {
@@ -200,7 +213,7 @@ async function associateTagsWithRecipe(
   return await upsertRecipeTags(recipe.id, updatedTags, userId);
 }
 
-async function upsertRecipe(
+async function updateRecipe(
   recipe: Omit<Recipe, "createdDate" | "updatedDate" | "preparationSteps"> & {
     preparationSteps: string[];
   },
@@ -218,7 +231,7 @@ async function upsertRecipe(
   });
 }
 
-export async function upsertRecipeWithDetails({
+export async function updateRecipeWithDetails({
   id,
   description,
   title,
@@ -229,17 +242,17 @@ export async function upsertRecipeWithDetails({
   tags,
   ingredients,
   userId,
-}: Omit<Recipe, "createdDate" | "updatedDate" | "preparationSteps"> & {
-  preparationSteps: string[];
-} & { userId: User["id"] } & { tags: Tag[] } & {
-  ingredients: Partial<CompositeIngredient>[];
-}) {
+}: UpsertRecipe) {
+
+  // Catch the case where the user is trying to update an existing recipe which
+  //  doesn't belong to them
   invariant(userId, "User ID is required when upserting a recipe");
   invariant(
     userId === submittedBy,
     "User ID must match submittedBy when upserting a recipe",
   );
-  const recipe = await upsertRecipe({
+
+  const recipe = await updateRecipe({
     id,
     description,
     title,
@@ -267,11 +280,7 @@ export async function createRecipe({
   ingredients,
   source,
   sourceUrl,
-}: Omit<Recipe, "id" | "createdDate" | "updatedDate" | "preparationSteps"> & {
-  tags: string[];
-} & { preparationSteps: string[] } & {
-  ingredients: IngredientFormEntry[];
-}) {
+}: PartialRecipe) {
   // Try to insert tags - get the inserted tags back
   const insertedTags = await Promise.all(
     tags.map(async (name) => {

@@ -22,7 +22,7 @@ import {
   createRecipe,
   disassociateIngredientsFromRecipe,
   getRecipeWithIngredients,
-  upsertRecipeWithDetails,
+  updateRecipeWithDetails,
 } from "~/models/recipe.server";
 import { requireUserId } from "~/session.server";
 import {
@@ -106,7 +106,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
     case "edit": {
       const id = String(formData.get("recipeId"));
-      await upsertRecipeWithDetails({
+      await updateRecipeWithDetails({
         ...partialRecipe,
         id,
         userId,
@@ -209,6 +209,9 @@ export default function NewRecipePage() {
 
   // Automatically focus the newest ingredient name input when a new ingredient is added
   useEffect(() => {
+    if (ingredients.length === 1) {
+      return;
+    }
     const lastIngredientIndex = ingredients.length - 1;
     const lastIngredientRef = ingredientRefs.current[lastIngredientIndex];
     lastIngredientRef?.focus();
@@ -248,14 +251,15 @@ export default function NewRecipePage() {
         </label>
       </VisuallyHidden>
       <FormTextInput
-        ref={titleRef}
+        forwardRef={titleRef}
         name="title"
         placeholder="Pumpkin Pie"
         error={actionData?.errors.title}
         defaultValue={defaultValues.title}
+        autofocus={true}
       />
       <FormTextAreaInput
-        ref={descriptionRef}
+        forwardRef={descriptionRef}
         name="description"
         defaultValue={defaultValues.description ?? ""}
         rows={4}
@@ -516,7 +520,7 @@ export default function NewRecipePage() {
       {/* tags: [] */}
 
       <FormTextInput
-        ref={sourceRef}
+        forwardRef={sourceRef}
         name="source"
         placeholder="NYT Cooking"
         error={actionData?.errors.source}
@@ -524,7 +528,7 @@ export default function NewRecipePage() {
       />
 
       <FormTextInput
-        ref={sourceUrlRef}
+        forwardRef={sourceUrlRef}
         name="sourceUrl"
         label="Source URL"
         placeholder="https://cooking.nytimes.com/recipes/1015622-pumpkin-pie"

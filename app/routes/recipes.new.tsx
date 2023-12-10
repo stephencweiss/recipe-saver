@@ -15,7 +15,7 @@ import {
   IngredientFormEntry,
   createRecipe,
   disassociateIngredientsFromRecipe,
-  upsertRecipeWithDetails,
+  updateRecipeWithDetails,
 } from "~/models/recipe.server";
 import { requireUserId } from "~/session.server";
 import { createPlaceholderIngredient, getDefaultRecipeValues } from "~/utils";
@@ -76,7 +76,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
     case "edit": {
       const id = String(formData.get("recipeId"));
-      await upsertRecipeWithDetails({
+      await updateRecipeWithDetails({
         ...partialRecipe,
         id,
         userId,
@@ -177,17 +177,20 @@ export default function NewRecipePage() {
     }
   }, [steps.length]);
 
-  // Automatically focus the newest ingredient name input when a new ingredient is added
-  useEffect(() => {
-    const lastIngredientIndex = ingredients.length - 1;
-    const lastIngredientRef = ingredientRefs.current[lastIngredientIndex];
-    lastIngredientRef?.focus();
-  }, [ingredients.length]);
-
   // Ensure we have enough refs to match the number of steps
   useEffect(() => {
     stepsRefs.current = stepsRefs.current.slice(0, steps.length);
   }, [steps]);
+
+  // Automatically focus the newest ingredient name input when a new ingredient is added
+  useEffect(() => {
+    if (ingredients.length === 1) {
+      return;
+    }
+    const lastIngredientIndex = ingredients.length - 1;
+    const lastIngredientRef = ingredientRefs.current[lastIngredientIndex];
+    lastIngredientRef?.focus();
+  }, [ingredients.length]);
 
   // Set initial focus on title
   // Run on load, and then never again.
@@ -218,14 +221,15 @@ export default function NewRecipePage() {
         </label>
       </VisuallyHidden>
       <FormTextInput
-        ref={titleRef}
+        forwardRef={titleRef}
         name="title"
         placeholder="Pumpkin Pie"
         error={actionData?.errors.title}
         defaultValue={defaultValues.title}
+        autofocus={true}
       />
       <FormTextAreaInput
-        ref={descriptionRef}
+        forwardRef={descriptionRef}
         name="description"
         defaultValue={defaultValues.description ?? ""}
         rows={4}
@@ -486,7 +490,7 @@ export default function NewRecipePage() {
       {/* tags: [] */}
 
       <FormTextInput
-        ref={sourceRef}
+        forwardRef={sourceRef}
         name="source"
         placeholder="NYT Cooking"
         error={actionData?.errors.source}
@@ -494,7 +498,7 @@ export default function NewRecipePage() {
       />
 
       <FormTextInput
-        ref={sourceUrlRef}
+        forwardRef={sourceUrlRef}
         name="sourceUrl"
         label="Source URL"
         placeholder="https://cooking.nytimes.com/recipes/1015622-pumpkin-pie"

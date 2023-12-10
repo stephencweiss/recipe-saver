@@ -4,14 +4,15 @@ interface IFormInput {
 }
 
 export interface FormTextProps extends IFormInput {
+  autofocus?: boolean;
   error?: string | null;
   label?: string;
   placeholder?: string;
-  ref?: React.RefObject<HTMLInputElement>;
+  forwardRef?: React.RefObject<HTMLInputElement>;
   type?: string;
 }
 
 export interface FormTextAreaProps extends IFormInput {
-  ref: React.RefObject<HTMLTextAreaElement>;
+  forwardRef: React.RefObject<HTMLTextAreaElement>;
   rows?: number;
 }

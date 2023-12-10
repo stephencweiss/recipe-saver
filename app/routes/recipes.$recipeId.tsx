@@ -92,7 +92,7 @@ export default function RecipeDetailsPage() {
           className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400 mr-2"
           disabled={!isUsersRecipe}
         >
-          Edit [Coming Soon]
+          Edit
         </button>
         <button
           type="submit"

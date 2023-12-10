@@ -3,7 +3,7 @@ import { FormTextAreaProps } from "./types";
 export const FormTextAreaInput = ({
   defaultValue,
   name,
-  ref,
+  forwardRef,
   rows = 4,
 }: FormTextAreaProps) => (
   <label className="flex w-full flex-col gap-2">
@@ -13,7 +13,7 @@ export const FormTextAreaInput = ({
       defaultValue={defaultValue}
       name={name}
       rows={rows}
-      ref={ref}
+      ref={forwardRef}
     />
   </label>
 );
