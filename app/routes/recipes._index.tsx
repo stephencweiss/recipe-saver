@@ -1,6 +1,6 @@
 import { Link } from "@remix-run/react";
 
-export default function NoteIndexPage() {
+export default function RecipeIndexPage() {
   return (
     <p>
       No note selected. Select a note on the left, or{" "}

@@ -4,7 +4,8 @@ import { useMemo } from "react";
 
 import type { User } from "~/models/user.server";
 
-import { IngredientFormEntry } from "./models/recipe.server";
+import { createJSONErrorResponse } from "./components/recipes/errors";
+import { IngredientFormEntry, CreatableRecipe } from "./models/recipe.server";
 
 const DEFAULT_REDIRECT = "/";
 
@@ -174,10 +175,27 @@ export const getDefaultRecipeValues = (data: unknown) => {
       description: data.recipe.description ?? "",
       source: data.recipe.source ?? "",
       sourceUrl: data.recipe.sourceUrl ?? "",
+      preparationSteps: parsePreparationSteps(data.recipe.preparationSteps) ?? [],
       ingredients: data.recipe.ingredients ?? [createPlaceholderIngredient()],
     };
   }
   return {
+    preparationSteps: [''],
     ingredients: [createPlaceholderIngredient()],
   };
 };
+
+export const validateUserSubmittedRecipe = (partialRecipe: CreatableRecipe) => {
+  if (partialRecipe.title.length === 0) {
+    return createJSONErrorResponse("title", "Title is required");
+  }
+  if (
+    !Array.isArray(partialRecipe.preparationSteps) ||
+    partialRecipe.preparationSteps.length === 0
+  ) {
+    return createJSONErrorResponse(
+      "preparationSteps",
+      "Preparation steps are required",
+    );
+  }
+}

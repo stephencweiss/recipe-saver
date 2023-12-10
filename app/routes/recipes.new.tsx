@@ -1,23 +1,13 @@
-import { ActionFunctionArgs, redirect } from "@remix-run/node";
+import { ActionFunctionArgs } from "@remix-run/node";
 import { useActionData, useLoaderData, Form } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 
+import { recipeAction } from "~/api/recipe-actions";
 import { FormTextAreaInput, FormTextInput } from "~/components/forms";
-import {
-  SUPPORTED_SUBMISSION_STYLES,
-  SubmissionStyles,
-  createJSONErrorResponse,
-  extractDeletedIngredientIdsFromFormData,
-  extractIngredientsFromFormData,
-} from "~/components/recipes";
+import { SubmissionStyles } from "~/components/recipes";
+import { useModeSwitcher } from "~/components/recipes/use-mode-switcher";
 import VisuallyHidden from "~/components/visually-hidden";
-import {
-  IngredientFormEntry,
-  createRecipe,
-  disassociateIngredientsFromRecipe,
-  upsertRecipeWithDetails,
-} from "~/models/recipe.server";
-import { requireUserId } from "~/session.server";
+import { IngredientFormEntry } from "~/models/recipe.server";
 import { createPlaceholderIngredient, getDefaultRecipeValues } from "~/utils";
 
 /**
@@ -25,79 +15,20 @@ import { createPlaceholderIngredient, getDefaultRecipeValues } from "~/utils";
  */
 export const loader = async () => null;
 
-/**
- * This action is shared between recipes.new and recipes.edit
- * Keep them in sync!
- */
-export const action = async ({ request }: ActionFunctionArgs) => {
-  const userId = await requireUserId(request);
-  const formData = await request.formData();
-
-  const submissionType = String(formData.get("submissionType"));
-  if (
-    !SUPPORTED_SUBMISSION_STYLES.includes(submissionType as SubmissionStyles)
-  ) {
-    return createJSONErrorResponse(
-      "global",
-      `Unknown Submission: ${submissionType}`,
-    );
-  }
-
-  // TODO: Support tags
-  const partialRecipe = {
-    description: String(formData.get("description")),
-    ingredients: extractIngredientsFromFormData(formData),
-    preparationSteps: Array.from(formData.keys())
-      .filter((k) => k.startsWith("steps["))
-      .map((k) => String(formData.get(k))),
-    source: String(formData.get("source")),
-    sourceUrl: String(formData.get("sourceUrl")),
-    submittedBy: userId,
-    tags: [],
-    title: String(formData.get("title")),
-  };
-
-  if (partialRecipe.title.length === 0) {
-    return createJSONErrorResponse("title", "Title is required");
-  }
-  if (
-    !Array.isArray(partialRecipe.preparationSteps) ||
-    partialRecipe.preparationSteps.length === 0
-  ) {
-    return createJSONErrorResponse(
-      "preparationSteps",
-      "Preparation steps are required",
-    );
-  }
-  switch (formData.get("submissionType")) {
-    case "create-manual": {
-      const recipe = await createRecipe(partialRecipe);
-      return redirect(`/recipes/${recipe.id}`);
-    }
-    case "edit": {
-      const id = String(formData.get("recipeId"));
-      await upsertRecipeWithDetails({
-        ...partialRecipe,
-        id,
-        userId,
-      });
-      const deletedIngredientIds =
-        extractDeletedIngredientIdsFromFormData(formData);
-      await disassociateIngredientsFromRecipe({ id }, deletedIngredientIds);
-      return redirect(`/recipes/${id}`);
-    }
-    default:
-      return createJSONErrorResponse("global", "Unknown submission type");
-  }
+export const action = async (actionArgs: ActionFunctionArgs) => {
+  return await recipeAction(actionArgs);
 };
 
 export default function NewRecipePage() {
+  const { mode, ModeUi } = useModeSwitcher();
+
   /** The submissionType is the **only** unique value between recipes.new &
    * recipes.edit */
-  const submissionType: SubmissionStyles = "create-manual";
+  const submissionType: SubmissionStyles = mode;
 
-  /** From here through the return should be **identical** between recipes.new &
-   * recipes.edit */
+  /** From here through the mode specific markup should be **identical** between
+   * recipes.new & recipes.edit
+   */
   const actionData = useActionData<typeof action>();
   const data = useLoaderData<typeof loader>();
   const titleRef = useRef<HTMLInputElement>(null);
@@ -177,17 +108,20 @@ export default function NewRecipePage() {
     }
   }, [steps.length]);
 
-  // Automatically focus the newest ingredient name input when a new ingredient is added
-  useEffect(() => {
-    const lastIngredientIndex = ingredients.length - 1;
-    const lastIngredientRef = ingredientRefs.current[lastIngredientIndex];
-    lastIngredientRef?.focus();
-  }, [ingredients.length]);
-
   // Ensure we have enough refs to match the number of steps
   useEffect(() => {
     stepsRefs.current = stepsRefs.current.slice(0, steps.length);
   }, [steps]);
+
+  // Automatically focus the newest ingredient name input when a new ingredient is added
+  useEffect(() => {
+    if (ingredients.length === 1) {
+      return;
+    }
+    const lastIngredientIndex = ingredients.length - 1;
+    const lastIngredientRef = ingredientRefs.current[lastIngredientIndex];
+    lastIngredientRef?.focus();
+  }, [ingredients.length]);
 
   // Set initial focus on title
   // Run on load, and then never again.
@@ -195,22 +129,20 @@ export default function NewRecipePage() {
     titleRef.current?.focus();
   }, []);
 
-  return (
-    <Form method="post" className="flex flex-col gap-4 w-full">
-      <div className="text-right">
-        <button
-          type="submit"
-          className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
-        >
-          Save
-        </button>
-      </div>
-      <VisuallyHidden>
-        <label>
-          Submission Type&nbsp;
-          <input name="submissionType" readOnly={true} value={submissionType} />
-        </label>
-      </VisuallyHidden>
+  /** Mode specific markup */
+  const URLSubmitForm = (
+    <FormTextInput
+      forwardRef={sourceUrlRef}
+      name="sourceUrl"
+      label="Source URL"
+      placeholder="https://cooking.nytimes.com/recipes/1015622-pumpkin-pie"
+      error={actionData?.errors.sourceUrl}
+      defaultValue={undefined}
+    />
+  );
+
+  const ManualSubmitForm = (
+    <>
       <VisuallyHidden>
         <label>
           Recipe ID&nbsp;
@@ -218,14 +150,15 @@ export default function NewRecipePage() {
         </label>
       </VisuallyHidden>
       <FormTextInput
-        ref={titleRef}
+        forwardRef={titleRef}
         name="title"
         placeholder="Pumpkin Pie"
         error={actionData?.errors.title}
         defaultValue={defaultValues.title}
+        autofocus={true}
       />
       <FormTextAreaInput
-        ref={descriptionRef}
+        forwardRef={descriptionRef}
         name="description"
         defaultValue={defaultValues.description ?? ""}
         rows={4}
@@ -327,7 +260,6 @@ export default function NewRecipePage() {
                     <input
                       type="number"
                       name={`ingredients[${index}][quantity]`}
-                      defaultValue={String(ingredient.quantity)}
                       value={String(ingredient.quantity)}
                       className="w-full p-2 border-2 rounded border-blue-500"
                       onChange={(e) =>
@@ -428,7 +360,6 @@ export default function NewRecipePage() {
                     <input
                       type="number"
                       name={`ingredients[${index}][quantity]`}
-                      defaultValue={String(ingredient.quantity)}
                       value={String(ingredient.quantity)}
                       onChange={(e) =>
                         updateIngredient(
@@ -443,7 +374,6 @@ export default function NewRecipePage() {
                     <input
                       type="text"
                       name={`ingredients[${index}][unit]`}
-                      defaultValue={String(ingredient.unit)}
                       value={String(ingredient.unit)}
                       onChange={(e) =>
                         updateIngredient(index, "unit", e.target.value)
@@ -454,7 +384,6 @@ export default function NewRecipePage() {
                     <input
                       type="text"
                       name={`ingredients[${index}][note]`}
-                      defaultValue={String(ingredient.note)}
                       value={String(ingredient.note)}
                       onChange={(e) =>
                         updateIngredient(index, "note", e.target.value)
@@ -486,7 +415,7 @@ export default function NewRecipePage() {
       {/* tags: [] */}
 
       <FormTextInput
-        ref={sourceRef}
+        forwardRef={sourceRef}
         name="source"
         placeholder="NYT Cooking"
         error={actionData?.errors.source}
@@ -494,13 +423,43 @@ export default function NewRecipePage() {
       />
 
       <FormTextInput
-        ref={sourceUrlRef}
+        forwardRef={sourceUrlRef}
         name="sourceUrl"
         label="Source URL"
         placeholder="https://cooking.nytimes.com/recipes/1015622-pumpkin-pie"
         error={actionData?.errors.sourceUrl}
         defaultValue={defaultValues.sourceUrl}
       />
-    </Form>
+    </>
+  );
+
+  const ModeSpecificForm =
+    mode === "create-manual" ? ManualSubmitForm : URLSubmitForm;
+
+  return (
+    <>
+      {ModeUi}
+      <Form method="post" className="flex flex-col gap-4 w-full">
+        <div className="text-right">
+          <button
+            type="submit"
+            className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
+          >
+            Save
+          </button>
+        </div>
+        <VisuallyHidden>
+          <label>
+            Submission Type&nbsp;
+            <input
+              name="submissionType"
+              readOnly={true}
+              value={submissionType}
+            />
+          </label>
+        </VisuallyHidden>
+        {ModeSpecificForm}
+      </Form>
+    </>
   );
 }
