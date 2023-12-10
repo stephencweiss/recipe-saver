@@ -55,9 +55,9 @@ export default function RecipeDetailsPage() {
   const parsedIngredients = data.recipe.ingredients.map((ingredient) => {
     const { quantity, unit, name, note } = ingredient;
     const q = quantity != null && quantity > 0 ? quantity: "";
-    const u = unit != null ? unit : "";
-    const nt = note != null ? note : "";
-    const nm = name != null ? name : "";
+    const u = unit != null && unit != 'null' ? unit : "";
+    const nt = note != null && note != 'null' ? note : "";
+    const nm = name != null && name != 'null' ? name : "";
     return `${q} ${u} ${nm} ${nt != '' ? `-- ${nt}` : ''}`;
   });
   return (
