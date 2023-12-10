@@ -1,11 +1,14 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
+import { LinksFunction } from "@remix-run/node";
 import { Link, NavLink, Outlet, useLoaderData } from "@remix-run/react";
 import { useEffect, useState } from "react";
 
-import { Header } from "~/components/header";
+import Layout, { links as layoutLinks } from "~/components/layout";
 import { getSubmittedRecipes } from "~/models/recipe.server";
 import { requireUserId } from "~/session.server";
+
+export const links: LinksFunction = () => [...layoutLinks()];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await requireUserId(request);
@@ -24,17 +27,14 @@ export default function RecipesPage() {
       setState(data.recipes);
     }
     const regExp = new RegExp(search, "i");
-    const filteredNotes = data.recipes.filter((i) =>
-      regExp.test(i.title),
-    );
+    const filteredNotes = data.recipes.filter((i) => regExp.test(i.title));
     setState(filteredNotes);
   }, [search.length, search, data.recipes]);
 
   const handleSearch = (value: string) => setSearch(value);
 
   return (
-    <div className="flex h-full min-h-screen flex-col">
-      <Header title={"Recipes"} route={'.'} />
+    <Layout title="Recipes">
       <main className="flex ">
         <div className="w-80 max-h-screen overflow-scroll border-r bg-blue-50 min-w-150">
           <Link to="new" className="block p-4 text-xl text-blue-500">
@@ -77,6 +77,6 @@ export default function RecipesPage() {
           <Outlet />
         </div>
       </main>
-    </div>
+    </Layout>
   );
 }

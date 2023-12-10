@@ -1,0 +1,34 @@
+/* styles.css */
+.DropdownMenuContent {
+  animation-duration: .5s;
+  animation-timing-function: ease-in-out;
+
+}
+.DropdownMenuContent[data-side='top'] {
+  animation-name: slideUp;
+}
+.DropdownMenuContent[data-side='bottom'] {
+  animation-name: slideDown;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
