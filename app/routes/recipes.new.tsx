@@ -1,10 +1,11 @@
 import { ActionFunctionArgs } from "@remix-run/node";
-import { useActionData, useLoaderData, Form, Link } from "@remix-run/react";
+import { useActionData, useLoaderData, Form } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 
 import { recipeAction } from "~/api/recipe-actions";
 import { FormTextAreaInput, FormTextInput } from "~/components/forms";
 import { SubmissionStyles } from "~/components/recipes";
+import { useModeSwitcher } from "~/components/recipes/use-mode-switcher";
 import VisuallyHidden from "~/components/visually-hidden";
 import { IngredientFormEntry } from "~/models/recipe.server";
 import { createPlaceholderIngredient, getDefaultRecipeValues } from "~/utils";
@@ -19,7 +20,7 @@ export const action = async (actionArgs: ActionFunctionArgs) => {
 };
 
 export default function NewRecipePage() {
-  const [mode, setMode] = useState<SubmissionStyles>("create-manual");
+  const { mode, ModeUi } = useModeSwitcher();
 
   /** The submissionType is the **only** unique value between recipes.new &
    * recipes.edit */
@@ -127,7 +128,6 @@ export default function NewRecipePage() {
   useEffect(() => {
     titleRef.current?.focus();
   }, []);
-
 
   /** Mode specific markup */
   const URLSubmitForm = (
@@ -438,27 +438,7 @@ export default function NewRecipePage() {
 
   return (
     <>
-      <div className="flex flex-row gap-4">
-        <button
-          type="button"
-          onClick={() => setMode("create-manual")}
-          className={`rounded bg-blue-200 px-4 py-2 text-white ${
-            mode === "create-manual" ? "bg-red-800" : ""
-          }`}
-        >
-          Manual
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode("create-from-url")}
-          className={`rounded bg-blue-200 px-4 py-2 text-white ${
-            mode === "create-from-url" ? "bg-red-800" : ""
-          }`}
-        >
-          URL
-        </button>
-        <p>{mode}</p>
-      </div>
+      {ModeUi}
       <Form method="post" className="flex flex-col gap-4 w-full">
         <div className="text-right">
           <button

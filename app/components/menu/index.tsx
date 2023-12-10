@@ -31,7 +31,8 @@ export function Menu() {
           justify-center
           text-violet11
           bg-slate-600
-          hover:bg-blue-500 active:bg-blue-600
+          hover:bg-blue-500
+          active:bg-blue-600
           "
           aria-label="menu"
         >
