@@ -42,7 +42,7 @@ export default function NewRecipePage() {
   const [steps, setSteps] = useState<string[]>([""]);
   const defaultValues = getDefaultRecipeValues(data);
   const [ingredients, setIngredients] = useState<IngredientFormEntry[]>(
-    defaultValues.ingredients,
+    defaultValues.recipeIngredients,
   );
   const [deletedIngredients, setDeletedIngredients] = useState<
     IngredientFormEntry[]
@@ -258,7 +258,7 @@ export default function NewRecipePage() {
                   <label>
                     Quantity
                     <input
-                      type="number"
+                      type="string"
                       name={`ingredients[${index}][quantity]`}
                       value={String(ingredient.quantity)}
                       className="w-full p-2 border-2 rounded border-blue-500"
@@ -266,7 +266,7 @@ export default function NewRecipePage() {
                         updateIngredient(
                           index,
                           "quantity",
-                          Number(e.target.value),
+                          e.target.value,
                         )
                       }
                     />
@@ -358,14 +358,14 @@ export default function NewRecipePage() {
                   </td>
                   <td className="">
                     <input
-                      type="number"
+                      type="string"
                       name={`ingredients[${index}][quantity]`}
                       value={String(ingredient.quantity)}
                       onChange={(e) =>
                         updateIngredient(
                           index,
                           "quantity",
-                          Number(e.target.value),
+                          e.target.value,
                         )
                       }
                     />

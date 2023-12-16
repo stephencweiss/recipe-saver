@@ -97,6 +97,7 @@ export async function recipeAction({ request }: ActionFunctionArgs) {
     submittedBy: userId,
     tags: [],
     title: String(formData.get("title")),
+    isPrivate: Boolean(formData.get("isPrivate")),
     userId: userId,
   };
 

@@ -50,28 +50,28 @@ async function createPumpkinPieRecipe(submitter: { id: string }) {
   const pieIngredientsObj = [
     {
       name: "pumpkin puree",
-      quantity: 15,
+      quantity: '15',
       unit: "oz",
     },
     {
       name: "sweetened condensed milk",
-      quantity: 14,
+      quantity: '14',
       unit: "oz",
     },
     {
       name: "eggs",
-      quantity: 2,
+      quantity: '2',
       unit: "",
     },
     {
       name: "pumpkin pie spice",
-      quantity: 1,
+      quantity: '1/3',
       unit: "tbsp",
     },
     {
       name: "pie crust",
-      quantity: 1,
-      unit: "",
+      quantity: '1',
+      unit: "whole",
     },
   ];
   const pieIngredientNames = pieIngredientsObj.map(
@@ -145,58 +145,58 @@ async function createCaesarSaladRecipe(submitter: { id: string }) {
   const saladIngredientsObj = [
     {
       name: "romaine lettuce",
-      quantity: 1,
+      quantity: '1',
       unit: "head",
     },
     {
       name: "croutons",
-      quantity: 1,
+      quantity: '1',
       unit: "cup",
     },
     {
       name: "parmesan cheese",
-      quantity: 1,
+      quantity: '1',
       unit: "cup",
     },
     {
       name: "lemon juice",
-      quantity: 1,
+      quantity: '1',
       unit: "tbsp",
     },
     {
       name: "olive oil",
-      quantity: 1,
+      quantity: '1',
       unit: "tbsp",
     },
     {
       name: "garlic",
-      quantity: 1,
+      quantity: '1',
       unit: "clove",
     },
     {
       name: "salt",
-      quantity: 1,
+      quantity: '1',
       unit: "tsp",
     },
     {
       name: "pepper",
-      quantity: 1,
+      quantity: '1',
       unit: "tsp",
     },
     {
       name: "egg yolk",
-      quantity: 1,
+      quantity: '1',
       unit: "",
     },
     {
       name: "dijon mustard",
-      quantity: 1,
+      quantity: '1',
       unit: "tsp",
     },
     {
       name: "anchovy paste",
-      quantity: 1,
-      unit: "tsp",
+      quantity: '1/4',
+      unit: "cup",
     },
   ];
   const saladIngredientNames = saladIngredientsObj.map(

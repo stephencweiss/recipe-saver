@@ -35,7 +35,7 @@ export function safeRedirect(
  * parsePreparationSteps takes a stringified Array and converts it into a JS Array
  * Removes empty strings from the array
  */
-export const parsePreparationSteps = (steps: string): string[] => {
+export const parsePreparationSteps = (steps: string): string[] => {9
   const parsedSteps = JSON.parse(steps);
   if (!Array.isArray(parsedSteps)) {
     return [];
@@ -45,7 +45,7 @@ export const parsePreparationSteps = (steps: string): string[] => {
 
 export const createPlaceholderIngredient = () => ({
   name: "",
-  quantity: 0,
+  quantity: '0',
   unit: "",
   note: "",
 });
@@ -162,9 +162,10 @@ export function extractGenericDataFromFormData<
 
 const isFullRecipe = (
   data: unknown,
-): data is { recipe: Recipe & { ingredients: Ingredient[] } } => {
-  const typedData = data as { recipe: Recipe & { ingredients: Ingredient[] } };
-  return Boolean(typedData?.recipe && typedData?.recipe?.ingredients);
+): data is { recipe: Recipe & { recipeIngredients: Ingredient[] } } => {
+  const typedData = data as { recipe: (Recipe & { recipeIngredients: Ingredient[] })};
+  const isFull = Boolean(typedData?.recipe && Array.isArray(typedData?.recipe.recipeIngredients));
+  return isFull;
 };
 
 export const getDefaultRecipeValues = (data: unknown) => {
@@ -175,13 +176,13 @@ export const getDefaultRecipeValues = (data: unknown) => {
       description: data.recipe.description ?? "",
       source: data.recipe.source ?? "",
       sourceUrl: data.recipe.sourceUrl ?? "",
-      preparationSteps: parsePreparationSteps(data.recipe.preparationSteps) ?? [],
-      ingredients: data.recipe.ingredients ?? [createPlaceholderIngredient()],
+      preparationSteps: data.recipe.preparationSteps ?? [''],
+      recipeIngredients: data.recipe.recipeIngredients ?? [createPlaceholderIngredient()],
     };
   }
   return {
     preparationSteps: [''],
-    ingredients: [createPlaceholderIngredient()],
+    recipeIngredients: [createPlaceholderIngredient()],
   };
 };
 

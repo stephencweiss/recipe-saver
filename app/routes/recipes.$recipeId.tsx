@@ -1,5 +1,5 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
+import { redirect } from "@remix-run/node";
 import {
   Form,
   isRouteErrorResponse,
@@ -8,25 +8,14 @@ import {
 } from "@remix-run/react";
 import invariant from "tiny-invariant";
 
+import { loadSingleRecipe } from "~/api/recipe-loader";
 import { List } from "~/components/lists";
-import { deleteRecipe, getRecipeWithIngredients } from "~/models/recipe.server";
+import { deleteRecipe } from "~/models/recipe.server";
 import { requireUserId } from "~/session.server";
-import { isNotPlaceholderIngredient, parsePreparationSteps } from "~/utils";
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  const userId = await requireUserId(request);
-  invariant(params.recipeId, "recipeId not found");
 
-  const rawRecipe = await getRecipeWithIngredients({ id: params.recipeId });
-  const recipe = {
-    ...rawRecipe,
-    ingredients: rawRecipe.ingredients.filter(isNotPlaceholderIngredient) ?? [],
-    preparationSteps: parsePreparationSteps(rawRecipe.preparationSteps ?? ""),
-  };
-  if (!rawRecipe) {
-    throw new Response("Not Found", { status: 404 });
-  }
-  return json({ recipe, userId });
+export const loader = async (args: LoaderFunctionArgs) => {
+  return await loadSingleRecipe({...args, mode: 'view'});
 };
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
@@ -52,9 +41,9 @@ export default function RecipeDetailsPage() {
 
   const isUsersRecipe = data.userId === data.recipe.submittedBy;
 
-  const parsedIngredients = data.recipe.ingredients.map((ingredient) => {
-    const { quantity, unit, name, note } = ingredient;
-    const q = quantity != null && quantity > 0 ? quantity: "";
+  const parsedIngredients = data.recipe.recipeIngredients.map((ingredient) => {
+    const { quantity, unit, ingredient: {name}, note } = ingredient;
+    const q = quantity != null && quantity != 'null' ? quantity: "";
     const u = unit != null && unit != 'null' ? unit : "";
     const nt = note != null && note != 'null' ? note : "";
     const nm = name != null && name != 'null' ? name : "";

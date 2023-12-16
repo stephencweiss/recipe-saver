@@ -21,12 +21,12 @@ export type IngredientFormEntry = Partial<CompositeIngredient>;
 export type CreatableRecipe = Omit<Recipe, "id" | "createdDate" | "updatedDate" | "preparationSteps">
   & { ingredients: IngredientFormEntry[] }
   & { preparationSteps: string[] }
-  & { tags: Pick<Tag,'name'>[] }
+  & { tags: Pick<Tag, 'name'>[] }
   & { id?: Recipe["id"] }
   & { userId?: User["id"] }
 
-  /** Used for updating an existing recipe */
-  type UpdatableRecipe = CreatableRecipe
+/** Used for updating an existing recipe */
+type UpdatableRecipe = CreatableRecipe
   & { id: Recipe["id"] }
   & { tags: Tag[] }
   & { userId: User["id"] }
@@ -41,11 +41,12 @@ export async function getRecipeDetails({ id }: Pick<Recipe, "id">) {
     select: {
       id: true,
       description: true,
+      isPrivate: true,
       preparationSteps: true,
       source: true,
       sourceUrl: true,
-      title: true,
       submittedBy: true,
+      title: true,
       user: true,
     },
     where: { id },
@@ -80,13 +81,34 @@ export async function getIngredientsForRecipe({ id }: Pick<Recipe, "id">) {
   return ingredients;
 }
 
-export async function getRecipeWithIngredients({ id }: Pick<Recipe, "id">) {
-  const recipeDetails = await getRecipeDetails({ id });
-  const fullRecipe = {
-    ...recipeDetails,
-    ingredients: await getIngredientsForRecipe({ id }),
-  };
-  return fullRecipe;
+export async function getRecipeWithIngredients({ id, requestingUser }: Pick<Recipe, "id"> & { requestingUser?: Pick<User, "id"> }) {
+  const recipe = await prisma.recipe.findFirst({
+    select: {
+      id: true,
+      description: true,
+      isPrivate: true,
+      preparationSteps: true,
+      recipeIngredients: {
+        select: {
+          ingredient: true,
+          ingredientId: true,
+          note: true,
+          quantity: true,
+          unit: true,
+        },
+      },
+      source: true,
+      sourceUrl: true,
+      submittedBy: true,
+      title: true,
+      user: true,
+    },
+    where: { id },
+
+  });
+  if (!recipe) return null;
+  if (recipe.isPrivate && requestingUser?.id !== recipe.submittedBy) return null;
+  return recipe;
 }
 
 export function getSubmittedRecipes({ userId }: { userId: User["id"] }) {
@@ -240,13 +262,14 @@ async function updateRecipe(
 export async function updateRecipeWithDetails({
   id,
   description,
-  title,
+  ingredients,
+  isPrivate,
   preparationSteps,
   source,
   sourceUrl,
   submittedBy,
   tags,
-  ingredients,
+  title,
   userId,
 }: UpdatableRecipe) {
 
@@ -261,11 +284,12 @@ export async function updateRecipeWithDetails({
   const recipe = await updateRecipe({
     id,
     description,
-    title,
+    isPrivate,
     preparationSteps,
     source,
     sourceUrl,
     submittedBy,
+    title,
   });
   await associateTagsWithRecipe(recipe, tags, userId);
   await associateIngredientsWithRecipe(recipe, ingredients);

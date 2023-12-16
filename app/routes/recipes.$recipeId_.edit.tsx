@@ -1,13 +1,12 @@
 import {
   ActionFunctionArgs,
   LoaderFunctionArgs,
-  json,
 } from "@remix-run/node";
 import { useActionData, useLoaderData, Form } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
-import invariant from "tiny-invariant";
 
 import { recipeAction } from "~/api/recipe-actions";
+import { loadSingleRecipe } from "~/api/recipe-loader";
 import { FormTextAreaInput, FormTextInput } from "~/components/forms";
 import {
   SubmissionStyles,
@@ -15,30 +14,15 @@ import {
 import VisuallyHidden from "~/components/visually-hidden";
 import {
   IngredientFormEntry,
-  getRecipeWithIngredients,
 } from "~/models/recipe.server";
-import { requireUserId } from "~/session.server";
 import {
   createPlaceholderIngredient,
   getDefaultRecipeValues,
 } from "~/utils";
 
-/**
- * This loader is *unique* between recipes.new and recipes.edit
- */
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  const userId = await requireUserId(request);
-  invariant(params.recipeId, "recipeId not found");
 
-  const recipe = await getRecipeWithIngredients({ id: params.recipeId });
-  if (!recipe) {
-    throw new Response("Not Found", { status: 404 });
-  }
-  if (recipe.submittedBy !== userId) {
-    throw new Response("Not Found", { status: 404 });
-  }
-
-  return json({ recipe, userId });
+export const loader = async (args: LoaderFunctionArgs) => {
+  return await loadSingleRecipe({ ...args, mode: "edit" });
 };
 
 export const action = async (actionArgs: ActionFunctionArgs) => {
@@ -54,6 +38,7 @@ export default function NewRecipePage() {
    * recipes.edit */
   const actionData = useActionData<typeof action>();
   const data = useLoaderData<typeof loader>();
+  console.log({ data, actionData });
   const titleRef = useRef<HTMLInputElement>(null);
   const sourceRef = useRef<HTMLInputElement>(null);
   const sourceUrlRef = useRef<HTMLInputElement>(null);
@@ -63,9 +48,9 @@ export default function NewRecipePage() {
   const ingredientRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const defaultValues = getDefaultRecipeValues(data);
-  const [steps, setSteps] = useState<string[]>(defaultValues.preparationSteps ?? []);
+  const [steps, setSteps] = useState<string[]>(Array.isArray(defaultValues.preparationSteps) ? defaultValues.preparationSteps : []);
   const [ingredients, setIngredients] = useState<IngredientFormEntry[]>(
-    defaultValues.ingredients,
+    defaultValues.recipeIngredients,
   );
   const [deletedIngredients, setDeletedIngredients] = useState<
     IngredientFormEntry[]
@@ -282,7 +267,7 @@ export default function NewRecipePage() {
                   <label>
                     Quantity
                     <input
-                      type="number"
+                      type="string"
                       name={`ingredients[${index}][quantity]`}
                       value={String(ingredient.quantity)}
                       className="w-full p-2 border-2 rounded border-blue-500"
@@ -290,7 +275,7 @@ export default function NewRecipePage() {
                         updateIngredient(
                           index,
                           "quantity",
-                          Number(e.target.value),
+                          (e.target.value),
                         )
                       }
                     />
@@ -382,14 +367,14 @@ export default function NewRecipePage() {
                   </td>
                   <td className="">
                     <input
-                      type="number"
+                      type="string"
                       name={`ingredients[${index}][quantity]`}
                       value={String(ingredient.quantity)}
                       onChange={(e) =>
                         updateIngredient(
                           index,
                           "quantity",
-                          Number(e.target.value),
+                          (e.target.value),
                         )
                       }
                     />

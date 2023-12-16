@@ -39,7 +39,7 @@ export function extractIngredientsFromFormData(
   return ingredientEntryData
     .map((ingredient) => ({
       ...ingredient,
-      quantity: Number(ingredient.quantity),
+      quantity: ingredient.quantity,
     }))
     .filter(isNotPlaceholderIngredient);
 }
