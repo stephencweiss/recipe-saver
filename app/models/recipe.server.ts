@@ -10,6 +10,13 @@ import invariant from "tiny-invariant";
 import { prisma } from "~/db.server";
 import { asyncFilter } from "~/utils";
 
+interface PaginationOptions {
+  skip?: number;
+  take?: number;
+};
+
+type Options = PaginationOptions;
+
 /** A composite entry which combines Recipe Ingredients with Ingredients */
 export type CompositeIngredient = Omit<RecipeIngredient, "createdDate"> &
   Omit<Ingredient, "createdDate">;
@@ -34,23 +41,6 @@ type UpdatableRecipe = CreatableRecipe
 export const isUpdatableRecipe = (recipe: CreatableRecipe | UpdatableRecipe): recipe is UpdatableRecipe => {
   if (recipe.id != null && recipe.userId != null) return true;
   return false;
-}
-
-export async function getRecipeDetails({ id }: Pick<Recipe, "id">) {
-  return await prisma.recipe.findFirst({
-    select: {
-      id: true,
-      description: true,
-      isPrivate: true,
-      preparationSteps: true,
-      source: true,
-      sourceUrl: true,
-      submittedBy: true,
-      title: true,
-      user: true,
-    },
-    where: { id },
-  });
 }
 
 export async function getIngredientsForRecipe({ id }: Pick<Recipe, "id">) {
@@ -79,6 +69,23 @@ export async function getIngredientsForRecipe({ id }: Pick<Recipe, "id">) {
     ),
   }));
   return ingredients;
+}
+
+export async function getRecipeDetails({ id }: Pick<Recipe, "id">) {
+  return await prisma.recipe.findFirst({
+    select: {
+      id: true,
+      description: true,
+      isPrivate: true,
+      preparationSteps: true,
+      source: true,
+      sourceUrl: true,
+      submittedBy: true,
+      title: true,
+      user: true,
+    },
+    where: { id },
+  });
 }
 
 export async function getRecipeWithIngredients({ id, requestingUser }: Pick<Recipe, "id"> & { requestingUser?: Pick<User, "id"> }) {
@@ -111,8 +118,65 @@ export async function getRecipeWithIngredients({ id, requestingUser }: Pick<Reci
   return recipe;
 }
 
-export function getSubmittedRecipes({ userId }: { userId: User["id"] }) {
+export interface RecipesResponse {
+  id: string;
+  title: string;
+  description: string | null;
+  user: {
+    id: string;
+    name: string | null;
+    username: string;
+  } | null;
+  rating: number,
+  tags: {
+    id: string;
+    name: string;
+  }[];
+}
+
+/**
+ * Gets all recipes which are not private in a paginated format
+ */
+export async function getRecipes(query: Options): Promise<RecipesResponse[]> {
+  const optionsWithDefaults = {
+    skip: 0,
+    take: 100,
+    ...query,
+  };
+
+  const recipes = await prisma.recipe.findMany({
+    ...optionsWithDefaults,
+    where: { isPrivate: false },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      recipeTags: { select: { tag: { select: { name: true, id: true } } } },
+      recipeRatings: { select: { rating: true } },
+      user: { select: { id: true, name: true, username: true } }
+    },
+    orderBy: { createdDate: "desc" },
+  });
+  return recipes.map((recipe) => ({
+    ...recipe,
+    tags: recipe.recipeTags.map((tag) => tag.tag),
+    rating: recipe.recipeRatings.reduce((acc, cur) => acc + cur.rating, 0) / recipe.recipeRatings.length,
+  }))
+}
+
+/**
+ * Get recipes which have been submitted by a user
+ * Paginated by default to the first 100 recipes
+ */
+export function getSubmittedRecipes({ userId }: { userId: User["id"] }, options?: Options) {
+  const optionsWithDefaults = {
+    skip: 0,
+    take: 100,
+    ...options,
+  };
+
   return prisma.recipe.findMany({
+    ...optionsWithDefaults,
     where: { submittedBy: userId },
     select: { id: true, title: true },
     orderBy: { createdDate: "desc" },
