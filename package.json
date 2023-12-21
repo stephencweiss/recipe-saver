@@ -4,6 +4,11 @@
   "sideEffects": false,
   "scripts": {
     "build": "remix build",
+    "db:gen": "npm run db:format && prisma generate",
+    "db:format": "prisma format",
+    "db:migrate": "prisma migrate dev --name \"$(date +%s)\"",
+    "db:seed": "prisma db seed",
+    "db:studio": "prisma studio",
     "dev": "remix dev -c \"npm run dev:serve\"",
     "dev:serve": "binode --require ./mocks -- @remix-run/serve:remix-serve ./build/index.js",
     "format": "prettier --write .",

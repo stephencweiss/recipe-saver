@@ -51,7 +51,6 @@ describe("extractGenericDataFromFormData", () => {
     formData.append(`${prefix}[2][id]`, "val-2");
     const pattern = /inputName\[(\d+)\]\[(\w+)\]/;
     const result = extractGenericDataFromFormData(formData, prefix, pattern);
-    console.log({ pattern, prefix, result });
     expect(result).toEqual([{ id: "val-1" }, { id: "val-2" }]);
   });
 });

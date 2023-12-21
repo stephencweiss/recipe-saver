@@ -1,5 +1,5 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
+import { redirect } from "@remix-run/node";
 import {
   Form,
   isRouteErrorResponse,
@@ -8,25 +8,13 @@ import {
 } from "@remix-run/react";
 import invariant from "tiny-invariant";
 
+import { loadSingleRecipe } from "~/api/recipe-loader";
 import { List } from "~/components/lists";
-import { deleteRecipe, getRecipeWithIngredients } from "~/models/recipe.server";
+import { deleteRecipe } from "~/models/recipe.server";
 import { requireUserId } from "~/session.server";
-import { isNotPlaceholderIngredient, parsePreparationSteps } from "~/utils";
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  const userId = await requireUserId(request);
-  invariant(params.recipeId, "recipeId not found");
-
-  const rawRecipe = await getRecipeWithIngredients({ id: params.recipeId });
-  const recipe = {
-    ...rawRecipe,
-    ingredients: rawRecipe.ingredients.filter(isNotPlaceholderIngredient) ?? [],
-    preparationSteps: parsePreparationSteps(rawRecipe.preparationSteps ?? ""),
-  };
-  if (!rawRecipe) {
-    throw new Response("Not Found", { status: 404 });
-  }
-  return json({ recipe, userId });
+export const loader = async (args: LoaderFunctionArgs) => {
+  return await loadSingleRecipe({ ...args, mode: "view" });
 };
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
@@ -50,15 +38,20 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 export default function RecipeDetailsPage() {
   const data = useLoaderData<typeof loader>();
 
-  const isUsersRecipe = data.userId === data.recipe.submittedBy;
+  const isUsersRecipe = data.user?.id === data.recipe.submittedBy;
 
-  const parsedIngredients = data.recipe.ingredients.map((ingredient) => {
-    const { quantity, unit, name, note } = ingredient;
-    const q = quantity != null && quantity > 0 ? quantity: "";
-    const u = unit != null && unit != 'null' ? unit : "";
-    const nt = note != null && note != 'null' ? note : "";
-    const nm = name != null && name != 'null' ? name : "";
-    return `${q} ${u} ${nm} ${nt != '' ? `-- ${nt}` : ''}`;
+  const parsedIngredients = data.recipe.recipeIngredients.map((ingredient) => {
+    const {
+      quantity,
+      unit,
+      ingredient: { name },
+      note,
+    } = ingredient;
+    const q = quantity != null && quantity != "null" ? quantity : "";
+    const u = unit != null && unit != "null" ? unit : "";
+    const nt = note != null && note != "null" ? note : "";
+    const nm = name != null && name != "null" ? name : "";
+    return `${q} ${u} ${nm} ${nt != "" ? `-- ${nt}` : ""}`;
   });
   return (
     <div>
@@ -69,10 +62,7 @@ export default function RecipeDetailsPage() {
       />
 
       <List title="Steps" items={data.recipe.preparationSteps} ListType="ol" />
-      <List
-        title="Ingredients"
-        items={parsedIngredients}
-      />
+      <List title="Ingredients" items={parsedIngredients} />
       <h2 className="text-xl font-bold py-4">Additional Details</h2>
       <p className="pb-2">Source: {data.recipe.source || "User Submitted"}</p>
       <p className="pb-2">
@@ -88,25 +78,32 @@ export default function RecipeDetailsPage() {
       <p className="pb-2">Submitted by: {data.recipe.user?.username}</p>
 
       <hr className="my-4" />
-      <Form method="post">
-        <button
-          type="submit"
-          value="edit"
-          name="action"
-          className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400 mr-2"
-          disabled={!isUsersRecipe}
-        >
-          Edit
-        </button>
-        <button
-          type="submit"
-          value="delete"
-          name="action"
-          className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
-        >
-          Delete
-        </button>
-      </Form>
+      {isUsersRecipe ? (
+        <>
+          <Form method="post">
+            <button
+              type="submit"
+              value="edit"
+              name="action"
+              className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400 mr-2 disabled:bg-gray-400"
+              disabled={!isUsersRecipe}
+            >
+              Edit
+            </button>
+            <button
+              type="submit"
+              value="delete"
+              name="action"
+              disabled={!isUsersRecipe}
+              className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400 disabled:bg-gray-400"
+            >
+              Delete
+            </button>
+          </Form>
+        </>
+      ) : (
+        <></>
+      )}
     </div>
   );
 }

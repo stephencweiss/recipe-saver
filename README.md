@@ -66,6 +66,8 @@ While this is not based on the epic-stack, that project has a good write up arti
 The ORM of Prisma manages most of the interface with the database.
 Docs are [here](https://www.prisma.io/docs).
 
+The [Prisma CLI reference is here](https://www.prisma.io/docs/orm/reference/prisma-cli-reference).
+
 Prototyping changes: use `prisma db push`.
 
 #### Connecting to the Database

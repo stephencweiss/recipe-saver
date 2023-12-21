@@ -1,22 +1,68 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import {
-  HamburgerMenuIcon,
-} from "@radix-ui/react-icons";
+import { HamburgerMenuIcon } from "@radix-ui/react-icons";
 import type { LinksFunction } from "@remix-run/node"; // or cloudflare/deno
 import { Link } from "@remix-run/react";
 import { useState } from "react";
 
-import { useUser } from "~/utils";
+import { useOptionalUser } from "~/utils";
 
 import styles from "./styles.css";
 
-export const links: LinksFunction = () => [
-  { rel: "stylesheet", href: styles },
-];
+export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
 
 export function Menu() {
-  const user = useUser();
+  const user = useOptionalUser();
   const [open, setOpen] = useState(false);
+
+  const profileOrLogin = user ? (
+    <DropdownMenu.Item
+      className="
+  group
+  text-xl
+  hover:bg-slate-600
+  hover:text-blue-100
+  leading-none
+  rounded-[3px]
+  flex
+  items-center
+  relative
+  select-none
+  outline-none
+  data-[disabled]:text-mauve8
+  data-[disabled]:pointer-events-none
+  data-[highlighted]:bg-violet9
+  data-[highlighted]:text-violet1"
+    >
+      <Link className="w-full px-4 py-2" to={`/user/${user.id}/profile`}>
+        Profile
+      </Link>
+    </DropdownMenu.Item>
+  ) : (
+    <>
+      <DropdownMenu.Item
+        className="
+            group
+            text-xl
+            hover:bg-slate-600
+            hover:text-blue-100
+            leading-none
+            rounded-[3px]
+            flex
+            items-center
+            relative
+            select-none
+            outline-none
+            data-[disabled]:text-mauve8
+            data-[disabled]:pointer-events-none
+            data-[highlighted]:bg-violet9
+            data-[highlighted]:text-violet1"
+      >
+        <Link className="w-full px-4 py-2" to="/login">
+          Log In
+        </Link>
+      </DropdownMenu.Item>
+    </>
+  );
   return (
     <DropdownMenu.Root open={open} onOpenChange={() => setOpen(!open)}>
       <DropdownMenu.Trigger asChild>
@@ -65,8 +111,8 @@ export function Menu() {
             data-[highlighted]:bg-violet9
             data-[highlighted]:text-violet1"
           >
-            <Link className="w-full px-4 py-2" to="/recipes">
-              Recipes
+            <Link className="w-full px-4 py-2" to="/explore">
+              Explore
             </Link>
           </DropdownMenu.Item>
           <DropdownMenu.Item
@@ -87,11 +133,11 @@ export function Menu() {
             data-[highlighted]:bg-violet9
             data-[highlighted]:text-violet1"
           >
-            <Link className="w-full px-4 py-2" to={`/user/${user.id}/profile`}>
-              Profile
+            <Link className="w-full px-4 py-2" to="/recipes">
+              Recipes
             </Link>
           </DropdownMenu.Item>
-
+          {profileOrLogin}
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>

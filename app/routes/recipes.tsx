@@ -1,19 +1,18 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { LinksFunction } from "@remix-run/node";
+import { json, LinksFunction } from "@remix-run/node";
 import { Link, NavLink, Outlet, useLoaderData } from "@remix-run/react";
 import { useEffect, useState } from "react";
 
 import Layout, { links as layoutLinks } from "~/components/layout";
 import { getSubmittedRecipes } from "~/models/recipe.server";
-import { requireUserId } from "~/session.server";
+import { getUser } from "~/session.server";
 
 export const links: LinksFunction = () => [...layoutLinks()];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const userId = await requireUserId(request);
-  const recipes = await getSubmittedRecipes({ userId });
-  return json({ recipes });
+  const user = await getUser(request);
+  const recipes = user ? await getSubmittedRecipes({ userId: user.id }) : [];
+  return json({ recipes, user });
 };
 
 export default function RecipesPage() {
@@ -29,7 +28,7 @@ export default function RecipesPage() {
     const regExp = new RegExp(search, "i");
     const filteredNotes = data.recipes.filter((i) => regExp.test(i.title));
     setState(filteredNotes);
-  }, [search.length, search, data.recipes]);
+  }, [search.length, search, data?.recipes]);
 
   const handleSearch = (value: string) => setSearch(value);
 
@@ -40,39 +39,52 @@ export default function RecipesPage() {
           <Link to="new" className="block p-4 text-xl text-blue-500">
             + New Recipe
           </Link>
-
           <hr />
-          <input
-            className="block p-4 w-full text-xl"
-            onChange={(e) => handleSearch(e.target.value)}
-            placeholder="Search..."
-          />
-          <hr />
+          {data.user ? (
+            <>
+              <input
+                className="block p-4 w-full text-xl"
+                onChange={(e) => handleSearch(e.target.value)}
+                placeholder="Search..."
+              />
+              <hr />
 
-          <div className="flex-1">
-            {state.length === 0 ? (
-              <p className="p-4">No recipes yet</p>
-            ) : (
-              <ol>
-                {state.map((recipe) => (
-                  <li key={recipe.id}>
-                    <NavLink
-                      className={({ isActive }) =>
-                        `block border-b p-4 text-xl ${
-                          isActive ? "bg-blue-500" : ""
-                        }`
-                      }
-                      to={recipe.id}
-                    >
-                      📝 {recipe.title}
-                    </NavLink>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </div>
+              <div className="flex-1">
+                {state.length === 0 ? (
+                  <p className="p-4">No recipes yet</p>
+                ) : (
+                  <ol>
+                    {state.map((recipe) => (
+                      <li key={recipe.id}>
+                        <NavLink
+                          className={({ isActive }) =>
+                            `block border-b p-4 text-xl ${
+                              isActive ? "bg-blue-500" : ""
+                            }`
+                          }
+                          to={recipe.id}
+                        >
+                          📝 {recipe.title}
+                        </NavLink>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="flex-1">
+              <p className="block p-4 w-full text-xl">
+                Sign in to see your recipes here!
+              </p>
+              <div className="flex justify-center gap-4">
+                <Link className="block p-4 text-xl text-blue-500" to="/join">Sign Up</Link>
+
+                <Link className="block p-4 text-xl text-blue-500" to="/login">Login</Link>
+              </div>
+            </div>
+          )}
         </div>
-
         <div className="flex-1 p-6">
           <Outlet />
         </div>
