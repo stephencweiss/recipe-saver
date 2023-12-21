@@ -61,7 +61,7 @@ const RecipeCard = ({
           </span>
         </div>
         <div className="px-4 pb-4">
-          <span className="text-gray-700 text-base p-4">Rating: {rating}</span>
+          <span className="text-gray-700 text-base p-4">Rating: {rating? rating : "Not yet rated!"}</span>
         </div>
       </div>
     </Link>
