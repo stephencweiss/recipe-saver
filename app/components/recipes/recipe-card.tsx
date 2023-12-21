@@ -8,7 +8,21 @@ interface RecipeCardProps {
   submitter: string;
   tags: string[];
   title: string;
+  options?: {
+    maxDescriptionLength?: number;
+  }
 }
+
+const getTruncatedDescription = ( description: string, maxDescriptionLength: number) => {
+  if (!description) {
+    return "No Description";
+  }
+  if (description.length > maxDescriptionLength) {
+    return `${description?.substring(0, maxDescriptionLength)}...`;
+  }
+
+  return description;
+};
 
 const RecipeCard = ({
   id,
@@ -18,13 +32,19 @@ const RecipeCard = ({
   submitter,
   tags,
   title,
+  options = {},
 }: RecipeCardProps) => {
+  const { maxDescriptionLength } = options;
+  const finalDescription = maxDescriptionLength
+    ? getTruncatedDescription(description, maxDescriptionLength)
+    : description;
+
   return (
     <Link to={`/recipes/${id}`} className="no-underline">
       <div className="max-w-sm rounded overflow-hidden shadow-lg m-4 bg-white flex flex-col">
         <h2 className="text-xl font-bold p-4">{title}</h2>
         <img className="w-full" src={image} alt={title} />
-        <p className="text-gray-700 text-base p-4">{description}</p>
+        <p className="text-gray-700 text-base p-4">{finalDescription}</p>
         <div className="px-4 py-4">
           {tags.map((tag, index) => (
             <span
