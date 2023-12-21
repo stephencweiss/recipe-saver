@@ -56,6 +56,14 @@ export default function Index() {
                   </div>
                 )}
               </div>
+              <div className="mx-auto mt-10 max-w-sm sm:flex sm:max-w-none sm:justify-center gap-x-4">
+                  <Link
+                    to="/explore"
+                    className="flex items-center justify-center rounded-md border border-transparent bg-yellow-500 px-4 py-3 text-base font-medium text-white shadow-sm hover:bg-yellow-600 sm:px-8"
+                  >
+                    Explore
+                  </Link>
+                </div>
               <h2 className="pt-16 text-center text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
                 <span className="block uppercase text-yellow-500 drop-shadow-md">
                   Eat well. Make memories.

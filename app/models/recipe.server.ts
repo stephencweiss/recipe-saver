@@ -88,7 +88,9 @@ export async function getRecipeDetails({ id }: Pick<Recipe, "id">) {
   });
 }
 
-export async function getRecipeWithIngredients({ id, requestingUser }: Pick<Recipe, "id"> & { requestingUser?: Pick<User, "id"> }) {
+export interface GetRecipeWithIngredientsArgs extends Pick<Recipe, "id"> {requestingUser?: Partial<Pick<User, "id">>}
+
+export async function getRecipeWithIngredients({ id, requestingUser }: GetRecipeWithIngredientsArgs) {
   const recipe = await prisma.recipe.findFirst({
     select: {
       id: true,

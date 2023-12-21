@@ -39,7 +39,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 export default function RecipeDetailsPage() {
   const data = useLoaderData<typeof loader>();
 
-  const isUsersRecipe = data.userId === data.recipe.submittedBy;
+  const isUsersRecipe = data.user?.id === data.recipe.submittedBy;
 
   const parsedIngredients = data.recipe.recipeIngredients.map((ingredient) => {
     const { quantity, unit, ingredient: {name}, note } = ingredient;
