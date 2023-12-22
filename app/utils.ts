@@ -1,4 +1,4 @@
-import { Ingredient, Recipe } from "@prisma/client";
+import { Recipe, RecipeIngredient } from "@prisma/client";
 import { useMatches } from "@remix-run/react";
 import { useMemo } from "react";
 
@@ -35,7 +35,7 @@ export function safeRedirect(
  * parsePreparationSteps takes a stringified Array and converts it into a JS Array
  * Removes empty strings from the array
  */
-export const parsePreparationSteps = (steps: string): string[] => {9
+export const parsePreparationSteps = (steps: string): string[] => {
   const parsedSteps = JSON.parse(steps);
   if (!Array.isArray(parsedSteps)) {
     return [];
@@ -44,16 +44,18 @@ export const parsePreparationSteps = (steps: string): string[] => {9
 };
 
 export const createPlaceholderIngredient = () => ({
+  id: `placeholder-${Date.now().toString()}`,
   name: "",
-  quantity: '0',
+  quantity: "",
   unit: "",
   note: "",
+  isDeleted: false
 });
 
 /** Predicate to determine if an ingredient is the placeholder ingredient */
 export const isNotPlaceholderIngredient = (
   ingredient: IngredientFormEntry,
-): boolean => {
+): ingredient is IngredientFormEntry => {
   const placeholderIngredient = createPlaceholderIngredient();
   return !(
     ingredient.name === placeholderIngredient.name &&
@@ -162,8 +164,8 @@ export function extractGenericDataFromFormData<
 
 const isFullRecipe = (
   data: unknown,
-): data is { recipe: Recipe & { recipeIngredients: Ingredient[] } } => {
-  const typedData = data as { recipe: (Recipe & { recipeIngredients: Ingredient[] })};
+): data is { recipe: Recipe & { recipeIngredients: RecipeIngredient[] } } => {
+  const typedData = data as { recipe: (Recipe & { recipeIngredients: RecipeIngredient[] })};
   const isFull = Boolean(typedData?.recipe && Array.isArray(typedData?.recipe.recipeIngredients));
   return isFull;
 };
@@ -173,11 +175,13 @@ export const getDefaultRecipeValues = (data: unknown) => {
     return {
       id: data.recipe.id,
       title: data.recipe.title,
+      prepTime: data.recipe.prepTime ?? "",
+      cookTime: data.recipe.cookTime ?? "",
       description: data.recipe.description ?? "",
       source: data.recipe.source ?? "",
       sourceUrl: data.recipe.sourceUrl ?? "",
       preparationSteps: data.recipe.preparationSteps ?? [''],
-      recipeIngredients: data.recipe.recipeIngredients ?? [createPlaceholderIngredient()],
+      recipeIngredients: data.recipe.recipeIngredients.map(i=> ({...i, isDeleted: false})) ?? [createPlaceholderIngredient()],
     };
   }
   return {

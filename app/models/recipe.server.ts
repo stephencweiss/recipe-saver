@@ -3,12 +3,11 @@ import {
   type Recipe,
   type RecipeIngredient,
   type Tag,
-  type Ingredient,
+
 } from "@prisma/client";
 import invariant from "tiny-invariant";
 
 import { prisma } from "~/db.server";
-import { asyncFilter } from "~/utils";
 
 interface PaginationOptions {
   skip?: number;
@@ -18,15 +17,14 @@ interface PaginationOptions {
 type Options = PaginationOptions;
 
 /** A composite entry which combines Recipe Ingredients with Ingredients */
-export type CompositeIngredient = Omit<RecipeIngredient, "createdDate"> &
-  Omit<Ingredient, "createdDate">;
+export type CompositeIngredient = Omit<RecipeIngredient, "createdDate">
 
 /** Used for User Inputs where data may be partial */
-export type IngredientFormEntry = Partial<CompositeIngredient>;
+export type IngredientFormEntry = Partial<CompositeIngredient> & { isDeleted: boolean };
 
 /** Used for creating a new recipe */
 export type CreatableRecipe = Omit<Recipe, "id" | "createdDate" | "updatedDate" | "preparationSteps">
-  & { ingredients: IngredientFormEntry[] }
+  & { ingredients: Omit<IngredientFormEntry, "isDeleted">[] }
   & { preparationSteps: string[] }
   & { tags: Pick<Tag, 'name'>[] }
   & { id?: Recipe["id"] }
@@ -44,31 +42,16 @@ export const isUpdatableRecipe = (recipe: CreatableRecipe | UpdatableRecipe): re
 }
 
 export async function getIngredientsForRecipe({ id }: Pick<Recipe, "id">) {
-  const ingredientsDetails = await prisma.recipeIngredient.findMany({
+  return await prisma.recipeIngredient.findMany({
     select: {
       recipeId: true,
-      ingredientId: true,
+      name: true,
       quantity: true,
       unit: true,
       note: true,
     },
     where: { recipeId: id },
   });
-  const ingredientNames = await prisma.ingredient.findMany({
-    select: { id: true, name: true },
-    where: {
-      id: {
-        in: ingredientsDetails.map((ingredient) => ingredient.ingredientId),
-      },
-    },
-  });
-  const ingredients = ingredientNames.map((iName) => ({
-    ...iName,
-    ...ingredientsDetails.find(
-      (ingredient) => ingredient.ingredientId === iName.id,
-    ),
-  }));
-  return ingredients;
 }
 
 export async function getRecipeDetails({ id }: Pick<Recipe, "id">) {
@@ -88,7 +71,7 @@ export async function getRecipeDetails({ id }: Pick<Recipe, "id">) {
   });
 }
 
-export interface GetRecipeWithIngredientsArgs extends Pick<Recipe, "id"> {requestingUser?: Partial<Pick<User, "id">>}
+export interface GetRecipeWithIngredientsArgs extends Pick<Recipe, "id"> { requestingUser?: Partial<Pick<User, "id">> }
 
 export async function getRecipeWithIngredients({ id, requestingUser }: GetRecipeWithIngredientsArgs) {
   const recipe = await prisma.recipe.findFirst({
@@ -99,8 +82,8 @@ export async function getRecipeWithIngredients({ id, requestingUser }: GetRecipe
       preparationSteps: true,
       recipeIngredients: {
         select: {
-          ingredient: true,
-          ingredientId: true,
+          id: true,
+          name: true,
           note: true,
           quantity: true,
           unit: true,
@@ -184,34 +167,41 @@ export function getSubmittedRecipes({ userId }: { userId: User["id"] }, options?
     orderBy: { createdDate: "desc" },
   });
 }
-
-async function upsertIngredient({
-  id,
-  name,
-}: Pick<Ingredient, "name"> & Partial<Ingredient>) {
-  return await prisma.ingredient.upsert({
-    where: { id },
-    update: { name },
-    create: { name },
-  });
-}
-
-async function upsertRecipeIngredient({
+async function createRecipeIngredient({
   recipeId,
-  ingredientId,
+  name,
   quantity,
   unit,
   note,
-}: Pick<RecipeIngredient, "recipeId" | "ingredientId"> &
+}: Pick<RecipeIngredient, "recipeId" | "name"> &
   Partial<RecipeIngredient>) {
-  return await prisma.recipeIngredient.upsert({
-    where: { recipeId_ingredientId: { recipeId, ingredientId } },
-    update: { quantity, unit, note },
-    create: {
+  return await prisma.recipeIngredient.create({
+    data: {
+      recipeId,
+      name,
       quantity,
       unit,
       note,
-      ingredient: { connect: { id: ingredientId } },
+    },
+  });
+}
+async function upsertRecipeIngredient({
+  recipeId,
+  id,
+  name,
+  quantity,
+  unit,
+  note,
+}: Pick<RecipeIngredient, "id" | "recipeId" | "name"> &
+  Partial<RecipeIngredient>) {
+  return await prisma.recipeIngredient.upsert({
+    where: { id },
+    update: { name, quantity, unit, note, updatedDate: new Date() },
+    create: {
+      quantity,
+      name,
+      unit,
+      note,
       recipe: { connect: { id: recipeId } },
     },
   });
@@ -219,55 +209,53 @@ async function upsertRecipeIngredient({
 
 async function associateIngredientsWithRecipe(
   recipe: Pick<Recipe, "id">,
-  ingredients: Partial<CompositeIngredient>[],
+  ingredients: Partial<IngredientFormEntry>[],
 ) {
   return await Promise.all(
-    ingredients.map(async (ingredient) => {
-      const { id, name, quantity, unit, note } = ingredient;
+    ingredients.map(async (compositeIngredient) => {
+      const { id, name, quantity, unit, note } = compositeIngredient;
       invariant(name, "Ingredient name is required");
-      // Add ingredients to global list
-      const updatedIngredient = await upsertIngredient({ id, name });
+
+      if (!id) {
+        // Create new ingredient
+        return await createRecipeIngredient({
+          recipeId: recipe.id,
+          name,
+          quantity,
+          unit,
+          note,
+        });
+      }
+
       // Associate ingredients with recipe
       const recipeIngredient = await upsertRecipeIngredient({
         recipeId: recipe.id,
-        ingredientId: updatedIngredient.id,
+        id,
+        name,
         quantity,
         unit,
         note,
       });
-      return { ingredient, recipeIngredient };
+      return { ingredient: compositeIngredient, recipeIngredient };
     }),
   );
 }
 
 async function deleteRecipeIngredients(
   recipe: Pick<Recipe, "id">,
-  ingredients: Pick<Ingredient, "id">[],
+  ingredients: Pick<RecipeIngredient, "id">[],
 ) {
   const ingredientIds = ingredients.map((ingredient) => ingredient.id);
   return prisma.recipeIngredient.deleteMany({
-    where: { recipeId: recipe.id, ingredientId: { in: ingredientIds } },
+    where: { recipeId: recipe.id, id: { in: ingredientIds } },
   });
-}
-
-async function deleteOrphanedIngredients(
-  ingredients: Pick<Ingredient, "id">[],
-) {
-  const ingredientIds = ingredients.map((ingredient) => ingredient.id);
-  const orphans = await asyncFilter(
-    ingredientIds,
-    async (ingredientId: string) =>
-      !(await prisma.recipeIngredient.findFirst({ where: { ingredientId } })),
-  );
-  return prisma.ingredient.deleteMany({ where: { id: { in: orphans } } });
 }
 
 export async function disassociateIngredientsFromRecipe(
   recipe: Pick<Recipe, "id">,
-  ingredientIds: Pick<Ingredient, "id">[],
+  ingredientIds: Pick<RecipeIngredient, "id">[],
 ) {
   await deleteRecipeIngredients(recipe, ingredientIds);
-  await deleteOrphanedIngredients(ingredientIds);
 }
 
 async function upsertTags(tags: Tag[]) {
@@ -336,6 +324,10 @@ export async function updateRecipeWithDetails({
   submittedBy,
   tags,
   title,
+  cookTime,
+  prepTime,
+  recipeYield,
+  totalTime,
   userId,
 }: UpdatableRecipe) {
 
@@ -349,6 +341,10 @@ export async function updateRecipeWithDetails({
 
   const recipe = await updateRecipe({
     id,
+    cookTime,
+    prepTime,
+    recipeYield,
+    totalTime,
     description,
     isPrivate,
     preparationSteps,
@@ -388,19 +384,19 @@ export async function createRecipe({
     }),
   );
 
-  // Add ingredients to global list
-  const insertedIngredients = await Promise.all(
-    ingredients.map(async ({ name }) => {
-      const ingredient = await prisma.ingredient.findUnique({
-        where: { name },
-      });
-      if (ingredient) {
-        return ingredient;
-      }
-      if (!name) throw new Error("Ingredient name is required");
-      return await prisma.ingredient.create({ data: { name } });
-    }),
-  );
+  // // Add ingredients to global list
+  // const insertedIngredients = await Promise.all(
+  //   ingredients.map(async ({ name }) => {
+  //     const ingredient = await prisma.ingredient.findUnique({
+  //       where: { name },
+  //     });
+  //     if (ingredient) {
+  //       return ingredient;
+  //     }
+  //     if (!name) throw new Error("Ingredient name is required");
+  //     return await prisma.ingredient.create({ data: { name } });
+  //   }),
+  // );
 
   const recipe = await prisma.recipe.create({
     data: {
@@ -426,23 +422,7 @@ export async function createRecipe({
     }),
   );
 
-  await Promise.all(
-    insertedIngredients.map((ingredient) => {
-      const ingredientObj = ingredients.find(
-        (obj) => obj.name === ingredient.name,
-      );
-      return prisma.recipeIngredient.create({
-        data: {
-          recipeId: recipe.id,
-          ingredientId: ingredient.id,
-          quantity: ingredientObj?.quantity ?? null,
-          unit: ingredientObj?.unit ?? null,
-          note: ingredientObj?.note ?? null,
-        },
-      });
-    }),
-  );
-
+  await associateIngredientsWithRecipe(recipe, ingredients);
   return recipe;
 }
 

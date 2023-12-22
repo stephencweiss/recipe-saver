@@ -5,10 +5,10 @@ import { useEffect, useRef, useState } from "react";
 import { recipeAction } from "~/api/recipe-actions";
 import { FormTextAreaInput, FormTextInput } from "~/components/forms";
 import { SubmissionStyles } from "~/components/recipes";
+import { useIngredientsForm } from "~/components/recipes/use-ingredients-form";
 import { useModeSwitcher } from "~/components/recipes/use-mode-switcher";
 import VisuallyHidden from "~/components/visually-hidden";
-import { IngredientFormEntry } from "~/models/recipe.server";
-import { createPlaceholderIngredient, getDefaultRecipeValues } from "~/utils";
+import { getDefaultRecipeValues } from "~/utils";
 
 /**
  * This loader is *unique* between recipes.new and recipes.edit
@@ -32,45 +32,20 @@ export default function NewRecipePage() {
   const actionData = useActionData<typeof action>();
   const data = useLoaderData<typeof loader>();
   const titleRef = useRef<HTMLInputElement>(null);
+  const prepTimeRef = useRef<HTMLInputElement>(null);
+  const cookTimeRef = useRef<HTMLInputElement>(null);
   const sourceRef = useRef<HTMLInputElement>(null);
   const sourceUrlRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const prepStepsRef = useRef<HTMLDivElement>(null);
-  const stepsRefs = useRef<HTMLInputElement[]>([]);
+  const stepsRefs = useRef<HTMLTextAreaElement[]>([]);
   const ingredientRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const [steps, setSteps] = useState<string[]>([""]);
   const defaultValues = getDefaultRecipeValues(data);
-  const [ingredients, setIngredients] = useState<IngredientFormEntry[]>(
+  const { ingredients, renderIngredients } = useIngredientsForm(
     defaultValues.recipeIngredients,
   );
-  const [deletedIngredients, setDeletedIngredients] = useState<
-    IngredientFormEntry[]
-  >([]);
-
-  const addIngredient = () => {
-    setIngredients([...ingredients, createPlaceholderIngredient()]);
-    // Ensure the refs array has the same length as the ingredients array
-    ingredientRefs.current = [...ingredientRefs.current, null];
-  };
-
-  const updateIngredient = <K extends keyof IngredientFormEntry>(
-    index: number,
-    field: K,
-    value: IngredientFormEntry[K],
-  ) => {
-    const newIngredients = [...ingredients];
-    const ingredient = newIngredients[index];
-    ingredient[field] = value;
-    setIngredients(newIngredients);
-  };
-
-  const deleteIngredient = (index: number) => {
-    const newIngredients = [...ingredients];
-    const deletedIngredient = newIngredients.splice(index, 1);
-    setDeletedIngredients([...deletedIngredients, ...deletedIngredient]);
-    setIngredients(newIngredients);
-  };
 
   function addStep() {
     setSteps([...steps, ""]);
@@ -176,8 +151,7 @@ export default function NewRecipePage() {
           <div id="stepsList" ref={prepStepsRef}>
             {steps.map((step, index) => (
               <div key={index} className="flex w-full flex-row gap-2 pt-2">
-                <input
-                  type="text"
+                <textarea
                   className="grow rounded-md border-2 border-blue-500 px-3 text-lg leading-loose"
                   name={`steps[${index}]`}
                   placeholder="Describe the step"
@@ -209,210 +183,24 @@ export default function NewRecipePage() {
         </div>
       </fieldset>
 
-      <fieldset>
-        <VisuallyHidden>
-          <legend>{`${"Deleted Ingredients".toUpperCase()}`}</legend>
-
-          {deletedIngredients.map((ingredient, index) => (
-            <input
-              key={ingredient.id}
-              name={`deletedIngredients[${index}][id]`}
-              value={ingredient.id}
-            />
-          ))}
-        </VisuallyHidden>
-      </fieldset>
-
-      <fieldset>
-        {/* Mobile friendly layout */}
-        <div className="md:hidden">
-          <legend>{`${"Ingredients".toUpperCase()}`}</legend>
-          <div className="border-b border-gray-200 flex flex-col gap-2">
-            {ingredients.map((ingredient, index) => (
-              <div key={index}>
-                <input
-                  type="hidden"
-                  name={`ingredients[${index}][id]`}
-                  value={ingredient.id}
-                />
-                <div>
-                  <label className="font-bold">
-                    Name
-                    <input
-                      id={`ingredient-name-${index}`}
-                      type="text"
-                      name={`ingredients[${index}][name]`}
-                      value={ingredient.name}
-                      className="w-full p-2 border-2 rounded border-blue-500"
-                      onChange={(e) =>
-                        updateIngredient(index, "name", e.target.value)
-                      }
-                      /** The element is sometimes null.
-                       * Skipping / returning null in these cases does not affect
-                       * functionality. */
-                      ref={(el) =>
-                        !el ? null : (ingredientRefs.current[index] = el)
-                      }
-                    />
-                  </label>
-                  <label>
-                    Quantity
-                    <input
-                      type="string"
-                      name={`ingredients[${index}][quantity]`}
-                      value={String(ingredient.quantity)}
-                      className="w-full p-2 border-2 rounded border-blue-500"
-                      onChange={(e) =>
-                        updateIngredient(
-                          index,
-                          "quantity",
-                          e.target.value,
-                        )
-                      }
-                    />
-                  </label>
-                  <label>
-                    Unit
-                    <input
-                      type="text"
-                      name={`ingredients[${index}][unit]`}
-                      value={String(ingredient.unit)}
-                      className="w-full p-2 border-2 rounded border-blue-500"
-                      onChange={(e) =>
-                        updateIngredient(index, "unit", e.target.value)
-                      }
-                    />
-                  </label>
-                  <label>
-                    Notes
-                    <textarea
-                      rows={4}
-                      name={`ingredients[${index}][note]`}
-                      value={String(ingredient.note)}
-                      className="w-full p-2 border-2 rounded border-blue-500"
-                      onChange={(e) =>
-                        updateIngredient(index, "note", e.target.value)
-                      }
-                    />
-                  </label>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => deleteIngredient(index)}
-                    className="flex-1 rounded bg-red-500 px-4 py-2 text-white hover:bg-red-600 focus:bg-red-400"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={addIngredient}
-              className="flex-1 rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
-            >
-              Add another ingredient
-            </button>
-          </div>
-        </div>
-        <div className="hidden md:block">
-          <legend>{`${"Ingredients".toUpperCase()}`}</legend>
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Quantity</th>
-                <th>Unit</th>
-                <th>Notes</th>
-              </tr>
-            </thead>
-            <tbody className="">
-              {ingredients.map((ingredient, index) => (
-                <tr key={index}>
-                  <td className="">
-                    <VisuallyHidden>
-                      <label>
-                        Ingredient ID&nbsp;
-                        <input
-                          readOnly={true}
-                          name={`ingredients[${index}][id]`}
-                          value={ingredient.id}
-                        />
-                      </label>
-                    </VisuallyHidden>
-                    <input
-                      type="text"
-                      name={`ingredients[${index}][name]`}
-                      value={ingredient.name}
-                      onChange={(e) =>
-                        updateIngredient(index, "name", e.target.value)
-                      }
-                      /** The element is sometimes null.
-                       * Skipping / returning null in these cases does not affect
-                       * functionality. */
-                      ref={(el) =>
-                        !el ? null : (ingredientRefs.current[index] = el)
-                      }
-                    />
-                  </td>
-                  <td className="">
-                    <input
-                      type="string"
-                      name={`ingredients[${index}][quantity]`}
-                      value={String(ingredient.quantity)}
-                      onChange={(e) =>
-                        updateIngredient(
-                          index,
-                          "quantity",
-                          e.target.value,
-                        )
-                      }
-                    />
-                  </td>
-                  <td className="">
-                    <input
-                      type="text"
-                      name={`ingredients[${index}][unit]`}
-                      value={String(ingredient.unit)}
-                      onChange={(e) =>
-                        updateIngredient(index, "unit", e.target.value)
-                      }
-                    />
-                  </td>
-                  <td className="">
-                    <input
-                      type="text"
-                      name={`ingredients[${index}][note]`}
-                      value={String(ingredient.note)}
-                      onChange={(e) =>
-                        updateIngredient(index, "note", e.target.value)
-                      }
-                    />
-                  </td>
-                  <td className="">
-                    <button
-                      type="button"
-                      className="rounded bg-red-500 px-4 py-2 text-white hover:bg-red-600 focus:bg-red-400"
-                      onClick={() => deleteIngredient(index)}
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <button
-            type="button"
-            onClick={addIngredient}
-            className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
-          >
-            Add another ingredient
-          </button>
-        </div>
-      </fieldset>
+      {renderIngredients}
       {/* tags: [] */}
+
+      <FormTextInput
+        forwardRef={prepTimeRef}
+        name="prepTime"
+        placeholder="1h30m"
+        error={actionData?.errors.prepTime}
+        defaultValue={defaultValues.prepTime}
+      />
+
+      <FormTextInput
+        forwardRef={cookTimeRef}
+        name="cookTime"
+        placeholder="1h30m"
+        error={actionData?.errors.cookTime}
+        defaultValue={defaultValues.cookTime}
+      />
 
       <FormTextInput
         forwardRef={sourceRef}

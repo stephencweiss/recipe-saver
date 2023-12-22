@@ -1,6 +1,6 @@
 import { ActionFunctionArgs, redirect } from "@remix-run/node";
 
-import { SUPPORTED_SUBMISSION_STYLES, SubmissionStyles, createJSONErrorResponse, extractDeletedIngredientIdsFromFormData, extractIngredientsFromFormData } from "~/components/recipes";
+import { SUPPORTED_SUBMISSION_STYLES, SubmissionStyles, createJSONErrorResponse, extractIngredientsFromFormData } from "~/components/recipes";
 import { parseRecipeSite } from "~/models/parse.server";
 import { CreatableRecipe, createRecipe, disassociateIngredientsFromRecipe, isUpdatableRecipe, updateRecipeWithDetails } from "~/models/recipe.server";
 import { requireUserId } from "~/session.server";
@@ -66,7 +66,7 @@ const handleCreateFromUrl = async (sourceUrl: string, userId: string) => {
 
   const parsedRecipe = await parseRecipeSite(sourceUrl ?? '');
 
-  const recipe = await createRecipe({...parsedRecipe, submittedBy: userId});
+  const recipe = await createRecipe({ ...parsedRecipe, submittedBy: userId });
   return redirect(`/recipes/${recipe.id}`);
 }
 
@@ -84,11 +84,21 @@ export async function recipeAction({ request }: ActionFunctionArgs) {
     );
   }
 
+  const ingredientEntryData = extractIngredientsFromFormData(formData)
+  console.log(JSON.stringify(ingredientEntryData,null,4))
+  const ingredients = ingredientEntryData.filter(i => !i.isDeleted);
+  const deletedIngredientsIds = ingredientEntryData.filter(i => i.isDeleted).filter((i): i is { id: string, isDeleted: boolean } => i.id != null).map(i => ({ id: i.id }));
+
+  console.log(JSON.stringify({ ingredients, deletedIngredientsIds },null,4))
   // TODO: Support tags
   const partialRecipe: CreatableRecipe = {
+    cookTime: String(formData.get("cookTime")),
+    prepTime: String(formData.get("prepTime")),
+    recipeYield: String(formData.get("recipeYield")),
+    totalTime: String(formData.get("totalTime")),
     description: String(formData.get("description")),
     id: String(formData.get("recipeId")),
-    ingredients: extractIngredientsFromFormData(formData),
+    ingredients,
     preparationSteps: Array.from(formData.keys())
       .filter((k) => k.startsWith("steps["))
       .map((k) => String(formData.get(k))),
@@ -101,8 +111,6 @@ export async function recipeAction({ request }: ActionFunctionArgs) {
     userId: userId,
   };
 
-  const deletedIngredientIds = extractDeletedIngredientIdsFromFormData(formData);
-
   switch (formData.get("submissionType")) {
     case "create-manual": {
       return handleCreateManual(partialRecipe);
@@ -111,7 +119,7 @@ export async function recipeAction({ request }: ActionFunctionArgs) {
       return handleCreateFromUrl(String(formData.get("sourceUrl")), userId);
     }
     case "edit": {
-      return handleEdit(partialRecipe, deletedIngredientIds);
+      return handleEdit(partialRecipe, deletedIngredientsIds);
     }
     default:
       return createJSONErrorResponse("global", "Unknown submission type");

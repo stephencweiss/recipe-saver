@@ -11,6 +11,8 @@ export const createJSONErrorResponse = (
     source: null,
     sourceUrl: null,
     preparationSteps: null,
+    prepTime: null,
+    cookTime: null,
     ingredients: null,
   };
   return json(

@@ -1,5 +1,5 @@
 import { json } from "@remix-run/node";
-import { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "@remix-run/node";
 import invariant from "tiny-invariant";
 
 import { GetRecipeWithIngredientsArgs, getRecipeWithIngredients } from "~/models/recipe.server";
@@ -29,7 +29,7 @@ export async function loadSingleRecipe({ params, request, mode }: LoaderFunction
 
   const recipe = {
     ...rawRecipe,
-    recipeIngredients: rawRecipe?.recipeIngredients.filter(isNotPlaceholderIngredient) ?? [],
+    recipeIngredients: rawRecipe?.recipeIngredients.map(r => ({ ...r, isDeleted: false })).filter(isNotPlaceholderIngredient) ?? [],
     preparationSteps: parsePreparationSteps(rawRecipe.preparationSteps ?? ""),
   };
   return json({ recipe, user })

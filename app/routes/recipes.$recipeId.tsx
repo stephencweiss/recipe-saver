@@ -10,6 +10,7 @@ import invariant from "tiny-invariant";
 
 import { loadSingleRecipe } from "~/api/recipe-loader";
 import { List } from "~/components/lists";
+import { useKeyboard } from "~/components/use-keyboard";
 import { deleteRecipe } from "~/models/recipe.server";
 import { requireUserId } from "~/session.server";
 
@@ -38,13 +39,14 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 export default function RecipeDetailsPage() {
   const data = useLoaderData<typeof loader>();
 
+  useKeyboard("e", "edit", `/recipes/${data.recipe.id}`);
   const isUsersRecipe = data.user?.id === data.recipe.submittedBy;
 
   const parsedIngredients = data.recipe.recipeIngredients.map((ingredient) => {
     const {
       quantity,
       unit,
-      ingredient: { name },
+      name,
       note,
     } = ingredient;
     const q = quantity != null && quantity != "null" ? quantity : "";

@@ -28,6 +28,9 @@ async function parseNYTCooking(url: string) {
     }
   }
 
+  // TODO: pull out prepTime, cookTime, totalTime, recipeYield
+  console.log('NYT Cooking recipe data', jsonData)
+
   const tagSet = new Set<string>();
   (jsonData.keywords?.split(',') ?? []).forEach((tag: string) => tagSet.add(tag.trim()));
   (jsonData.cuisine?.split(',') ?? []).forEach((tag: string) => tagSet.add(tag.trim()));
@@ -47,6 +50,11 @@ async function parseNYTCooking(url: string) {
   }).filter((step: string) => step != null);
 
   const creatableRecipe: Omit<CreatableRecipe, 'submittedBy'> = {
+    cookTime: jsonData.cookTime,
+    prepTime: jsonData.prepTime,
+    recipeYield: jsonData.recipeYield,
+    totalTime: jsonData.totalTime,
+
     title: jsonData.name,
     description: jsonData.description,
     ingredients,
@@ -78,7 +86,7 @@ function testUrl(url: string, domain: string) {
 function extractQuantityUnit(ingredient:string) {
   let quantity = "";
   let unit = "";
-  const parts = ingredient.split(" ");
+  const parts = (ingredient ?? '').split(" ");
   for (let i = 0; i < parts.length; i++) {
       if (!isNaN(parseInt(parts[i].replace('/', ''))) || !isNaN(parseFloat(parts[i]))) {
           quantity = parts[i];
@@ -93,15 +101,15 @@ function extractQuantityUnit(ingredient:string) {
   return [quantity, unit];
 }
 
-function parseIngredients(ingredientList: string[]) {
+function parseIngredients(ingredientList: {name:string}[]) {
   const parsedIngredients = [];
 
   for (const ingredient of ingredientList) {
-      const [quantity, unit] = extractQuantityUnit(ingredient);
-      const nameParts = ingredient.split(",")[0].split(" ");
+      const [quantity, unit] = extractQuantityUnit(ingredient.name);
+      const nameParts = ingredient.name.split(",")[0].split(" ");
 
       const name = nameParts.filter(part => part.replace('/', '') && isNaN(parseFloat(part))).join(" ");
-      const notes = ingredient.replace(name, "").replace(quantity, "").replace(unit, "").replace(", ", "").trim();
+      const notes = ingredient.name.replace(name, "").replace(quantity, "").replace(unit, "").replace(", ", "").trim();
 
       const cleanedName = name.replace(quantity, "").replace(unit, "").trim()
       const parsedIngredient = {
