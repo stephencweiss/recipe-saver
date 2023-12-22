@@ -74,20 +74,7 @@ async function createPumpkinPieRecipe(submitter: { id: string }) {
       unit: "whole",
     },
   ];
-  const pieIngredientNames = pieIngredientsObj.map(
-    (ingredient) => ingredient.name,
-  );
-  const pieIngredients = await Promise.all(
-    pieIngredientNames.map(async (name) => {
-      const ingredient = await prisma.ingredient.findUnique({
-        where: { name },
-      });
-      if (ingredient) {
-        return ingredient;
-      }
-      return await prisma.ingredient.create({ data: { name } });
-    }),
-  );
+
   const pieTagNames = ["pumpkin", "pie", "dessert", "thanksgiving"];
   const pieTags = await Promise.all(
     pieTagNames.map(async (name) => {
@@ -124,16 +111,14 @@ async function createPumpkinPieRecipe(submitter: { id: string }) {
     }),
   );
   await Promise.all(
-    pieIngredients.map((ingredient) => {
-      const ingredientObj = pieIngredientsObj.find(
-        (obj) => obj.name === ingredient.name,
-      );
+    pieIngredientsObj.map((ingredient) => {
+
       return prisma.recipeIngredient.create({
         data: {
           recipeId: pieRecipe.id,
-          ingredientId: ingredient.id,
-          quantity: ingredientObj?.quantity ?? null,
-          unit: ingredientObj?.unit ?? null,
+          name: ingredient.name,
+          quantity: ingredient?.quantity ?? null,
+          unit: ingredient?.unit ?? null,
         },
       });
     }),
@@ -199,20 +184,6 @@ async function createCaesarSaladRecipe(submitter: { id: string }) {
       unit: "cup",
     },
   ];
-  const saladIngredientNames = saladIngredientsObj.map(
-    (ingredient) => ingredient.name,
-  );
-  const saladIngredients = await Promise.all(
-    saladIngredientNames.map(async (name) => {
-      const ingredient = await prisma.ingredient.findUnique({
-        where: { name },
-      });
-      if (ingredient) {
-        return ingredient;
-      }
-      return await prisma.ingredient.create({ data: { name } });
-    }),
-  );
   const saladTagNames = ["salad", "dinner", "lunch", "vegetarian"];
   const saladTags = await Promise.all(
     saladTagNames.map(async (name) => {
@@ -249,16 +220,14 @@ async function createCaesarSaladRecipe(submitter: { id: string }) {
     }),
   );
   await Promise.all(
-    saladIngredients.map((ingredient) => {
-      const ingredientObj = saladIngredientsObj.find(
-        (obj) => obj.name === ingredient.name,
-      );
+    saladIngredientsObj.map((ingredient) => {
+
       return prisma.recipeIngredient.create({
         data: {
           recipeId: saladRecipe.id,
-          ingredientId: ingredient.id,
-          quantity: ingredientObj?.quantity ?? null,
-          unit: ingredientObj?.unit ?? null,
+          name: ingredient.name,
+          quantity: ingredient?.quantity ?? null,
+          unit: ingredient?.unit ?? null,
         },
       });
     }),
@@ -271,7 +240,6 @@ async function wipeSeededDatabase() {
   await prisma.recipeIngredient.deleteMany({});
   await prisma.recipeTag.deleteMany({});
   await prisma.recipe.deleteMany({});
-  await prisma.ingredient.deleteMany({});
   await prisma.tag.deleteMany({});
   await prisma.user.deleteMany({});
 }
