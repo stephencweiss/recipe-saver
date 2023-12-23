@@ -85,11 +85,9 @@ export async function recipeAction({ request }: ActionFunctionArgs) {
   }
 
   const ingredientEntryData = extractIngredientsFromFormData(formData)
-  console.log(JSON.stringify(ingredientEntryData,null,4))
   const ingredients = ingredientEntryData.filter(i => !i.isDeleted);
   const deletedIngredientsIds = ingredientEntryData.filter(i => i.isDeleted).filter((i): i is { id: string, isDeleted: boolean } => i.id != null).map(i => ({ id: i.id }));
 
-  console.log(JSON.stringify({ ingredients, deletedIngredientsIds },null,4))
   // TODO: Support tags
   const partialRecipe: CreatableRecipe = {
     cookTime: String(formData.get("cookTime")),
