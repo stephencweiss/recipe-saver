@@ -65,7 +65,6 @@ const handleCreateFromUrl = async (sourceUrl: string, userId: string) => {
   }
 
   const parsedRecipe = await parseRecipeSite(sourceUrl ?? '');
-
   const recipe = await createRecipe({ ...parsedRecipe, submittedBy: userId });
   return redirect(`/recipes/${recipe.id}`);
 }

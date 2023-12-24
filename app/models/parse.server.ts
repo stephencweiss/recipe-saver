@@ -47,7 +47,6 @@ async function parseNYTCooking(url: string) {
   }).filter((step: string) => step != null);
 
 
-  console.log(jsonData);
   const creatableRecipe: Omit<CreatableRecipe, 'submittedBy'> = {
     cookTime: jsonData.cookTime,
     prepTime: jsonData.prepTime,
