@@ -2,7 +2,7 @@ import { json } from "@remix-run/node";
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import invariant from "tiny-invariant";
 
-import { GetRecipeWithIngredientsArgs, getRecipeWithIngredients } from "~/models/recipe.server";
+import { RecipeUserArgs, getPrivateRecipeComments, getPublicRecipeComments, getRecipeWithIngredients } from "~/models/recipe.server";
 import { getUser } from "~/session.server";
 import { isNotPlaceholderIngredient, parsePreparationSteps } from "~/utils";
 
@@ -11,12 +11,14 @@ export async function loadSingleRecipe({ params, request, mode }: LoaderFunction
   invariant(params.recipeId, "recipeId not found");
   const user = await getUser(request);
 
-  const args: GetRecipeWithIngredientsArgs = { id: params.recipeId };
+  const args: RecipeUserArgs = { id: params.recipeId };
   if (user) {
     args['requestingUser'] = user
   }
 
   const rawRecipe = await getRecipeWithIngredients(args);
+  const privateComments = await getPrivateRecipeComments(args);
+  const publicComments = await getPublicRecipeComments(args);
   if (!rawRecipe) {
     throw new Response("Not Found", { status: 404 });
   }
@@ -31,6 +33,8 @@ export async function loadSingleRecipe({ params, request, mode }: LoaderFunction
     ...rawRecipe,
     recipeIngredients: rawRecipe?.recipeIngredients.map(r => ({ ...r, isDeleted: false })).filter(isNotPlaceholderIngredient) ?? [],
     preparationSteps: parsePreparationSteps(rawRecipe.preparationSteps ?? ""),
+    privateComments,
+    publicComments,
   };
   return json({ recipe, user })
 }

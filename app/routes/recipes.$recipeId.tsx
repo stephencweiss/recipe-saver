@@ -60,6 +60,32 @@ export default function RecipeDetailsPage() {
   });
   return (
     <div>
+      {isUsersRecipe ? (
+        <>
+          <Form method="post">
+            <button
+              type="submit"
+              value="edit"
+              name="action"
+              className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400 mr-2 disabled:bg-gray-400"
+              disabled={!isUsersRecipe}
+            >
+              Edit
+            </button>
+            <button
+              type="submit"
+              value="delete"
+              name="action"
+              disabled={!isUsersRecipe}
+              className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400 disabled:bg-gray-400"
+            >
+              Delete
+            </button>
+          </Form>
+        </>
+      ) : (
+        <></>
+      )}
       <h2 className="text-4xl font-bold">{data.recipe.title}</h2>
       <div className="flex flex-row gap-4 px-2 py-4">
         <Time label={"Cook Time"} time={data.recipe.cookTime} />
@@ -97,32 +123,31 @@ export default function RecipeDetailsPage() {
       ))}
       <hr className="my-4" />
 
+      <h2 className="text-xl font-bold py-4">Comments</h2>
       {isUsersRecipe ? (
         <>
-          <Form method="post">
-            <button
-              type="submit"
-              value="edit"
-              name="action"
-              className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400 mr-2 disabled:bg-gray-400"
-              disabled={!isUsersRecipe}
-            >
-              Edit
-            </button>
-            <button
-              type="submit"
-              value="delete"
-              name="action"
-              disabled={!isUsersRecipe}
-              className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400 disabled:bg-gray-400"
-            >
-              Delete
-            </button>
-          </Form>
+          <List
+            title="Personal Notes"
+            items={data.recipe.privateComments.map((comment) => (
+              <div key={comment.comment.id}>
+                <p className="text-gray-700">{comment.comment.submittedBy}</p>
+                <p>{comment.comment.comment}</p>
+              </div>
+            ))}
+          />
         </>
       ) : (
-        <></>
+        <> </>
       )}
+      <List
+        title="Comments"
+        items={data.recipe.publicComments.map((comment) => (
+          <div key={comment.comment.id}>
+            <p className="text-gray-700">{comment.comment.submittedBy}</p>
+            <p>{comment.comment.comment}</p>
+          </div>
+        ))}
+      />
     </div>
   );
 }

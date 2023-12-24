@@ -71,9 +71,9 @@ export async function getRecipeDetails({ id }: Pick<Recipe, "id">) {
   });
 }
 
-export interface GetRecipeWithIngredientsArgs extends Pick<Recipe, "id"> { requestingUser?: Partial<Pick<User, "id">> }
+export interface RecipeUserArgs extends Pick<Recipe, "id"> { requestingUser?: Partial<Pick<User, "id">> }
 
-export async function getRecipeWithIngredients({ id, requestingUser }: GetRecipeWithIngredientsArgs) {
+export async function getRecipeWithIngredients({ id, requestingUser }: RecipeUserArgs) {
   const recipe = await prisma.recipe.findFirst({
     select: {
       id: true,
@@ -115,6 +115,30 @@ export async function getRecipeWithIngredients({ id, requestingUser }: GetRecipe
   if (!recipe) return null;
   if (recipe.isPrivate && requestingUser?.id !== recipe.submittedBy) return null;
   return recipe;
+}
+
+/**
+ * Allows a user to get comments for a recipe which they have submitted and have marked as private
+ */
+export async function getPrivateRecipeComments({ id, requestingUser }: RecipeUserArgs) {
+  return await prisma.recipeComment.findMany({
+    select: {
+      comment: true,
+    },
+    where: { recipeId: id, comment: { isPrivate: true, submittedBy: requestingUser?.id } },
+  })
+};
+
+/**
+ * Allows the retrieval to get all public comments for a recipe
+ */
+export async function getPublicRecipeComments({ id }: Pick<Recipe, "id">) {
+  return await prisma.recipeComment.findMany({
+    select: {
+      comment: true,
+    },
+    where: { recipeId: id, comment: { isPrivate: false } },
+  });
 }
 
 export interface RecipesResponse {
