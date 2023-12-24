@@ -4,8 +4,8 @@ import { useMemo } from "react";
 
 import type { User } from "~/models/user.server";
 
-import { createJSONErrorResponse } from "./components/recipes/errors";
-import { IngredientFormEntry, CreatableRecipe } from "./models/recipe.server";
+import { createJSONErrorResponse } from "../components/recipes/errors";
+import { IngredientFormEntry, CreatableRecipe } from "../models/recipe.server";
 
 const DEFAULT_REDIRECT = "/";
 
