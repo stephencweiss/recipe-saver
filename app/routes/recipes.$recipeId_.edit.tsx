@@ -1,5 +1,5 @@
 import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import { useActionData, useLoaderData, Form, useFetcher } from "@remix-run/react";
+import { useActionData, useLoaderData, Form } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 
 import { recipeAction } from "~/api/recipe-actions";
@@ -7,6 +7,7 @@ import { loadSingleRecipe } from "~/api/recipe-loader";
 import { FormTextAreaInput, FormTextInput } from "~/components/forms";
 import { SubmissionStyles } from "~/components/recipes";
 import { useIngredientsForm } from "~/components/recipes/use-ingredients-form";
+import { useKeyboardSubmit } from "~/components/use-keyboard";
 import VisuallyHidden from "~/components/visually-hidden";
 import { getDefaultRecipeValues } from "~/utils";
 
@@ -22,6 +23,8 @@ export default function EditRecipePage() {
   /** The submissionType is the **only** unique value between recipes.new &
    * recipes.edit */
   const submissionType: SubmissionStyles = "edit";
+
+  useKeyboardSubmit(["shift", "enter"], "edit-form");
 
   /** From here through the return should be **identical** between recipes.new &
    * recipes.edit */
@@ -105,7 +108,7 @@ export default function EditRecipePage() {
   }, []);
 
   return (
-    <Form method="post" className="flex flex-col gap-4 w-full">
+    <Form method="post" id="edit-form" className="flex flex-col gap-4 w-full">
       <div className="text-right">
         <button
           type="submit"
