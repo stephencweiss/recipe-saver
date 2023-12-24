@@ -78,6 +78,10 @@ export async function getRecipeWithIngredients({ id, requestingUser }: GetRecipe
     select: {
       id: true,
       description: true,
+      cookTime: true,
+      prepTime: true,
+      totalTime: true,
+      recipeYield: true,
       isPrivate: true,
       preparationSteps: true,
       recipeIngredients: {
@@ -87,6 +91,16 @@ export async function getRecipeWithIngredients({ id, requestingUser }: GetRecipe
           note: true,
           quantity: true,
           unit: true,
+        },
+      },
+      recipeTags: {
+        select: {
+          tag: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
         },
       },
       source: true,
