@@ -10,6 +10,7 @@ import invariant from "tiny-invariant";
 
 import { loadSingleRecipe } from "~/api/recipe-loader";
 import { List } from "~/components/lists";
+import { Time } from "~/components/time";
 import { useKeyboard } from "~/components/use-keyboard";
 import { deleteRecipe } from "~/models/recipe.server";
 import { requireUserId } from "~/session.server";
@@ -43,30 +44,37 @@ export default function RecipeDetailsPage() {
   const isUsersRecipe = data.user?.id === data.recipe.submittedBy;
 
   const parsedIngredients = data.recipe.recipeIngredients.map((ingredient) => {
-    const {
-      quantity,
-      unit,
-      name,
-      note,
-    } = ingredient;
+    const { quantity, unit, name, note } = ingredient;
     const q = quantity != null && quantity != "null" ? quantity : "";
     const u = unit != null && unit != "null" ? unit : "";
     const nt = note != null && note != "null" ? note : "";
     const nm = name != null && name != "null" ? name : "";
-    return `${q} ${u} ${nm} ${nt != "" ? `-- ${nt}` : ""}`;
+    return (
+      <div key={`${q}-${u}-${nm}`.trim()}>
+        <span>{`${q} ${u} ${nm} `}</span>
+        <span className="text-red-500 font-bold">
+          {nt != "" ? `-- ${nt}` : ""}
+        </span>
+      </div>
+    );
   });
   return (
     <div>
       <h2 className="text-4xl font-bold">{data.recipe.title}</h2>
+      <div className="flex flex-row gap-4 px-2 py-4">
+        <Time label={"Cook Time"} time={data.recipe.cookTime} />
+        <Time label={"Prep Time"} time={data.recipe.prepTime} />
+        <Time label={"Total Time"} time={data.recipe.totalTime} />
+      </div>
       <List
         title="Description"
         items={[data.recipe.description || "No Description"]}
       />
-
       <List title="Steps" items={data.recipe.preparationSteps} ListType="ol" />
       <List title="Ingredients" items={parsedIngredients} />
       <h2 className="text-xl font-bold py-4">Additional Details</h2>
       <p className="pb-2">Source: {data.recipe.source || "User Submitted"}</p>
+
       <p className="pb-2">
         URL:{" "}
         {data.recipe.sourceUrl ? (
@@ -77,9 +85,18 @@ export default function RecipeDetailsPage() {
           "N/A"
         )}
       </p>
-      <p className="pb-2">Submitted by: {data.recipe.user?.username}</p>
 
+      <p className="pb-2">Submitted by: {data.recipe.user?.username}</p>
+      {data.recipe.recipeTags.map((tag) => (
+        <span
+          className="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2"
+          key={tag.tag.id}
+        >
+          {tag.tag.name}
+        </span>
+      ))}
       <hr className="my-4" />
+
       {isUsersRecipe ? (
         <>
           <Form method="post">
