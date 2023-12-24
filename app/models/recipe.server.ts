@@ -364,6 +364,10 @@ export async function updateRecipeWithDetails({
  * 2. This should probably be decomposed a bit.
  */
 export async function createRecipe({
+  cookTime,
+  prepTime,
+  totalTime,
+  recipeYield,
   description,
   title,
   submittedBy,
@@ -401,6 +405,10 @@ export async function createRecipe({
   const recipe = await prisma.recipe.create({
     data: {
       title,
+      cookTime,
+      prepTime,
+      totalTime,
+      recipeYield,
       description,
       // Defer stringifying until record creation.
       preparationSteps: JSON.stringify(preparationSteps),

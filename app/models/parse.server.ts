@@ -28,9 +28,6 @@ async function parseNYTCooking(url: string) {
     }
   }
 
-  // TODO: pull out prepTime, cookTime, totalTime, recipeYield
-  console.log('NYT Cooking recipe data', jsonData)
-
   const tagSet = new Set<string>();
   (jsonData.keywords?.split(',') ?? []).forEach((tag: string) => tagSet.add(tag.trim()));
   (jsonData.cuisine?.split(',') ?? []).forEach((tag: string) => tagSet.add(tag.trim()));
@@ -49,12 +46,13 @@ async function parseNYTCooking(url: string) {
     return step.text
   }).filter((step: string) => step != null);
 
+
+  console.log(jsonData);
   const creatableRecipe: Omit<CreatableRecipe, 'submittedBy'> = {
     cookTime: jsonData.cookTime,
     prepTime: jsonData.prepTime,
-    recipeYield: jsonData.recipeYield,
     totalTime: jsonData.totalTime,
-
+    recipeYield: jsonData.recipeYield,
     title: jsonData.name,
     description: jsonData.description,
     ingredients,
@@ -83,42 +81,42 @@ function testUrl(url: string, domain: string) {
  * Given a string ingredient, try to find the number in the string, then attempt
  * to pull out the unit.
  */
-function extractQuantityUnit(ingredient:string) {
+function extractQuantityUnit(ingredient: string) {
   let quantity = "";
   let unit = "";
   const parts = (ingredient ?? '').split(" ");
   for (let i = 0; i < parts.length; i++) {
-      if (!isNaN(parseInt(parts[i].replace('/', ''))) || !isNaN(parseFloat(parts[i]))) {
-          quantity = parts[i];
-          if (i + 1 < parts.length) {
-              unit = parts[i + 1];
-          } else {
-            unit = 'whole'
-          }
-          break;
+    if (!isNaN(parseInt(parts[i].replace('/', ''))) || !isNaN(parseFloat(parts[i]))) {
+      quantity = parts[i];
+      if (i + 1 < parts.length) {
+        unit = parts[i + 1];
+      } else {
+        unit = 'whole'
       }
+      break;
+    }
   }
   return [quantity, unit];
 }
 
-function parseIngredients(ingredientList: {name:string}[]) {
+function parseIngredients(ingredientList: { name: string }[]) {
   const parsedIngredients = [];
 
   for (const ingredient of ingredientList) {
-      const [quantity, unit] = extractQuantityUnit(ingredient.name);
-      const nameParts = ingredient.name.split(",")[0].split(" ");
+    const [quantity, unit] = extractQuantityUnit(ingredient.name);
+    const nameParts = ingredient.name.split(",")[0].split(" ");
 
-      const name = nameParts.filter(part => part.replace('/', '') && isNaN(parseFloat(part))).join(" ");
-      const notes = ingredient.name.replace(name, "").replace(quantity, "").replace(unit, "").replace(", ", "").trim();
+    const name = nameParts.filter(part => part.replace('/', '') && isNaN(parseFloat(part))).join(" ");
+    const notes = ingredient.name.replace(name, "").replace(quantity, "").replace(unit, "").replace(", ", "").trim();
 
-      const cleanedName = name.replace(quantity, "").replace(unit, "").trim()
-      const parsedIngredient = {
-          name: cleanedName,
-          notes: notes,
-          unit: unit.trim(),
-          quantity: quantity.trim()
-      };
-      parsedIngredients.push(parsedIngredient);
+    const cleanedName = name.replace(quantity, "").replace(unit, "").trim()
+    const parsedIngredient = {
+      name: cleanedName,
+      notes: notes,
+      unit: unit.trim(),
+      quantity: quantity.trim()
+    };
+    parsedIngredients.push(parsedIngredient);
   }
 
   return parsedIngredients;
