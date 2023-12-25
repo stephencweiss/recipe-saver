@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
  * Custom hook to handle keyboard events.
  *
  * @param key The key that triggers the action.
- * @param action The submissionType action to be performed on key press.
+ * @param action The type of action to be performed on key press.
  * @param endpoint The endpoint where the action will be submitted.
  * @example useKeyboard("e", "edit", `/recipes/${data.recipe.id}`); // Will trigger the edit action when the user presses the "e" key on the recipes/{recipeId} page
  */
@@ -79,18 +79,17 @@ export function useKeyboardSubmit(keyCombo: string[], formId: string) {
  * Custom hook to handle keyboard events.
  *
  * @param keyCombo The key combo that triggers the action.
- * @param action The submissionType action to be performed on key press.
+ * @param action The type of action to be performed on key press.
  * @param endpoint The endpoint where the action will be submitted.
  * @example useKeyboardCombo(["shift", "e"], "edit", `/recipes/${data.recipe.id}`); // Will trigger the edit action when the user presses the "shift" + "e" keys on the recipes/{recipeId} page
  */
 export function useKeyboardCombo(
-  keyCombo: [string, string],
+  keyCombo: string[],
   action: string,
   endpoint: string,
 ) {
   const fetcher = useFetcher();
   const activeKeys = useRef(new Set());
-
   useEffect(() => {
     function handleKeyPress(event: KeyboardEvent) {
       activeKeys.current.add(event.key.toLowerCase());
