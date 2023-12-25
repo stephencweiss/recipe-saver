@@ -9,6 +9,8 @@ import invariant from "tiny-invariant";
 
 import { prisma } from "~/db.server";
 
+import { CreatableComment, createComment } from "./comment.server";
+
 interface PaginationOptions {
   skip?: number;
   take?: number;
@@ -117,28 +119,69 @@ export async function getRecipeWithIngredients({ id, requestingUser }: RecipeUse
   return recipe;
 }
 
+export interface CreatableRecipeComment extends CreatableComment {
+  recipeId: Recipe["id"],
+
+}
+export async function createRecipeComment({ recipeId, comment, isPrivate, submittedBy }: CreatableRecipeComment) {
+  const createdComment = await createComment({ comment, isPrivate, submittedBy })
+
+  await prisma.recipeComment.create({
+    data: {
+      recipeId,
+      commentId: createdComment.id,
+    },
+  });
+  return createdComment;
+}
+
+async function getRecipeComments({ id, requestingUser, includePrivate }: RecipeUserArgs & { includePrivate: boolean }) {
+  const recipeComments = await prisma.recipeComment.findMany({
+    select: {
+      comment: {
+        select: {
+          comment: true,
+          createdDate: true,
+          id: true,
+          isPrivate: true,
+          submittedBy: true,
+          updatedDate: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              username: true,
+            },
+          }
+        },
+      },
+    },
+    where: {
+      recipeId: id,
+      comment: {
+        isPrivate: includePrivate,
+        ...(requestingUser?.id ? { submittedBy: requestingUser.id } : {})
+      }
+    },
+  });
+
+  return recipeComments
+    .map(({ comment }) => ({ ...comment }))
+    .filter(c => !c.isPrivate || c.submittedBy === requestingUser?.id);
+}
+
 /**
  * Allows a user to get comments for a recipe which they have submitted and have marked as private
  */
 export async function getPrivateRecipeComments({ id, requestingUser }: RecipeUserArgs) {
-  return await prisma.recipeComment.findMany({
-    select: {
-      comment: true,
-    },
-    where: { recipeId: id, comment: { isPrivate: true, submittedBy: requestingUser?.id } },
-  })
+  return getRecipeComments({ id, requestingUser, includePrivate: true });
 };
 
 /**
  * Allows the retrieval to get all public comments for a recipe
  */
 export async function getPublicRecipeComments({ id }: Pick<Recipe, "id">) {
-  return await prisma.recipeComment.findMany({
-    select: {
-      comment: true,
-    },
-    where: { recipeId: id, comment: { isPrivate: false } },
-  });
+  return getRecipeComments({ id, includePrivate: false });
 }
 
 export interface RecipesResponse {

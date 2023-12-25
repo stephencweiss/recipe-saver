@@ -5,9 +5,7 @@ import { parseRecipeSite } from "~/models/parse.server";
 import { CreatableRecipe, createRecipe, disassociateIngredientsFromRecipe, isUpdatableRecipe, updateRecipeWithDetails } from "~/models/recipe.server";
 import { requireUserId } from "~/session.server";
 
-
 const handleCreateManual = async (partialRecipe: CreatableRecipe) => {
-
   // Validate the partialRecipe
   if (partialRecipe.title.length === 0) {
     return createJSONErrorResponse("title", "Title is required");

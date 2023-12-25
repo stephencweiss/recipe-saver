@@ -11,8 +11,9 @@ import invariant from "tiny-invariant";
 import { loadSingleRecipe } from "~/api/recipe-loader";
 import { List } from "~/components/lists";
 import { Time } from "~/components/time";
-import { useKeyboard } from "~/components/use-keyboard";
+import { useKeyboardCombo } from "~/components/use-keyboard";
 import { deleteRecipe } from "~/models/recipe.server";
+import { CreateCommentForm, CommentList } from "~/routes/api.comments";
 import { requireUserId } from "~/session.server";
 
 export const loader = async (args: LoaderFunctionArgs) => {
@@ -27,10 +28,10 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   const action = formData.get("action");
 
   switch (action) {
-    case "delete":
+    case "delete-recipe":
       await deleteRecipe({ id: params.recipeId, userId });
       return redirect("/recipes");
-    case "edit":
+    case "edit-recipe":
       return redirect(`/recipes/${params.recipeId}/edit`);
     default:
       throw new Error(`Unsupported action: ${action}`);
@@ -40,7 +41,11 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 export default function RecipeDetailsPage() {
   const data = useLoaderData<typeof loader>();
 
-  useKeyboard("e", "edit", `/recipes/${data.recipe.id}`);
+  useKeyboardCombo(
+    ["Shift", "Meta", "e"],
+    "edit",
+    `/recipes/${data.recipe.id}`,
+  );
   const isUsersRecipe = data.user?.id === data.recipe.submittedBy;
 
   const parsedIngredients = data.recipe.recipeIngredients.map((ingredient) => {
@@ -65,7 +70,7 @@ export default function RecipeDetailsPage() {
           <Form method="post">
             <button
               type="submit"
-              value="edit"
+              value="edit-recipe"
               name="action"
               className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400 mr-2 disabled:bg-gray-400"
               disabled={!isUsersRecipe}
@@ -74,7 +79,7 @@ export default function RecipeDetailsPage() {
             </button>
             <button
               type="submit"
-              value="delete"
+              value="delete-recipe"
               name="action"
               disabled={!isUsersRecipe}
               className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400 disabled:bg-gray-400"
@@ -123,30 +128,21 @@ export default function RecipeDetailsPage() {
       ))}
       <hr className="my-4" />
 
-      <h2 className="text-xl font-bold py-4">Comments</h2>
-      {isUsersRecipe ? (
-        <>
-          <List
-            title="Personal Notes"
-            items={data.recipe.privateComments.map((comment) => (
-              <div key={comment.comment.id}>
-                <p className="text-gray-700">{comment.comment.submittedBy}</p>
-                <p>{comment.comment.comment}</p>
-              </div>
-            ))}
-          />
-        </>
-      ) : (
-        <> </>
-      )}
-      <List
-        title="Comments"
-        items={data.recipe.publicComments.map((comment) => (
-          <div key={comment.comment.id}>
-            <p className="text-gray-700">{comment.comment.submittedBy}</p>
-            <p>{comment.comment.comment}</p>
-          </div>
-        ))}
+      <CreateCommentForm type="recipe" associatedId={data.recipe.id} />
+
+{/* TODO: load the comments based on the type of comments (i.e., recipe) within the component */}
+      <CommentList
+      type={"recipe"}
+        comments={data.recipe.comments.map((c) => ({
+          username: c.user.username,
+          submittedBy: c.submittedBy,
+          date: c.createdDate ?? "",
+          comment: c.comment,
+          usefulCount: 0, //c.usefulCount,
+          isPrivate: c.isPrivate ?? false,
+          commentId: c.id,
+          associatedId: data.recipe.id,
+        }))}
       />
     </div>
   );

@@ -44,6 +44,7 @@ export default function EditRecipePage() {
   const { ingredients, renderIngredients } = useIngredientsForm(
     defaultValues.recipeIngredients,
   );
+
   const [steps, setSteps] = useState<string[]>(
     Array.isArray(defaultValues.preparationSteps)
       ? defaultValues.preparationSteps

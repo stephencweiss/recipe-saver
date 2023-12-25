@@ -6,6 +6,8 @@ import { RecipeUserArgs, getPrivateRecipeComments, getPublicRecipeComments, getR
 import { getUser } from "~/session.server";
 import { isNotPlaceholderIngredient, parsePreparationSteps } from "~/utils";
 
+// TODO: Load comments separately (as part of the api.comments.tsx file)
+// Then remove the comments from this loader
 /** A common loader for a specific recipe; include the requesting user */
 export async function loadSingleRecipe({ params, request, mode }: LoaderFunctionArgs & { mode: 'edit' | 'view' }) {
   invariant(params.recipeId, "recipeId not found");
@@ -33,8 +35,7 @@ export async function loadSingleRecipe({ params, request, mode }: LoaderFunction
     ...rawRecipe,
     recipeIngredients: rawRecipe?.recipeIngredients.map(r => ({ ...r, isDeleted: false })).filter(isNotPlaceholderIngredient) ?? [],
     preparationSteps: parsePreparationSteps(rawRecipe.preparationSteps ?? ""),
-    privateComments,
-    publicComments,
+    comments: [...privateComments, ...publicComments],
   };
   return json({ recipe, user })
 }
