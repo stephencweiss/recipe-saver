@@ -38,11 +38,12 @@ export function useKeyboardSubmit(keyCombo: string[], formId: string) {
   const activeKeys = useRef(new Set());
 
   useEffect(() => {
+    const currentActiveKey = activeKeys.current;
     function handleKeyDown(event: KeyboardEvent) {
-      activeKeys.current.add(event.key.toLowerCase());
+      currentActiveKey.add(event.key.toLowerCase());
 
       const allKeysPressed = keyCombo.every((key) =>
-        activeKeys.current.has(key.toLowerCase()),
+        currentActiveKey.has(key.toLowerCase()),
       );
 
       if (allKeysPressed) {
@@ -54,7 +55,7 @@ export function useKeyboardSubmit(keyCombo: string[], formId: string) {
     }
 
     function handleKeyUp(event: KeyboardEvent) {
-      activeKeys.current.delete(event.key.toLowerCase());
+      currentActiveKey.delete(event.key.toLowerCase());
     }
 
     window.addEventListener("keydown", handleKeyDown);
@@ -69,8 +70,9 @@ export function useKeyboardSubmit(keyCombo: string[], formId: string) {
 
   // Clean up active keys on unmount
   useEffect(() => {
+    const currentActiveKey = activeKeys.current;
     return () => {
-      activeKeys.current.clear();
+      currentActiveKey.clear();
     };
   }, []);
 }
@@ -118,6 +120,7 @@ export function useKeyboardCombo(
 
   // Optional: Reset shift state if component unmounts
   useEffect(() => {
-    return () => activeKeys.current.clear();
+    const currentActiveKey = activeKeys.current;
+    return () => currentActiveKey.clear();
   }, []);
 }

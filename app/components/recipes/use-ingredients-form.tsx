@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { c } from "vitest/dist/reporters-5f784f42";
 
 import VisuallyHidden from "~/components/visually-hidden";
 import { IngredientFormEntry } from "~/models/recipe.server";
