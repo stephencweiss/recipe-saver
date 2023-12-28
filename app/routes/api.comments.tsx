@@ -1,132 +1,27 @@
-import {
-  json,
-  type ActionFunctionArgs,
-  type LoaderFunctionArgs,
-} from "@remix-run/node";
-import { useFetcher, useLoaderData } from "@remix-run/react";
-import { useEffect, useRef, useState } from "react";
-import invariant from "tiny-invariant";
+import { User } from "@prisma/client";
+import { ActionFunctionArgs } from "@remix-run/node";
+import { isRouteErrorResponse, useFetcher, useRouteError } from "@remix-run/react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import { editComment } from "~/models/comment.server";
-import { createRecipeComment } from "~/models/recipe.server";
-import { getUser, requireUser } from "~/session.server";
+import { commentAction } from "~/api/comment-actions";
+import { CommentForm } from "~/components/comments";
+import { CommentTypes, FlatComment } from "~/models/comment.server";
+import { useOptionalUser } from "~/utils";
+import { isValidString } from "~/utils/strings";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const user = await getUser(request);
-  return json({ user });
+import { RequireAuthenticatedUser } from "./api.restricted";
+
+export const action = async (args: ActionFunctionArgs) => {
+  return await commentAction(args);
 };
 
-const getCreateDetailsFromFormData = (formData: FormData) => {
-  const type = String(formData.get("comment-type"));
-  const associatedId = String(formData.get("associatedId"));
-  invariant(associatedId, "recipeId not found");
-  return { type, associatedId };
-};
+export const loader = async () => null
 
-const getEditDetailsFromFormData = (formData: FormData) => {
-  const type = String(formData.get("comment-type"));
-  const commentId = String(formData.get("commentId"));
-  invariant(commentId, "commentId not found");
-  return { type, commentId };
-};
-
-const getCommentFromFormData = (formData: FormData) => {
-  const userId = String(formData.get("userId"));
-  invariant(userId, "userId not found");
-  const comment = String(formData.get("comment"));
-  invariant(comment, "comment not found");
-  const isPrivate = Boolean(formData.get("isPrivate") === "true");
-  const partialComment = { comment, submittedBy: userId, isPrivate };
-  return partialComment;
-};
-
-const handleEditComment = async (formData: FormData, userId: string) => {
-  const editDetails = getEditDetailsFromFormData(formData);
-  const commentDetails = getCommentFromFormData(formData);
-  console.log({ editDetails, commentDetails })
-  if (editDetails.type === "recipe")
-    return await editComment(
-      {
-        ...commentDetails,
-        id: editDetails.commentId,
-      },
-      userId,
-    );
-  else {
-    throw new Error(`Unsupported comment type: ${editDetails.type}`);
-  }
-};
-
-const handleCreateComment = async (formData: FormData) => {
-  const createDetails = getCreateDetailsFromFormData(formData);
-  const partialComment = getCommentFromFormData(formData);
-  if (createDetails.type === "recipe") {
-    const recipeComment = {
-      ...partialComment,
-      recipeId: createDetails.associatedId,
-    };
-    return await createRecipeComment(recipeComment);
-  } else {
-    throw new Error(`Unsupported comment type: ${createDetails.type}`);
-  }
-};
-
-// TODO: handle useful comment
-// This API should update the useful_comment table with the user id and comment id
-const handleUsefulComment = async (formData: FormData) => {
-  return { status: 501 };
-};
-
-export const action = async ({ request }: ActionFunctionArgs) => {
-  const formData = await request.formData();
-  const action = String(formData.get("action"));
-
-  console.log(`in the right place`);
-  console.log({ action, method: request.method });
-  switch (request.method) {
-    case "POST": {
-      console.log(`reached post action`);
-      switch (action) {
-        case "create-comment":
-          return await handleCreateComment(formData);
-        case "useful-comment":
-          return await handleUsefulComment(formData);
-        default:
-          throw new Error(`Unsupported comment action: ${action}`);
-      }
-    }
-    case "PUT":
-      switch (action) {
-        case "edit-comment": {
-          const user = await requireUser(request);
-
-          return await handleEditComment(formData, user.id);
-        }
-      }
-      console.log(`reached put action`);
-      return { status: 501 };
-
-    default:
-      return new Response("Method Not Allowed", { status: 405 });
-  }
-};
-
-interface CommentProps {
-  username: string;
-  submittedBy: string;
-  date: string;
-  comment: string;
-  isPrivate: boolean;
-  usefulCount: number;
-  commentId: string;
-  associatedId: string; // e.g., recipeId, menuId, etc.
-}
-
-// Comment Component
+// Ui
 const Comment = ({
   associatedId,
   username,
-  date,
+  createdDate,
   comment,
   usefulCount,
   isPrivate: isPrivateOriginal,
@@ -134,7 +29,7 @@ const Comment = ({
   userId,
   commentId,
   type,
-}: CommentProps & {
+}: FlatComment & {
   type: "recipe";
   userId?: string;
 }) => {
@@ -149,7 +44,7 @@ const Comment = ({
   });
 
   // Format date to a more readable format
-  const formattedDate = new Date(date).toLocaleDateString("en-US", {
+  const formattedDate = new Date(createdDate).toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -161,8 +56,7 @@ const Comment = ({
     }
   }, [editFetcher]);
 
-  const showEdit = submittedBy === userId;
-
+  const showEditDeleteActions = submittedBy === userId;
   const handleClick = () => {
     usefulFetcher.submit({});
   };
@@ -204,37 +98,42 @@ const Comment = ({
             </button>
           </div>
         </usefulFetcher.Form>
-        {/* {isPrivate ? <div>Private</div> : <div>Public</div>} */}
-        <div className="flex gap4">
-          {showEdit ? (
+
+        {showEditDeleteActions ? (
+          <div className="flex gap4">
             <button
               onClick={() => setIsEditing(true)}
               className="text-sm rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400 mr-2 disabled:bg-gray-400"
             >
               Edit
             </button>
-          ) : (
-            <></>
-          )}
-          <deleteFetcher.Form method="delete">
-            <input type="hidden" name="action" value="delete-comment" />
-            <button
-              name="action"
-              value="delete-comment"
-              type="submit"
-              className="text-sm rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400 mr-2 disabled:bg-gray-400"
-            >
-              Delete
-            </button>
-          </deleteFetcher.Form>
-        </div>
+            <deleteFetcher.Form method="delete">
+              <input type="hidden" name="action" value="delete-comment" />
+              <input type="hidden" name="comment-type" value={type} />
+              <input type="hidden" name="associatedId" value={associatedId} />
+              <input type="hidden" name="commentId" value={commentId} />
+              <input type="hidden" name="submittedBy" value={submittedBy} />
+              <input type="hidden" name="isDeleted" value="true" />
+              <button
+                name="action"
+                value="delete-comment"
+                type="submit"
+                className="text-sm rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400 mr-2 disabled:bg-gray-400"
+              >
+                Delete
+              </button>
+            </deleteFetcher.Form>
+          </div>
+        ) : (
+          <></>
+        )}
       </div>
     </div>
   );
 
   const editingView = (
     <editFetcher.Form method="put" action="/api/comments">
-      <CommentFormUi
+      <CommentForm
         isPrivate={isPrivate}
         note={note}
         setNote={setNote}
@@ -247,7 +146,7 @@ const Comment = ({
         <input type="hidden" name="associatedId" value={associatedId} />
         <input type="hidden" name="commentId" value={commentId} />
         <input type="hidden" name="userId" value={userId} />
-      </CommentFormUi>
+      </CommentForm>
     </editFetcher.Form>
   );
 
@@ -255,15 +154,7 @@ const Comment = ({
   return view;
 };
 
-const commentCounts = (comments: CommentProps[]) => {
-  const counts = {
-    all: comments.length,
-    helpful: comments.filter((c) => c.usefulCount > 0).length,
-    private: comments.filter((c) => c.isPrivate).length,
-  };
-  return counts;
-};
-
+// Hook
 const useCommentForm = ({
   isPrivate: isPrivateOriginal,
   note: noteOriginal,
@@ -273,86 +164,12 @@ const useCommentForm = ({
 }) => {
   const [note, setNote] = useState(noteOriginal ?? "");
   const [isPrivate, setIsPrivate] = useState(isPrivateOriginal ?? false);
-  const reset = () => {
+  const reset = useCallback(() => {
     setNote("");
     setIsPrivate(false);
-  };
+  }, []);
 
   return { note, setNote, isPrivate, setIsPrivate, reset };
-};
-
-const CommentFormUi = ({
-  children,
-  isPrivate,
-  note,
-  setNote,
-  setIsPrivate,
-  reset,
-  userId,
-}: React.PropsWithChildren<{
-  isPrivate: boolean;
-  note: string;
-  setNote: (note: string) => void;
-  setIsPrivate: (isPrivate: boolean) => void;
-  reset: () => void;
-  userId?: string;
-}>) => {
-  return (
-    <>
-      {children}
-      <input type="hidden" name="isPrivate" value={String(isPrivate)} />
-      <textarea
-        name="comment"
-        className="w-full p-2 border border-gray-300 rounded mb-2"
-        placeholder="Share your notes with other cooks or make a private note for yourself..."
-        value={note}
-        rows={4}
-        onChange={(e) => setNote(e.target.value)}
-      />
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex">
-          <button
-            type="button"
-            className={`px-4 py-1 rounded-l-full ${
-              isPrivate
-                ? "bg-slate-600 text-blue-100"
-                : "bg-blue-500 text-white"
-            }`}
-            onClick={() => setIsPrivate(false)}
-          >
-            Public
-          </button>
-          <button
-            type="button"
-            className={`px-4 py-1 rounded-r-full ${
-              !isPrivate
-                ? "bg-slate-600 text-blue-100"
-                : "bg-blue-500 text-white"
-            }`}
-            onClick={() => setIsPrivate(true)}
-          >
-            Private
-          </button>
-        </div>
-        <div>
-          <button
-            type="button"
-            className="px-3 py-1 border bg-slate-600 text-blue-100  hover:bg-blue-500 active:bg-blue-600 rounded mr-2"
-            onClick={reset}
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={!userId}
-            className="px-3 py-1 bg-blue-500 hover:bg-blue-600 focus:bg-blue-400 text-white rounded"
-          >
-            Submit
-          </button>
-        </div>
-      </div>
-    </>
-  );
 };
 
 export const CreateCommentForm = ({
@@ -362,9 +179,10 @@ export const CreateCommentForm = ({
   associatedId: string;
   type: "recipe";
 }) => {
-  const data = useLoaderData<typeof loader>();
+  const user = useOptionalUser();
   const commentFormRef = useRef<HTMLFormElement>(null);
   const commentFormFetcher = useFetcher({ key: "create-comment" });
+
   const { note, setNote, isPrivate, setIsPrivate, reset } = useCommentForm({
     isPrivate: false,
     note: "",
@@ -375,39 +193,70 @@ export const CreateCommentForm = ({
       commentFormRef.current?.reset();
       reset();
     }
-  }, [commentFormFetcher]);
+  }, [commentFormFetcher, reset]);
 
-  return (
+  const loggedOutView = (type: CommentTypes, associatedId: string) => {
+    //  CommentTypes are singular (e.g., recipe), but routes are plural (e.g., recipes/).
+    const redirectToUrl = `/${type}s/${associatedId}`;
+    return (
+      <RequireAuthenticatedUser message={"To submit a comment, please log in or create an account."}
+      redirectTo={redirectToUrl}
+      />
+    );
+  };
+
+  const loggedInView = (
     <commentFormFetcher.Form
       ref={commentFormRef}
       method="post"
       action="/api/comments"
     >
-      <div className="border-t border-gray-300 pt-4 pb-6">
-        <h2 className="text-xl font-semibold mb-3">COOKING NOTES</h2>
-        <CommentFormUi
-          isPrivate={isPrivate}
-          note={note}
-          setNote={setNote}
-          setIsPrivate={setIsPrivate}
-          reset={reset}
-          userId={data.user?.id}
-        >
-          <input type="hidden" name="action" value={"create-comment"} />
-          <input type="hidden" name="comment-type" value={type} />
-          <input type="hidden" name="associatedId" value={associatedId} />
-          <input type="hidden" name="userId" value={data.user?.id} />
-        </CommentFormUi>
-      </div>
+      <CommentForm
+        isPrivate={isPrivate}
+        note={note}
+        setNote={setNote}
+        setIsPrivate={setIsPrivate}
+        reset={reset}
+        userId={user?.id}
+      >
+        <input type="hidden" name="action" value={"create-comment"} />
+        <input type="hidden" name="comment-type" value={type} />
+        <input type="hidden" name="associatedId" value={associatedId} />
+        <input type="hidden" name="userId" value={user?.id} />
+      </CommentForm>
     </commentFormFetcher.Form>
+  );
+  return (
+    <div className="border-t border-gray-300 pt-4 pb-6">
+      <h2 className="text-xl font-semibold mb-3">COOKING NOTES</h2>
+      {user ? loggedInView : loggedOutView(type, associatedId)}
+    </div>
   );
 };
 
-export const CommentList = ({ comments, type }: { comments: CommentProps[], type: "recipe" }) => {
-  const data = useLoaderData<typeof loader>();
-  const { user } = data;
-  const [view, setView] = useState<"all" | "helpful" | "private">("all");
-  const counts = commentCounts(comments);
+type CommentListViews = "all" | "helpful" | "personal";
+
+const commentCounts = (comments: FlatComment[], userId?: User["id"]) => {
+  const counts = {
+    all: comments.length,
+    helpful: comments.filter((c) => c.usefulCount > 0).length,
+    personal: comments.filter((c) => c.submittedBy === userId).length,
+  };
+  return counts;
+};
+
+const CommentList = ({
+  comments = [],
+  type,
+}: {
+  comments: FlatComment[];
+  type: "recipe";
+}) => {
+  const user = useOptionalUser()
+
+  const [view, setView] = useState<CommentListViews>("all");
+  const counts = commentCounts(comments, user?.id);
+
   const filteredComments = comments.filter((c) => {
     if (view === "all") {
       return true;
@@ -415,16 +264,16 @@ export const CommentList = ({ comments, type }: { comments: CommentProps[], type
     if (view === "helpful") {
       return c.usefulCount > 0;
     }
-    if (view === "private") {
-      return c.isPrivate && user?.id === c.submittedBy;
+    if (view === "personal") {
+      return user?.id === c.submittedBy;
     }
   });
 
-  const handleClick = (view: "all" | "helpful" | "private") => {
+  const handleClick = (view: CommentListViews) => {
     setView(view);
   };
 
-  const buttonClass = (buttonId: "all" | "helpful" | "private") => {
+  const buttonClass = (buttonId: CommentListViews) => {
     if (view === buttonId) {
       return "font-bold";
     }
@@ -440,29 +289,81 @@ export const CommentList = ({ comments, type }: { comments: CommentProps[], type
         >
           {`All Notes (${counts.all})`}
         </button>
-        <button
+        {/* TODO: add helpful list back in once it's supported */}
+        {/* <button
           onClick={() => handleClick("helpful")}
           className={buttonClass("helpful")}
         >
           {`Most Helpful (${counts.helpful})`}
-        </button>
+        </button> */}
         <button
-          onClick={() => handleClick("private")}
-          className={buttonClass("private")}
+          onClick={() => handleClick("personal")}
+          className={buttonClass("personal")}
         >
-          {`Private (${counts.private})`}
+          {`Personal (${counts.personal})`}
         </button>
       </div>
 
       <div className="space-y-4">
         {filteredComments
           .sort(
-            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+            (a, b) =>
+              new Date(b.createdDate).getTime() -
+              new Date(a.createdDate).getTime(),
           )
           .map((commentData, index) => (
-            <Comment key={index} type={type} {...commentData} userId={user?.id} />
+            <Comment
+              key={index}
+              type={type}
+              {...commentData}
+              userId={user?.id}
+            />
           ))}
       </div>
     </div>
   );
 };
+
+export const CommentListAndForm = ({
+  associatedId,
+  type,
+  comments,
+}: {
+  associatedId: string;
+  type: "recipe";
+  comments: FlatComment[];
+}) => {
+  return (
+    <>
+      <CreateCommentForm associatedId={associatedId} type={type} />
+      <CommentList type={type} comments={comments} />
+    </>
+  );
+};
+
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+
+  if (error instanceof Error) {
+    return <div>An unexpected error occurred: {error.message}</div>;
+  }
+
+  if (!isRouteErrorResponse(error)) {
+    return <h1>Unknown Error</h1>;
+  }
+
+  if (error.status === 401) {
+    return (
+      <div>
+        {isValidString(error.data) ? error.data : "You do not have access"}
+      </div>
+    );
+  }
+
+  if (error.status === 404) {
+    return <div>{isValidString(error.data) ? error.data : "Not found"}</div>;
+  }
+
+  return <div>An unexpected error occurred: {error.statusText}</div>;
+}

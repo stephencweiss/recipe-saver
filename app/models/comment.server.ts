@@ -1,7 +1,9 @@
 import { Comment, User } from "@prisma/client";
+import invariant from "tiny-invariant";
 import { c } from "vitest/dist/reporters-5f784f42";
 
 import { prisma } from "~/db.server";
+import { getPrivateRecipeComments, getPublicRecipeComments } from "./recipe.server";
 
 /** TODO: Support other types */
 export type CommentTypes = "recipe";
@@ -62,6 +64,37 @@ export const deduplicateComments = (comments: FlatCommentServer[]): FlatCommentS
   return Array.from(commentMap.values());
 };
 
+// This is a little weird, but I want a central place for all comment getters.
+// The weird part is that in theory, this will be invoked by many different
+// loaders and then redirect those requests to various servers based on the
+// commentType
+export const getComments = async ({
+  associatedId,
+  commentType,
+  userId,
+}: {
+  associatedId: string;
+  commentType: CommentTypes;
+  userId?: User["id"];
+}) => {
+  invariant(commentType, "type not found");
+  invariant(associatedId, "associatedId not found");
+  switch (commentType) {
+    case "recipe": {
+      const privateComments = await getPrivateRecipeComments({
+        id: associatedId,
+        requestingUser: { id: userId },
+      });
+      const publicComments = await getPublicRecipeComments({
+        id: associatedId,
+      });
+
+      return deduplicateComments([...privateComments, ...publicComments]);
+    }
+    default:
+      throw new Response(`Unsupported comment type: ${commentType}`, {status: 400});
+  }
+};
 
 export async function createComment(CreatableComment: CreatableComment, requestingUserId: User["id"]): Promise<Comment> {
   const { comment, isPrivate } = CreatableComment;
