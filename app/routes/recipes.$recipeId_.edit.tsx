@@ -1,5 +1,11 @@
 import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import { useActionData, useLoaderData, Form } from "@remix-run/react";
+import {
+  useActionData,
+  useLoaderData,
+  Form,
+  useRouteError,
+  isRouteErrorResponse,
+} from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 
 import { recipeAction } from "~/api/recipe-actions";
@@ -10,6 +16,7 @@ import { useIngredientsForm } from "~/components/recipes/use-ingredients-form";
 import { useKeyboardSubmit } from "~/components/use-keyboard";
 import VisuallyHidden from "~/components/visually-hidden";
 import { getDefaultRecipeValues } from "~/utils";
+import { isValidString } from "~/utils/strings";
 
 export const loader = async (args: LoaderFunctionArgs) => {
   return await loadSingleRecipe({ ...args, mode: "edit" });
@@ -226,4 +233,30 @@ export default function EditRecipePage() {
       />
     </Form>
   );
+}
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+
+  if (error instanceof Error) {
+    return <div>An unexpected error occurred: {error.message}</div>;
+  }
+
+  if (!isRouteErrorResponse(error)) {
+    return <h1>Unknown Error</h1>;
+  }
+
+  if (error.status === 401) {
+    return (
+      <div>
+        {isValidString(error.data) ? error.data : "You do not have access"}
+      </div>
+    );
+  }
+
+  if (error.status === 404) {
+    return <div>{isValidString(error.data) ? error.data : "Not found"}</div>;
+  }
+
+  return <div>An unexpected error occurred: {error.statusText}</div>;
 }
