@@ -1,5 +1,5 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
 import {
   Form,
   isRouteErrorResponse,
@@ -12,35 +12,50 @@ import { loadSingleRecipe } from "~/api/recipe-loader";
 import { List } from "~/components/lists";
 import { Time } from "~/components/time";
 import { useKeyboardCombo } from "~/components/use-keyboard";
+import { getComments } from "~/models/comment.server";
 import { deleteRecipe } from "~/models/recipe.server";
-import { CreateCommentForm, CommentList } from "~/routes/api.comments";
+import { CommentListAndForm, isFlatComment } from "~/routes/api.comments";
 import { requireUserId } from "~/session.server";
 
 export const loader = async (args: LoaderFunctionArgs) => {
-  return await loadSingleRecipe({ ...args, mode: "view" });
+  const recipeData = await loadSingleRecipe({ ...args, mode: "view" });
+  const comments = await getComments({
+    associatedId: recipeData.recipe.id,
+    commentType: "recipe",
+    userId: recipeData.user?.id,
+  });
+  return json({...recipeData, comments});
 };
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
-  const userId = await requireUserId(request);
   invariant(params.recipeId, "recipeId not found");
 
   const formData = await request.formData();
   const action = formData.get("action");
 
   switch (action) {
-    case "delete-recipe":
+    case "delete-recipe": {
+      const userId = await requireUserId(request);
       await deleteRecipe({ id: params.recipeId, userId });
       return redirect("/recipes");
-    case "edit-recipe":
+    }
+    case "edit-recipe": {
+      const userId = await requireUserId(request);
+      const recipeData = await loadSingleRecipe({ params, request, mode: "view" });
+      if (recipeData.recipe.submittedBy !== userId) {
+        throw new Response("You do not have permission to edit this recipe", {status: 401});
+      }
       return redirect(`/recipes/${params.recipeId}/edit`);
+    }
     default:
-      throw new Error(`Unsupported action: ${action}`);
+      throw new Response(`Unsupported action: ${action}`, {status: 400});
   }
 };
 
 export default function RecipeDetailsPage() {
   const data = useLoaderData<typeof loader>();
-
+  console.log(`loaded comments`,JSON.stringify({comments: data.comments},null,4))
+  const flatComments = data.comments.filter(isFlatComment)
   useKeyboardCombo(
     ["Shift", "Meta", "e"],
     "edit",
@@ -126,23 +141,10 @@ export default function RecipeDetailsPage() {
           {tag.tag.name}
         </span>
       ))}
-      <hr className="my-4" />
-
-      <CreateCommentForm type="recipe" associatedId={data.recipe.id} />
-
-{/* TODO: load the comments based on the type of comments (i.e., recipe) within the component */}
-      <CommentList
-      type={"recipe"}
-        comments={data.recipe.comments.map((c) => ({
-          username: c.user.username,
-          submittedBy: c.submittedBy,
-          date: c.createdDate ?? "",
-          comment: c.comment,
-          usefulCount: 0, //c.usefulCount,
-          isPrivate: c.isPrivate ?? false,
-          commentId: c.id,
-          associatedId: data.recipe.id,
-        }))}
+      <CommentListAndForm
+        type="recipe"
+        associatedId={data.recipe.id}
+        comments={flatComments}
       />
     </div>
   );
