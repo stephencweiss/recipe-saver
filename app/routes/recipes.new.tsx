@@ -8,7 +8,9 @@ import { SubmissionStyles } from "~/components/recipes";
 import { useIngredientsForm } from "~/components/recipes/use-ingredients-form";
 import { useModeSwitcher } from "~/components/recipes/use-mode-switcher";
 import VisuallyHidden from "~/components/visually-hidden";
-import { getDefaultRecipeValues } from "~/utils";
+import { getDefaultRecipeValues, useOptionalUser } from "~/utils";
+
+import { RequireAuthenticatedUser } from "./api.restricted";
 
 /**
  * This loader is *unique* between recipes.new and recipes.edit
@@ -21,6 +23,7 @@ export const action = async (actionArgs: ActionFunctionArgs) => {
 
 export default function NewRecipePage() {
   const { mode, ModeUi } = useModeSwitcher();
+  const user = useOptionalUser();
 
   /** The submissionType is the **only** unique value between recipes.new &
    * recipes.edit */
@@ -103,6 +106,17 @@ export default function NewRecipePage() {
   useEffect(() => {
     titleRef.current?.focus();
   }, []);
+
+  if (!user) {
+    return (
+      <div className="flex justify-between">
+        <p className="text-xl py-4">Sign in to submit a recipe!</p>
+        <div className="flex justify-center">
+          <RequireAuthenticatedUser redirectTo="/recipes/new" />
+        </div>
+      </div>
+    );
+  }
 
   /** Mode specific markup */
   const URLSubmitForm = (
