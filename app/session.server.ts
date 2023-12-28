@@ -44,12 +44,16 @@ export async function getUser(request: Request) {
 
 export async function requireUserId(
   request: Request,
-  redirectTo: string = new URL(request.url).pathname,
+  options: { redirectTo?: string, path?: 'login' | 'join' } = {}
 ) {
   const userId = await getUserId(request);
+  const {
+    redirectTo = new URL(request.url).pathname,
+    path = 'login' } = options;
+
   if (!userId) {
     const searchParams = new URLSearchParams([["redirectTo", redirectTo]]);
-    throw redirect(`/login?${searchParams}`);
+    throw redirect(`/${path}?${searchParams}`);
   }
   return userId;
 }
