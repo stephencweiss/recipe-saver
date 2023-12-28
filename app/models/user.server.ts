@@ -20,8 +20,9 @@ export async function createEmailUser(email: User["email"], password: string) {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   if (!email || !hashedPassword) {
-    throw new Error(
+    throw new Response(
       "Cannot create email user if email and password are missing",
+      { status: 400}
     );
   }
   return prisma.user.create({
@@ -39,7 +40,7 @@ export async function createEmailUser(email: User["email"], password: string) {
 
 export async function deleteUserByEmail(email: User["email"]) {
   if (!email) {
-    throw new Error("Cannot delete user by email if email is missing");
+    throw new Response("Cannot delete user by email if email is missing", {status: 400});
   }
   return prisma.user.delete({ where: { email } });
 }

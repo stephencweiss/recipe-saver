@@ -1,13 +1,66 @@
 import { ActionFunctionArgs, redirect } from "@remix-run/node";
 
-import { SUPPORTED_SUBMISSION_STYLES, SubmissionStyles, createJSONErrorResponse, extractDeletedIngredientIdsFromFormData, extractIngredientsFromFormData } from "~/components/recipes";
+import { SUPPORTED_SUBMISSION_STYLES, SubmissionStyles, createJSONErrorResponse, extractIngredientsFromFormData } from "~/components/recipes";
 import { parseRecipeSite } from "~/models/parse.server";
 import { CreatableRecipe, createRecipe, disassociateIngredientsFromRecipe, isUpdatableRecipe, updateRecipeWithDetails } from "~/models/recipe.server";
 import { requireUserId } from "~/session.server";
 
+export async function recipeAction({ request }: ActionFunctionArgs) {
+  const userId = await requireUserId(request);
+  const formData = await request.formData();
 
+  const submissionType = String(formData.get("submissionType"));
+  if (
+    !SUPPORTED_SUBMISSION_STYLES.includes(submissionType as SubmissionStyles)
+  ) {
+    return createJSONErrorResponse(
+      "global",
+      `Unknown Submission: ${submissionType}`,
+    );
+  }
+
+  const ingredientEntryData = extractIngredientsFromFormData(formData)
+  const ingredients = ingredientEntryData.filter(i => !i.isDeleted);
+  const deletedIngredientsIds = ingredientEntryData.filter(i => i.isDeleted).filter((i): i is { id: string, isDeleted: boolean } => i.id != null).map(i => ({ id: i.id }));
+
+  // TODO: Support tags
+  const partialRecipe: CreatableRecipe = {
+    cookTime: String(formData.get("cookTime")),
+    prepTime: String(formData.get("prepTime")),
+    recipeYield: String(formData.get("recipeYield")),
+    totalTime: String(formData.get("totalTime")),
+    description: String(formData.get("description")),
+    id: String(formData.get("recipeId")),
+    ingredients,
+    preparationSteps: Array.from(formData.keys())
+      .filter((k) => k.startsWith("steps["))
+      .map((k) => String(formData.get(k))),
+    source: String(formData.get("source")),
+    sourceUrl: String(formData.get("sourceUrl")),
+    submittedBy: userId,
+    tags: [],
+    title: String(formData.get("title")),
+    isPrivate: Boolean(formData.get("isPrivate")),
+    userId: userId,
+  };
+
+  switch (formData.get("submissionType")) {
+    case "create-manual": {
+      return handleCreateManual(partialRecipe);
+    }
+    case "create-from-url": {
+      return handleCreateFromUrl(String(formData.get("sourceUrl")), userId);
+    }
+    case "edit": {
+      return handleEdit(partialRecipe, deletedIngredientsIds);
+    }
+    default:
+      return createJSONErrorResponse("global", "Unknown submission type");
+  }
+}
+
+// Helpers
 const handleCreateManual = async (partialRecipe: CreatableRecipe) => {
-
   // Validate the partialRecipe
   if (partialRecipe.title.length === 0) {
     return createJSONErrorResponse("title", "Title is required");
@@ -65,55 +118,6 @@ const handleCreateFromUrl = async (sourceUrl: string, userId: string) => {
   }
 
   const parsedRecipe = await parseRecipeSite(sourceUrl ?? '');
-
-  const recipe = await createRecipe({...parsedRecipe, submittedBy: userId});
+  const recipe = await createRecipe({ ...parsedRecipe, submittedBy: userId });
   return redirect(`/recipes/${recipe.id}`);
-}
-
-export async function recipeAction({ request }: ActionFunctionArgs) {
-  const userId = await requireUserId(request);
-  const formData = await request.formData();
-
-  const submissionType = String(formData.get("submissionType"));
-  if (
-    !SUPPORTED_SUBMISSION_STYLES.includes(submissionType as SubmissionStyles)
-  ) {
-    return createJSONErrorResponse(
-      "global",
-      `Unknown Submission: ${submissionType}`,
-    );
-  }
-
-  // TODO: Support tags
-  const partialRecipe: CreatableRecipe = {
-    description: String(formData.get("description")),
-    id: String(formData.get("recipeId")),
-    ingredients: extractIngredientsFromFormData(formData),
-    preparationSteps: Array.from(formData.keys())
-      .filter((k) => k.startsWith("steps["))
-      .map((k) => String(formData.get(k))),
-    source: String(formData.get("source")),
-    sourceUrl: String(formData.get("sourceUrl")),
-    submittedBy: userId,
-    tags: [],
-    title: String(formData.get("title")),
-    isPrivate: Boolean(formData.get("isPrivate")),
-    userId: userId,
-  };
-
-  const deletedIngredientIds = extractDeletedIngredientIdsFromFormData(formData);
-
-  switch (formData.get("submissionType")) {
-    case "create-manual": {
-      return handleCreateManual(partialRecipe);
-    }
-    case "create-from-url": {
-      return handleCreateFromUrl(String(formData.get("sourceUrl")), userId);
-    }
-    case "edit": {
-      return handleEdit(partialRecipe, deletedIngredientIds);
-    }
-    default:
-      return createJSONErrorResponse("global", "Unknown submission type");
-  }
 }

@@ -3,7 +3,7 @@ import {
   asyncMap,
   extractGenericDataFromFormData,
   validateEmail,
-} from "./utils";
+} from ".";
 
 test("validateEmail returns false for non-emails", () => {
   expect(validateEmail(undefined)).toBe(false);

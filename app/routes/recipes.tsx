@@ -7,6 +7,8 @@ import Layout, { links as layoutLinks } from "~/components/layout";
 import { getSubmittedRecipes } from "~/models/recipe.server";
 import { getUser } from "~/session.server";
 
+import { RequireAuthenticatedUser } from "./api.restricted";
+
 export const links: LinksFunction = () => [...layoutLinks()];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -73,15 +75,11 @@ export default function RecipesPage() {
               </div>
             </>
           ) : (
-            <div className="flex-1">
-              <p className="block p-4 w-full text-xl">
-                Sign in to see your recipes here!
-              </p>
-              <div className="flex justify-center gap-4">
-                <Link className="block p-4 text-xl text-blue-500" to="/join">Sign Up</Link>
-
-                <Link className="block p-4 text-xl text-blue-500" to="/login">Login</Link>
-              </div>
+            <div className="flex-1 justify-center">
+              <RequireAuthenticatedUser
+                message="Sign in to see your recipes here!"
+                redirectTo="/recipes"
+              />
             </div>
           )}
         </div>

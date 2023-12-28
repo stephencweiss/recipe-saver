@@ -1,0 +1,1 @@
+export const isValidString = (str: unknown): str is string => typeof str == 'string' && str.trim().length > 0
