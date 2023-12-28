@@ -1,9 +1,9 @@
 import { Comment, User } from "@prisma/client";
 import invariant from "tiny-invariant";
-import { c } from "vitest/dist/reporters-5f784f42";
 
 import { prisma } from "~/db.server";
-import { getPrivateRecipeComments, getPublicRecipeComments } from "./recipe.server";
+
+import { getRecipeComments } from "./recipe.server";
 
 /** TODO: Support other types */
 export type CommentTypes = "recipe";
@@ -48,12 +48,22 @@ export const flattenAndAssociateComment = (
   commentType,
 })
 
-export interface FlatComment extends FlatCommentServer {
-  createdDate: string; // Date | null on the server, but jsonified becomes a string
+/** A helper function to filter out private comments based on
+ * 1. the requesting user,
+ * 2. the privacy of the comment and,
+ * 3. whether or not we want to include private comments
+ */
+export const filterPrivateComments = (comment: { isPrivate: boolean | null, submittedBy: string, }, requestingUserId: string) => {
+  if (comment.isPrivate) {
+    if (comment.submittedBy == requestingUserId) return true;
+
+    return false
+  }
+  return true;
 }
 
-export const isFlatComment = (comment: FlatCommentServer | FlatComment): comment is FlatComment => {
-  return typeof (comment as FlatComment).createdDate == 'string';
+export interface FlatComment extends FlatCommentServer {
+  createdDate: string; // Date | null on the server, but jsonified becomes a string
 }
 
 export const deduplicateComments = (comments: FlatCommentServer[]): FlatCommentServer[] => {
@@ -81,18 +91,13 @@ export const getComments = async ({
   invariant(associatedId, "associatedId not found");
   switch (commentType) {
     case "recipe": {
-      const privateComments = await getPrivateRecipeComments({
+      return await getRecipeComments({
         id: associatedId,
         requestingUser: { id: userId },
       });
-      const publicComments = await getPublicRecipeComments({
-        id: associatedId,
-      });
-
-      return deduplicateComments([...privateComments, ...publicComments]);
     }
     default:
-      throw new Response(`Unsupported comment type: ${commentType}`, {status: 400});
+      throw new Response(`Unsupported comment type: ${commentType}`, { status: 400 });
   }
 };
 

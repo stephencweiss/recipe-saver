@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { commentAction } from "~/api/comment-actions";
 import { CommentForm } from "~/components/comments";
-import { CommentTypes, FlatComment } from "~/models/comment.server";
+import { CommentTypes, FlatComment, FlatCommentServer } from "~/models/comment.server";
 import { useOptionalUser } from "~/utils";
 import { isValidString } from "~/utils/strings";
 
@@ -16,6 +16,12 @@ export const action = async (args: ActionFunctionArgs) => {
 };
 
 export const loader = async () => null
+
+
+// Used on the client, so cannot be in a `.server` file
+export const isFlatComment = (comment: FlatCommentServer | FlatComment): comment is FlatComment => {
+  return typeof (comment as FlatComment).createdDate == 'string';
+}
 
 // Ui
 const Comment = ({

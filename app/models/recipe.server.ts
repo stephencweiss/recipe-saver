@@ -146,7 +146,7 @@ export async function deleteRecipeComment(recipeId: Recipe["id"], commentId: Com
   });
 };
 
-export async function getRecipeComments({ id, requestingUser, includePrivate }: RecipeUserArgs & { includePrivate: boolean }): Promise<FlatCommentServer[]> {
+export async function getRecipeComments({ id, requestingUser }: RecipeUserArgs): Promise<FlatCommentServer[]> {
   const recipeComments = await prisma.recipeComment.findMany({
     select: {
       comment: {
@@ -174,7 +174,7 @@ export async function getRecipeComments({ id, requestingUser, includePrivate }: 
   const commentType: CommentTypes = "recipe";
   return  recipeComments
     .map(({ comment }) => ({ ...comment }))
-    .filter(c => filterPrivateComments(c, includePrivate, requestingUser?.id ?? ""))
+    .filter(c => filterPrivateComments(c, requestingUser?.id ?? ""))
     .map((c) => flattenAndAssociateComment(c, { associatedId: id, commentType }))
 }
 
