@@ -9,8 +9,9 @@ import {
 import invariant from "tiny-invariant";
 
 import { prisma } from "~/db.server";
+import { flattenAndAssociateComment, filterPrivateComments } from "~/utils/comment.utils";
 
-import { FlatCommentServer, CommentTypes, CreatableComment, createComment, deleteComment, flattenAndAssociateComment, filterPrivateComments } from "./comment.server";
+import { FlatCommentServer, CommentTypes, CreatableComment, createComment, deleteComment } from "./comment.server";
 
 interface PaginationOptions {
   skip?: number;
@@ -172,7 +173,7 @@ export async function getRecipeComments({ id, requestingUser }: RecipeUserArgs):
     },
   });
   const commentType: CommentTypes = "recipe";
-  return  recipeComments
+  return recipeComments
     .map(({ comment }) => ({ ...comment }))
     .filter(c => filterPrivateComments(c, requestingUser?.id ?? ""))
     .map((c) => flattenAndAssociateComment(c, { associatedId: id, commentType }))
