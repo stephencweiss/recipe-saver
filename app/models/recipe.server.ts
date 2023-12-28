@@ -1,5 +1,6 @@
 import {
   type User,
+  type Comment,
   type Recipe,
   type RecipeIngredient,
   type Tag,
@@ -9,7 +10,7 @@ import invariant from "tiny-invariant";
 
 import { prisma } from "~/db.server";
 
-import { CreatableComment, createComment } from "./comment.server";
+import { FlatCommentServer, CommentTypes, CreatableComment, createComment, deleteComment, flattenAndAssociateComment, filterPrivateComments } from "./comment.server";
 
 interface PaginationOptions {
   skip?: number;
@@ -123,8 +124,8 @@ export interface CreatableRecipeComment extends CreatableComment {
   recipeId: Recipe["id"],
 
 }
-export async function createRecipeComment({ recipeId, comment, isPrivate, submittedBy }: CreatableRecipeComment) {
-  const createdComment = await createComment({ comment, isPrivate, submittedBy })
+export async function createRecipeComment({ recipeId, comment, isPrivate }: CreatableRecipeComment, submittedBy: User["id"]) {
+  const createdComment = await createComment({ comment, isPrivate }, submittedBy)
 
   await prisma.recipeComment.create({
     data: {
@@ -135,7 +136,17 @@ export async function createRecipeComment({ recipeId, comment, isPrivate, submit
   return createdComment;
 }
 
-async function getRecipeComments({ id, requestingUser, includePrivate }: RecipeUserArgs & { includePrivate: boolean }) {
+export async function deleteRecipeComment(recipeId: Recipe["id"], commentId: Comment["id"], requestingUserId: User["id"]) {
+  await deleteComment(commentId, requestingUserId);
+  return await prisma.recipeComment.deleteMany({
+    where: {
+      recipeId,
+      commentId,
+    },
+  });
+};
+
+export async function getRecipeComments({ id, requestingUser, includePrivate }: RecipeUserArgs & { includePrivate: boolean }): Promise<FlatCommentServer[]> {
   const recipeComments = await prisma.recipeComment.findMany({
     select: {
       comment: {
@@ -158,30 +169,13 @@ async function getRecipeComments({ id, requestingUser, includePrivate }: RecipeU
     },
     where: {
       recipeId: id,
-      comment: {
-        isPrivate: includePrivate,
-        ...(requestingUser?.id ? { submittedBy: requestingUser.id } : {})
-      }
     },
   });
-
-  return recipeComments
+  const commentType: CommentTypes = "recipe";
+  return  recipeComments
     .map(({ comment }) => ({ ...comment }))
-    .filter(c => !c.isPrivate || c.submittedBy === requestingUser?.id);
-}
-
-/**
- * Allows a user to get comments for a recipe which they have submitted and have marked as private
- */
-export async function getPrivateRecipeComments({ id, requestingUser }: RecipeUserArgs) {
-  return getRecipeComments({ id, requestingUser, includePrivate: true });
-};
-
-/**
- * Allows the retrieval to get all public comments for a recipe
- */
-export async function getPublicRecipeComments({ id }: Pick<Recipe, "id">) {
-  return getRecipeComments({ id, includePrivate: false });
+    .filter(c => filterPrivateComments(c, includePrivate, requestingUser?.id ?? ""))
+    .map((c) => flattenAndAssociateComment(c, { associatedId: id, commentType }))
 }
 
 export interface RecipesResponse {
