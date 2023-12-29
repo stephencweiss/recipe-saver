@@ -32,22 +32,6 @@ export interface FlatCommentServer {
   commentType: CommentTypes;
 }
 
-export const flattenAndAssociateComment = (
-  comment: Comment & {
-    usefulCount?: number, // TODO: once this is included in the db, remove this
-    user: { id: string, username: string | null, },
-  },
-  { associatedId, commentType }: { associatedId: string; commentType: CommentTypes },
-): FlatCommentServer => ({
-  ...comment,
-  isPrivate: comment.isPrivate ?? false,
-  username: comment.user.username ?? "Anonymous",
-  commentId: comment.id,
-  usefulCount: comment.usefulCount ?? 0,
-  associatedId,
-  commentType,
-})
-
 export interface FlatComment extends FlatCommentServer {
   createdDate: string; // Date | null on the server, but jsonified becomes a string
 }
