@@ -1,5 +1,5 @@
 import { LinksFunction } from "@remix-run/node";
-import { Form } from "@remix-run/react";
+import { Form, Link } from "@remix-run/react";
 
 import { useOptionalUser } from "~/utils";
 
@@ -17,15 +17,14 @@ export function Header({ title }: Readonly<HeaderProps>): JSX.Element {
   const displayName = user?.name || user?.email;
   return (
     <header className="flex items-center justify-between bg-slate-800 p-4 text-white">
-      <h1 className="text-3xl font-bold">{title}</h1>
-      {displayName ? <p className="text-xl">{displayName}</p> : <></>}
+      <h1 className="text-3xl font-bold">
+        <Link to="/explore">{title}</Link>
+      </h1>
+      {displayName ? <Link to={`/user/${user.id}/profile`} className="text-xl">{displayName}</Link> : <></>}
       <div className="flex items-center justify-between flex-row gap-4">
         {user ? (
-          <button
-            onClick={() =>
-              (window.location.href =
-                "/recipes/new?submissionStyle=create-manual")
-            }
+          <Link
+            to="/recipes/new?submissionStyle=create-manual"
             className="
             px-4 py-2 rounded
             bg-blue-500 text-white text-xl
@@ -36,14 +35,14 @@ export function Header({ title }: Readonly<HeaderProps>): JSX.Element {
             "
           >
             + New Recipe
-          </button>
+          </Link>
         ) : (
-          <button
-            onClick={() => (window.location.href = "/explore")}
+          <Link
+            to="/explore"
             className="rounded bg-slate-600 px-4 py-2 text-blue-100 text-xl hover:bg-blue-500 active:bg-blue-600"
           >
             Explore
-          </button>
+          </Link>
         )}
 
         {user ? (
