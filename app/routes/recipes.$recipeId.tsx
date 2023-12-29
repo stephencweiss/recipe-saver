@@ -54,7 +54,6 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
 export default function RecipeDetailsPage() {
   const data = useLoaderData<typeof loader>();
-  console.log(`loaded comments`,JSON.stringify({comments: data.comments},null,4))
   const flatComments = data.comments.filter(isFlatComment)
   useKeyboardCombo(
     ["Shift", "Meta", "e"],
