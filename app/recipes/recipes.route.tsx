@@ -38,7 +38,13 @@ export default function RecipesPage() {
     <Layout title="Recipes">
       <main className="flex ">
         <div className="w-80 max-h-screen overflow-scroll border-r bg-blue-50 min-w-150">
-          <Link to="new" className="block p-4 text-xl text-blue-500">
+          <Link
+            to="new?submissionStyle=create-manual"
+            className="
+          block p-4 text-xl text-blue-500
+          hover:bg-blue-500 hover:text-white
+          "
+          >
             + New Recipe
           </Link>
           <hr />
@@ -60,9 +66,9 @@ export default function RecipesPage() {
                       <li key={recipe.id}>
                         <NavLink
                           className={({ isActive }) =>
-                            `block border-b p-4 text-xl ${
-                              isActive ? "bg-blue-500" : ""
-                            }`
+                            `block border-b p-4 text-xl
+                            hover:bg-blue-500 hover:text-white
+                            ${isActive ? "bg-blue-600 text-white" : ""}`
                           }
                           to={recipe.id}
                         >

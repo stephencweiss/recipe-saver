@@ -10,28 +10,30 @@ import styles from "./styles.css";
 
 export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
 
+const menuItemClasses = `
+select-none outline-none leading-none
+rounded-[3px]
+group
+flex items-center
+relative
+
+text-xl
+hover:bg-blue-500
+hover:text-white
+active:bg-blue-600
+active:text-white
+disabled:bg-gray-400
+disabled:text-white
+`
+
+
 export function Menu() {
   const user = useOptionalUser();
   const [open, setOpen] = useState(false);
 
   const profileOrLogin = user ? (
     <DropdownMenu.Item
-      className="
-  group
-  text-xl
-  hover:bg-slate-600
-  hover:text-blue-100
-  leading-none
-  rounded-[3px]
-  flex
-  items-center
-  relative
-  select-none
-  outline-none
-  data-[disabled]:text-mauve8
-  data-[disabled]:pointer-events-none
-  data-[highlighted]:bg-violet9
-  data-[highlighted]:text-violet1"
+      className={menuItemClasses}
     >
       <Link className="w-full px-4 py-2" to={`/user/${user.id}/profile`}>
         Profile
@@ -40,22 +42,7 @@ export function Menu() {
   ) : (
     <>
       <DropdownMenu.Item
-        className="
-            group
-            text-xl
-            hover:bg-slate-600
-            hover:text-blue-100
-            leading-none
-            rounded-[3px]
-            flex
-            items-center
-            relative
-            select-none
-            outline-none
-            data-[disabled]:text-mauve8
-            data-[disabled]:pointer-events-none
-            data-[highlighted]:bg-violet9
-            data-[highlighted]:text-violet1"
+        className={menuItemClasses}
       >
         <Link className="w-full px-4 py-2" to="/login">
           Log In
@@ -75,8 +62,9 @@ export function Menu() {
           inline-flex
           items-center
           justify-center
-          text-violet11
+          transition-colors
           bg-slate-600
+          text-blue-100
           hover:bg-blue-500
           active:bg-blue-600
           "
@@ -94,44 +82,14 @@ export function Menu() {
           tabIndex={-1}
         >
           <DropdownMenu.Item
-            className="
-            group
-            text-xl
-            hover:bg-slate-600
-            hover:text-blue-100
-            leading-none
-            rounded-[3px]
-            flex
-            items-center
-            relative
-            select-none
-            outline-none
-            data-[disabled]:text-mauve8
-            data-[disabled]:pointer-events-none
-            data-[highlighted]:bg-violet9
-            data-[highlighted]:text-violet1"
+            className={menuItemClasses}
           >
             <Link className="w-full px-4 py-2" to="/explore">
               Explore
             </Link>
           </DropdownMenu.Item>
           <DropdownMenu.Item
-            className="
-            group
-            text-xl
-            hover:bg-slate-600
-            hover:text-blue-100
-            leading-none
-            rounded-[3px]
-            flex
-            items-center
-            relative
-            select-none
-            outline-none
-            data-[disabled]:text-mauve8
-            data-[disabled]:pointer-events-none
-            data-[highlighted]:bg-violet9
-            data-[highlighted]:text-violet1"
+            className={menuItemClasses}
           >
             <Link className="w-full px-4 py-2" to="/recipes">
               Recipes

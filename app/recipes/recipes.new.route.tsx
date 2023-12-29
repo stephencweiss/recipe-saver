@@ -1,10 +1,10 @@
-import { ActionFunctionArgs } from "@remix-run/node";
+import { ActionFunctionArgs, LoaderFunction, json } from "@remix-run/node";
 import { useActionData, useLoaderData, Form, Link } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 
 import { CreateCommentForm } from "~/comments/api.comments.route";
 import { FormTextAreaInput, FormTextInput } from "~/components/forms";
-import Tooltip, { InvisibleTooltip } from "~/components/tooltip";
+import Tooltip from "~/components/tooltip";
 import VisuallyHidden from "~/components/visually-hidden";
 import { recipeAction } from "~/recipes/recipe-actions";
 import { useIngredientsForm } from "~/recipes/use-ingredients-form";
@@ -17,25 +17,30 @@ import { SubmissionStyles } from "./recipe-form-constants";
 /**
  * This loader is *unique* between recipes.new and recipes.edit
  */
-export const loader = async () => null;
+export const loader: LoaderFunction = async ({ request }) => {
+  const url = new URL(request.url);
+  const queryParam = url.searchParams.get("submissionStyle"); // Replace 'yourQueryParam' with your parameter key
+  return json({ queryParam });
+};
 
 export const action = async (actionArgs: ActionFunctionArgs) => {
   return await recipeAction(actionArgs);
 };
 
 export default function NewRecipePage() {
-  const { mode, ModeUi } = useModeSwitcher();
+  const data = useLoaderData<typeof loader>();
+  const { ModeUi: ModeSwitcher } = useModeSwitcher(data.queryParam);
   const user = useOptionalUser();
 
   /** The submissionType is the **only** unique value between recipes.new &
    * recipes.edit */
-  const submissionType: SubmissionStyles = mode;
+  const submissionType: SubmissionStyles = data.queryParam ?? "create-manual";
 
   /** From here through the mode specific markup should be **identical** between
    * recipes.new & recipes.edit
    */
   const actionData = useActionData<typeof action>();
-  const data = useLoaderData<typeof loader>();
+
   const titleRef = useRef<HTMLInputElement>(null);
   const prepTimeRef = useRef<HTMLInputElement>(null);
   const cookTimeRef = useRef<HTMLInputElement>(null);
@@ -145,7 +150,9 @@ export default function NewRecipePage() {
                   We are on a mission to make submitting recipes as easy as
                   possible.
                 </p>
-                <p>We&apos;re always looking for new recipe sites to support.</p>
+                <p>
+                  We&apos;re always looking for new recipe sites to support.
+                </p>
                 <p>We currently support the following websites:</p>
                 <ul>
                   <li>
@@ -287,11 +294,11 @@ export default function NewRecipePage() {
   );
 
   const ModeSpecificUi =
-    mode === "create-manual" ? ManualSubmitForm : URLSubmitForm;
+    data.queryParam === "create-from-url" ? URLSubmitForm : ManualSubmitForm;
 
   return (
     <>
-      {ModeUi}
+      {ModeSwitcher}
       {ModeSpecificUi}
     </>
   );
