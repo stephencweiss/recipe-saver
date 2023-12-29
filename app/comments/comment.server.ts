@@ -5,14 +5,12 @@ import { prisma } from "~/db.server";
 
 import { getRecipeComments } from "../recipes/recipe.server";
 
-/** TODO: Support other types */
-export type CommentTypes = "recipe";
+export type CommentTypes =
+  | "recipe"
+  | "feedback-comment";
 
-/**
- * TODO: Support other types
- */
 export const isValidCommentType = (commentType: string): commentType is CommentTypes => {
-  return commentType === "recipe";
+  return commentType === "recipe" || commentType === "feedback-comment";
 }
 export interface CreatableComment {
   comment: string,
@@ -71,7 +69,7 @@ export const getComments = async ({
   }
 };
 
-export async function createComment(CreatableComment: CreatableComment, requestingUserId: User["id"]): Promise<Comment> {
+export async function createComment(CreatableComment: CreatableComment, requestingUserId?: User["id"]): Promise<Comment> {
   const { comment, isPrivate } = CreatableComment;
   const recipeComment = await prisma.comment.create({
     data: {

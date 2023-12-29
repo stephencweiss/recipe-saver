@@ -1,11 +1,19 @@
 import { User } from "@prisma/client";
 import { ActionFunctionArgs } from "@remix-run/node";
-import { isRouteErrorResponse, useFetcher, useRouteError } from "@remix-run/react";
+import {
+  isRouteErrorResponse,
+  useFetcher,
+  useRouteError,
+} from "@remix-run/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { commentAction } from "~/comments/comment-actions";
 import { CommentForm } from "~/comments/comment-form";
-import { CommentTypes, FlatComment, FlatCommentServer } from "~/comments/comment.server";
+import {
+  CommentTypes,
+  FlatComment,
+  FlatCommentServer,
+} from "~/comments/comment.server";
 import { useOptionalUser } from "~/utils";
 import { isValidString } from "~/utils/strings";
 
@@ -15,13 +23,14 @@ export const action = async (args: ActionFunctionArgs) => {
   return await commentAction(args);
 };
 
-export const loader = async () => null
-
+export const loader = async () => null;
 
 // Used on the client, so cannot be in a `.server` file
-export const isFlatComment = (comment: FlatCommentServer | FlatComment): comment is FlatComment => {
-  return typeof (comment as FlatComment).createdDate == 'string';
-}
+export const isFlatComment = (
+  comment: FlatCommentServer | FlatComment,
+): comment is FlatComment => {
+  return typeof (comment as FlatComment).createdDate == "string";
+};
 
 // Ui
 const Comment = ({
@@ -34,9 +43,9 @@ const Comment = ({
   submittedBy,
   userId,
   commentId,
-  type,
+  commentType,
 }: FlatComment & {
-  type: "recipe";
+  commentType: CommentTypes;
   userId?: string;
 }) => {
   const editFetcher = useFetcher({ key: "edit-comment" });
@@ -115,7 +124,7 @@ const Comment = ({
             </button>
             <deleteFetcher.Form method="delete">
               <input type="hidden" name="action" value="delete-comment" />
-              <input type="hidden" name="comment-type" value={type} />
+              <input type="hidden" name="comment-type" value={commentType} />
               <input type="hidden" name="associatedId" value={associatedId} />
               <input type="hidden" name="commentId" value={commentId} />
               <input type="hidden" name="submittedBy" value={submittedBy} />
@@ -148,7 +157,7 @@ const Comment = ({
         userId={userId}
       >
         <input type="hidden" name="action" value={"edit-comment"} />
-        <input type="hidden" name="comment-type" value={type} />
+        <input type="hidden" name="comment-type" value={commentType} />
         <input type="hidden" name="associatedId" value={associatedId} />
         <input type="hidden" name="commentId" value={commentId} />
         <input type="hidden" name="userId" value={userId} />
@@ -179,11 +188,17 @@ const useCommentForm = ({
 };
 
 export const CreateCommentForm = ({
+  allowAnonymous = false,
   associatedId,
-  type,
+  commentType,
+  placeholder,
+  hidePrivateCheckbox = false
 }: {
+  allowAnonymous?: boolean;
   associatedId: string;
-  type: "recipe";
+  commentType: CommentTypes;
+  placeholder?: string;
+  hidePrivateCheckbox?: boolean;
 }) => {
   const user = useOptionalUser();
   const commentFormRef = useRef<HTMLFormElement>(null);
@@ -205,8 +220,9 @@ export const CreateCommentForm = ({
     //  CommentTypes are singular (e.g., recipe), but routes are plural (e.g., recipes/).
     const redirectToUrl = `/${type}s/${associatedId}`;
     return (
-      <RequireAuthenticatedUser message={"To submit a comment, please log in or create an account."}
-      redirectTo={redirectToUrl}
+      <RequireAuthenticatedUser
+        message={"To submit a comment, please log in or create an account."}
+        redirectTo={redirectToUrl}
       />
     );
   };
@@ -218,26 +234,24 @@ export const CreateCommentForm = ({
       action="/api/comments"
     >
       <CommentForm
+        allowAnonymous={allowAnonymous}
         isPrivate={isPrivate}
+        hidePrivateCheckbox={hidePrivateCheckbox}
         note={note}
+        placeholder={placeholder}
+        reset={reset}
         setNote={setNote}
         setIsPrivate={setIsPrivate}
-        reset={reset}
         userId={user?.id}
       >
         <input type="hidden" name="action" value={"create-comment"} />
-        <input type="hidden" name="comment-type" value={type} />
+        <input type="hidden" name="comment-type" value={commentType} />
         <input type="hidden" name="associatedId" value={associatedId} />
         <input type="hidden" name="userId" value={user?.id} />
       </CommentForm>
     </commentFormFetcher.Form>
   );
-  return (
-    <div className="border-t border-gray-300 pt-4 pb-6">
-      <h2 className="text-xl font-semibold mb-3">COOKING NOTES</h2>
-      {user ? loggedInView : loggedOutView(type, associatedId)}
-    </div>
-  );
+  return allowAnonymous || user != null ? loggedInView : loggedOutView(commentType, associatedId);
 };
 
 type CommentListViews = "all" | "helpful" | "personal";
@@ -253,12 +267,10 @@ const commentCounts = (comments: FlatComment[], userId?: User["id"]) => {
 
 const CommentList = ({
   comments = [],
-  type,
 }: {
   comments: FlatComment[];
-  type: "recipe";
 }) => {
-  const user = useOptionalUser()
+  const user = useOptionalUser();
 
   const [view, setView] = useState<CommentListViews>("all");
   const counts = commentCounts(comments, user?.id);
@@ -320,9 +332,8 @@ const CommentList = ({
           .map((commentData, index) => (
             <Comment
               key={index}
-              type={type}
-              {...commentData}
               userId={user?.id}
+              {...commentData}
             />
           ))}
       </div>
@@ -336,17 +347,19 @@ export const CommentListAndForm = ({
   comments,
 }: {
   associatedId: string;
-  type: "recipe";
+  type: CommentTypes;
   comments: FlatComment[];
 }) => {
   return (
     <>
-      <CreateCommentForm associatedId={associatedId} type={type} />
-      <CommentList type={type} comments={comments} />
+      <div className="border-t border-gray-300 pt-4 pb-6">
+        <h2 className="text-xl font-semibold mb-3">Cooking Notes</h2>
+        <CreateCommentForm associatedId={associatedId} commentType={type} placeholder={"Share your notes with other cooks or make a private note for yourself..."}/>
+      </div>
+      <CommentList comments={comments} />
     </>
   );
 };
-
 
 export function ErrorBoundary() {
   const error = useRouteError();

@@ -1,7 +1,7 @@
 import { InfoCircledIcon } from "@radix-ui/react-icons";
 import * as RadixTooltip from "@radix-ui/react-tooltip";
 
-const Tooltip = ({ message }: { message: string }) => {
+const Tooltip = ({ message }: { message: React.ReactNode }) => {
   return (
     <InvisibleTooltip message={message}>
           <button
@@ -26,7 +26,7 @@ export const InvisibleTooltip = ({
   children,
   message,
   displayMessage = true,
-}: React.PropsWithChildren<{ message: string; displayMessage?: boolean }>) => {
+}: React.PropsWithChildren<{ message: React.ReactNode; displayMessage?: boolean }>) => {
 
   if (displayMessage == false) {
     return <>{children}</>;

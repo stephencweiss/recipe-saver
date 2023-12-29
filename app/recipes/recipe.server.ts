@@ -123,9 +123,9 @@ export async function getRecipeWithIngredients({ id, requestingUser }: RecipeUse
 
 export interface CreatableRecipeComment extends CreatableComment {
   recipeId: Recipe["id"],
-
 }
-export async function createRecipeComment({ recipeId, comment, isPrivate }: CreatableRecipeComment, submittedBy: User["id"]) {
+
+export async function createRecipeComment({ recipeId, comment, isPrivate }: CreatableRecipeComment, submittedBy?: User["id"]) {
   const createdComment = await createComment({ comment, isPrivate }, submittedBy)
 
   await prisma.recipeComment.create({
