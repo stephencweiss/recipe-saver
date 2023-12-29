@@ -3,9 +3,7 @@ import * as RadixTooltip from "@radix-ui/react-tooltip";
 
 const Tooltip = ({ message }: { message: string }) => {
   return (
-    <RadixTooltip.Provider>
-      <RadixTooltip.Root delayDuration={0}>
-        <RadixTooltip.Trigger asChild>
+    <InvisibleTooltip message={message}>
           <button
             className="
           inline-flex
@@ -20,7 +18,23 @@ const Tooltip = ({ message }: { message: string }) => {
           >
             <InfoCircledIcon />
           </button>
-        </RadixTooltip.Trigger>
+    </InvisibleTooltip>
+  );
+};
+
+export const InvisibleTooltip = ({
+  children,
+  message,
+  displayMessage = true,
+}: React.PropsWithChildren<{ message: string; displayMessage?: boolean }>) => {
+
+  if (displayMessage == false) {
+    return <>{children}</>;
+  }
+  return (
+    <RadixTooltip.Provider>
+      <RadixTooltip.Root delayDuration={0}>
+        <RadixTooltip.Trigger asChild>{children}</RadixTooltip.Trigger>
         <RadixTooltip.Portal>
           <RadixTooltip.Content
             className="TooltipContent
