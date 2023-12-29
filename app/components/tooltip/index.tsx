@@ -11,7 +11,7 @@ const Tooltip = ({ message }: { message: React.ReactNode }) => {
           w-[35px]
           items-center
           justify-center
-          rounded-full
+          rounded
           bg-white
           hover:bg-blue-500
           active:bg-blue-600"
