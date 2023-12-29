@@ -6,6 +6,7 @@ module.exports = {
   cacheDirectory: "./node_modules/.cache/remix",
   ignoredRouteFiles: ["routes/**.*", "**/*.test.{ts,tsx}"],
   routes() {
+    // eslint-disable-next-line no-undef
     const appDirectory = path.join(__dirname, "app")
     return routeExtensions(appDirectory)
   },
