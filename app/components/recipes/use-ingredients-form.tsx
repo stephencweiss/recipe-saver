@@ -69,7 +69,7 @@ export const useIngredientsForm = (
         .filter((i) => !i.isDeleted)
         .filter((i): i is IngredientFormEntry & { id: string } => i.id != null)
         .map((ingredient, index) => (
-          <details key={ingredient.id} className="[&_svg]:open:-rotate-180">
+          <details key={ingredient.id} className="[&_svg]:open:-rotate-180 my-2">
             {/* <!-- notice here, we have disabled the summary's default triangle/arrow --> */}
             <summary className="flex justify-between cursor-pointer list-none items-center gap-4">
               <div className="flex gap-2">

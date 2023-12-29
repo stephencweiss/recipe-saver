@@ -1,40 +1,37 @@
-import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import {
-  useActionData,
-  useLoaderData,
-  Form,
-  useRouteError,
-  isRouteErrorResponse,
-} from "@remix-run/react";
+import { ActionFunctionArgs } from "@remix-run/node";
+import { useActionData, useLoaderData, Form } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 
-import { recipeAction } from "~/api/recipe-actions";
-import { loadSingleRecipe } from "~/api/recipe-loader";
 import { FormTextAreaInput, FormTextInput } from "~/components/forms";
 import { SubmissionStyles } from "~/components/recipes";
 import { useIngredientsForm } from "~/components/recipes/use-ingredients-form";
-import { useKeyboardSubmit } from "~/components/use-keyboard";
+import { useModeSwitcher } from "~/components/recipes/use-mode-switcher";
 import VisuallyHidden from "~/components/visually-hidden";
-import { getDefaultRecipeValues } from "~/utils";
-import { isValidString } from "~/utils/strings";
+import { recipeAction } from "~/recipes/recipe-actions";
+import { getDefaultRecipeValues, useOptionalUser } from "~/utils";
 
-export const loader = async (args: LoaderFunctionArgs) => {
-  return await loadSingleRecipe({ ...args, mode: "edit" });
-};
+import { RequireAuthenticatedUser } from "../routes/api.restricted.route";
+
+/**
+ * This loader is *unique* between recipes.new and recipes.edit
+ */
+export const loader = async () => null;
 
 export const action = async (actionArgs: ActionFunctionArgs) => {
   return await recipeAction(actionArgs);
 };
 
-export default function EditRecipePage() {
+export default function NewRecipePage() {
+  const { mode, ModeUi } = useModeSwitcher();
+  const user = useOptionalUser();
+
   /** The submissionType is the **only** unique value between recipes.new &
    * recipes.edit */
-  const submissionType: SubmissionStyles = "edit";
+  const submissionType: SubmissionStyles = mode;
 
-  useKeyboardSubmit(["shift", "enter"], "edit-form");
-
-  /** From here through the return should be **identical** between recipes.new &
-   * recipes.edit */
+  /** From here through the mode specific markup should be **identical** between
+   * recipes.new & recipes.edit
+   */
   const actionData = useActionData<typeof action>();
   const data = useLoaderData<typeof loader>();
   const titleRef = useRef<HTMLInputElement>(null);
@@ -47,15 +44,10 @@ export default function EditRecipePage() {
   const stepsRefs = useRef<HTMLTextAreaElement[]>([]);
   const ingredientRefs = useRef<(HTMLInputElement | null)[]>([]);
 
+  const [steps, setSteps] = useState<string[]>([""]);
   const defaultValues = getDefaultRecipeValues(data);
   const { ingredients, renderIngredients } = useIngredientsForm(
     defaultValues.recipeIngredients,
-  );
-
-  const [steps, setSteps] = useState<string[]>(
-    Array.isArray(defaultValues.preparationSteps)
-      ? defaultValues.preparationSteps
-      : [],
   );
 
   function addStep() {
@@ -94,6 +86,11 @@ export default function EditRecipePage() {
     }
   }, [steps.length]);
 
+  // Ensure we have enough refs to match the number of steps
+  useEffect(() => {
+    stepsRefs.current = stepsRefs.current.slice(0, steps.length);
+  }, [steps]);
+
   // Automatically focus the newest ingredient name input when a new ingredient is added
   useEffect(() => {
     if (ingredients.length === 1) {
@@ -104,33 +101,37 @@ export default function EditRecipePage() {
     lastIngredientRef?.focus();
   }, [ingredients.length]);
 
-  // Ensure we have enough refs to match the number of steps
-  useEffect(() => {
-    stepsRefs.current = stepsRefs.current.slice(0, steps.length);
-  }, [steps]);
-
   // Set initial focus on title
   // Run on load, and then never again.
   useEffect(() => {
     titleRef.current?.focus();
   }, []);
 
-  return (
-    <Form method="post" id="edit-form" className="flex flex-col gap-4 w-full">
-      <div className="text-right">
-        <button
-          type="submit"
-          className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
-        >
-          Save
-        </button>
+  if (!user) {
+    return (
+      <div className="flex justify-between">
+        <p className="text-xl py-4">Sign in to submit a recipe!</p>
+        <div className="flex justify-center">
+          <RequireAuthenticatedUser redirectTo="/recipes/new" />
+        </div>
       </div>
-      <VisuallyHidden>
-        <label>
-          Submission Type&nbsp;
-          <input name="submissionType" readOnly={true} value={submissionType} />
-        </label>
-      </VisuallyHidden>
+    );
+  }
+
+  /** Mode specific markup */
+  const URLSubmitForm = (
+    <FormTextInput
+      forwardRef={sourceUrlRef}
+      name="sourceUrl"
+      label="Source URL"
+      placeholder="https://cooking.nytimes.com/recipes/1015622-pumpkin-pie"
+      error={actionData?.errors.sourceUrl}
+      defaultValue={undefined}
+    />
+  );
+
+  const ManualSubmitForm = (
+    <>
       <VisuallyHidden>
         <label>
           Recipe ID&nbsp;
@@ -196,7 +197,7 @@ export default function EditRecipePage() {
         </div>
       </fieldset>
 
-      <fieldset>{renderIngredients}</fieldset>
+      {renderIngredients}
       {/* tags: [] */}
 
       <FormTextInput
@@ -231,32 +232,36 @@ export default function EditRecipePage() {
         error={actionData?.errors.sourceUrl}
         defaultValue={defaultValues.sourceUrl}
       />
-    </Form>
+    </>
   );
-}
 
-export function ErrorBoundary() {
-  const error = useRouteError();
+  const ModeSpecificForm =
+    mode === "create-manual" ? ManualSubmitForm : URLSubmitForm;
 
-  if (error instanceof Error) {
-    return <div>An unexpected error occurred: {error.message}</div>;
-  }
-
-  if (!isRouteErrorResponse(error)) {
-    return <h1>Unknown Error</h1>;
-  }
-
-  if (error.status === 401) {
-    return (
-      <div>
-        {isValidString(error.data) ? error.data : "You do not have access"}
-      </div>
-    );
-  }
-
-  if (error.status === 404) {
-    return <div>{isValidString(error.data) ? error.data : "Not found"}</div>;
-  }
-
-  return <div>An unexpected error occurred: {error.statusText}</div>;
+  return (
+    <>
+      {ModeUi}
+      <Form method="post" className="flex flex-col gap-4 w-full">
+        <div className="text-right">
+          <button
+            type="submit"
+            className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
+          >
+            Save
+          </button>
+        </div>
+        <VisuallyHidden>
+          <label>
+            Submission Type&nbsp;
+            <input
+              name="submissionType"
+              readOnly={true}
+              value={submissionType}
+            />
+          </label>
+        </VisuallyHidden>
+        {ModeSpecificForm}
+      </Form>
+    </>
+  );
 }

@@ -7,7 +7,7 @@ import Layout, { links as layoutLinks } from "~/components/layout";
 import { getSubmittedRecipes } from "~/models/recipe.server";
 import { getUser } from "~/session.server";
 
-import { RequireAuthenticatedUser } from "./api.restricted";
+import { RequireAuthenticatedUser } from "../routes/api.restricted.route";
 
 export const links: LinksFunction = () => [...layoutLinks()];
 

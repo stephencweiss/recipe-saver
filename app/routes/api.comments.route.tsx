@@ -9,7 +9,7 @@ import { CommentTypes, FlatComment, FlatCommentServer } from "~/models/comment.s
 import { useOptionalUser } from "~/utils";
 import { isValidString } from "~/utils/strings";
 
-import { RequireAuthenticatedUser } from "./api.restricted";
+import { RequireAuthenticatedUser } from "./api.restricted.route";
 
 export const action = async (args: ActionFunctionArgs) => {
   return await commentAction(args);
