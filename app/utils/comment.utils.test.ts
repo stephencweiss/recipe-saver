@@ -1,4 +1,4 @@
-import { filterPrivateComments } from "./comment.server"
+import { filterPrivateComments } from "./comment.utils"
 
 describe("Comment", () => {
   describe("filterPrivateComments", () => {

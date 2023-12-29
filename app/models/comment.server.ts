@@ -48,20 +48,6 @@ export const flattenAndAssociateComment = (
   commentType,
 })
 
-/** A helper function to filter out private comments based on
- * 1. the requesting user,
- * 2. the privacy of the comment and,
- * 3. whether or not we want to include private comments
- */
-export const filterPrivateComments = (comment: { isPrivate: boolean | null, submittedBy: string, }, requestingUserId: string) => {
-  if (comment.isPrivate) {
-    if (comment.submittedBy == requestingUserId) return true;
-
-    return false
-  }
-  return true;
-}
-
 export interface FlatComment extends FlatCommentServer {
   createdDate: string; // Date | null on the server, but jsonified becomes a string
 }
