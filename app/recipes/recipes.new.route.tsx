@@ -3,14 +3,14 @@ import { useActionData, useLoaderData, Form } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 
 import { FormTextAreaInput, FormTextInput } from "~/components/forms";
-import { SubmissionStyles } from "~/recipes/recipes";
-import { useIngredientsForm } from "~/recipes/recipes/use-ingredients-form";
-import { useModeSwitcher } from "~/recipes/recipes/use-mode-switcher";
 import VisuallyHidden from "~/components/visually-hidden";
 import { recipeAction } from "~/recipes/recipe-actions";
+import { useIngredientsForm } from "~/recipes/use-ingredients-form";
+import { useModeSwitcher } from "~/recipes/use-mode-switcher";
+import { RequireAuthenticatedUser } from "~/users/api.restricted.route";
 import { getDefaultRecipeValues, useOptionalUser } from "~/utils";
 
-import { RequireAuthenticatedUser } from "../users/api.restricted.route";
+import { SubmissionStyles } from "./recipe-form-constants";
 
 /**
  * This loader is *unique* between recipes.new and recipes.edit

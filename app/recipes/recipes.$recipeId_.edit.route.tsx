@@ -8,15 +8,16 @@ import {
 } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 
+import { FormTextAreaInput, FormTextInput } from "~/components/forms";
+import VisuallyHidden from "~/components/visually-hidden";
+import { useKeyboardSubmit } from "~/hooks/use-keyboard";
 import { recipeAction } from "~/recipes/recipe-actions";
 import { loadSingleRecipe } from "~/recipes/recipe-loader";
-import { FormTextAreaInput, FormTextInput } from "~/components/forms";
-import { SubmissionStyles } from "~/recipes/recipes";
-import { useIngredientsForm } from "~/recipes/recipes/use-ingredients-form";
-import { useKeyboardSubmit } from "~/hooks/use-keyboard";
-import VisuallyHidden from "~/components/visually-hidden";
+import { useIngredientsForm } from "~/recipes/use-ingredients-form";
 import { getDefaultRecipeValues } from "~/utils";
 import { isValidString } from "~/utils/strings";
+
+import { SubmissionStyles } from "./recipe-form-constants";
 
 export const loader = async (args: LoaderFunctionArgs) => {
   return await loadSingleRecipe({ ...args, mode: "edit" });

@@ -1,9 +1,9 @@
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
 import { useState } from "react";
 
-import Tooltip from "../../components/tooltip";
+import Tooltip from "../components/tooltip";
 
-import { SubmissionStyles } from "./form-constants";
+import { SubmissionStyles } from "./recipe-form-constants";
 
 const toggleGroupItemClasses =
   "data-[state=on]:bg-slate-600  data-[state=on]:text-white  flex  items-center  justify-center  bg-white  text-slate-600  leading-4  first:rounded-l  last:rounded-r  focus:z-10  ";
