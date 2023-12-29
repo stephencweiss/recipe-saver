@@ -2,10 +2,10 @@ import { Recipe, RecipeIngredient } from "@prisma/client";
 import { useMatches } from "@remix-run/react";
 import { useMemo } from "react";
 
-import type { User } from "~/models/user.server";
+import type { User } from "~/users/user.server";
 
-import { createJSONErrorResponse } from "../components/recipes/errors";
-import { IngredientFormEntry, CreatableRecipe } from "../models/recipe.server";
+import { createJSONErrorResponse } from "../recipes/recipes/errors";
+import { IngredientFormEntry, CreatableRecipe } from "../recipes/recipe.server";
 
 const DEFAULT_REDIRECT = "/";
 

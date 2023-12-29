@@ -3,7 +3,7 @@ import invariant from "tiny-invariant";
 
 import { prisma } from "~/db.server";
 
-import { getRecipeComments } from "./recipe.server";
+import { getRecipeComments } from "../recipes/recipe.server";
 
 /** TODO: Support other types */
 export type CommentTypes = "recipe";

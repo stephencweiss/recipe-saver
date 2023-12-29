@@ -11,10 +11,10 @@ import invariant from "tiny-invariant";
 import { loadSingleRecipe } from "~/recipes/recipe-loader";
 import { List } from "~/components/lists";
 import { Time } from "~/components/time";
-import { useKeyboardCombo } from "~/components/use-keyboard";
-import { getComments } from "~/models/comment.server";
-import { deleteRecipe } from "~/models/recipe.server";
-import { CommentListAndForm, isFlatComment } from "~/routes/api.comments.route";
+import { useKeyboardCombo } from "~/hooks/use-keyboard";
+import { getComments } from "~/comments/comment.server";
+import { deleteRecipe } from "~/recipes/recipe.server";
+import { CommentListAndForm, isFlatComment } from "~/comments/api.comments.route";
 import { requireUserId } from "~/session.server";
 
 export const loader = async (args: LoaderFunctionArgs) => {

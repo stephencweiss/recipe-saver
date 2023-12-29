@@ -11,7 +11,7 @@ import invariant from "tiny-invariant";
 import { prisma } from "~/db.server";
 import { flattenAndAssociateComment, filterPrivateComments } from "~/utils/comment.utils";
 
-import { FlatCommentServer, CommentTypes, CreatableComment, createComment, deleteComment } from "./comment.server";
+import { FlatCommentServer, CommentTypes, CreatableComment, createComment, deleteComment } from "../comments/comment.server";
 
 interface PaginationOptions {
   skip?: number;

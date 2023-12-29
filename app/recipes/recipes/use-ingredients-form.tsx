@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import VisuallyHidden from "~/components/visually-hidden";
-import { IngredientFormEntry } from "~/models/recipe.server";
+import { IngredientFormEntry } from "~/recipes/recipe.server";
 import { createPlaceholderIngredient } from "~/utils";
 
 export const useIngredientsForm = (

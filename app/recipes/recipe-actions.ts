@@ -1,8 +1,8 @@
 import { ActionFunctionArgs, redirect } from "@remix-run/node";
 
-import { SUPPORTED_SUBMISSION_STYLES, SubmissionStyles, createJSONErrorResponse, extractIngredientsFromFormData } from "~/components/recipes";
-import { parseRecipeSite } from "~/models/parse.server";
-import { CreatableRecipe, createRecipe, disassociateIngredientsFromRecipe, isUpdatableRecipe, updateRecipeWithDetails } from "~/models/recipe.server";
+import { SUPPORTED_SUBMISSION_STYLES, SubmissionStyles, createJSONErrorResponse, extractIngredientsFromFormData } from "~/recipes/recipes";
+import { parseRecipeSite } from "~/recipes/parse.server";
+import { CreatableRecipe, createRecipe, disassociateIngredientsFromRecipe, isUpdatableRecipe, updateRecipeWithDetails } from "~/recipes/recipe.server";
 import { requireUserId } from "~/session.server";
 
 export async function recipeAction({ request }: ActionFunctionArgs) {

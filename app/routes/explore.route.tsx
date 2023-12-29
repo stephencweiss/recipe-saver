@@ -5,8 +5,8 @@ import { useEffect, useState } from "react";
 import recipePlaceholder from "~/assets/images/recipe-placeholder.jpg";
 import { InfiniteScroller } from "~/components/infinite-scroller";
 import Layout from "~/components/layout";
-import RecipeCard from "~/components/recipes/recipe-card";
-import { RecipesResponse, getRecipes } from "~/models/recipe.server";
+import RecipeCard from "~/recipes/recipes/recipe-card";
+import { RecipesResponse, getRecipes } from "~/recipes/recipe.server";
 
 const DEFAULT_SKIP = 0;
 const DEFAULT_TAKE = 10;

@@ -6,11 +6,11 @@ import {
   CommentTypes,
   editComment,
   isValidCommentType,
-} from "~/models/comment.server";
+} from "~/comments/comment.server";
 import {
   createRecipeComment,
   deleteRecipeComment,
-} from "~/models/recipe.server";
+} from "~/recipes/recipe.server";
 import { requireUserId } from "~/session.server";
 
 // Types

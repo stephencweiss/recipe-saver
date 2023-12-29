@@ -4,10 +4,10 @@ import { Link, NavLink, Outlet, useLoaderData } from "@remix-run/react";
 import { useEffect, useState } from "react";
 
 import Layout, { links as layoutLinks } from "~/components/layout";
-import { getSubmittedRecipes } from "~/models/recipe.server";
+import { getSubmittedRecipes } from "~/recipes/recipe.server";
 import { getUser } from "~/session.server";
 
-import { RequireAuthenticatedUser } from "../routes/api.restricted.route";
+import { RequireAuthenticatedUser } from "../users/api.restricted.route";
 
 export const links: LinksFunction = () => [...layoutLinks()];
 

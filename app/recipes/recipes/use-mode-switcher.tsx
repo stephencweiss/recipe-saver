@@ -1,7 +1,7 @@
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
 import { useState } from "react";
 
-import Tooltip from "../tooltip";
+import Tooltip from "../../components/tooltip";
 
 import { SubmissionStyles } from "./form-constants";
 

@@ -1,6 +1,6 @@
 import { Comment } from "@prisma/client";
 
-import { CommentTypes, FlatCommentServer } from "~/models/comment.server";
+import { CommentTypes, FlatCommentServer } from "~/comments/comment.server";
 
 /** A helper function to filter out private comments based on
  * 1. the requesting user,

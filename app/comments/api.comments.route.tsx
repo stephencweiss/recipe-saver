@@ -3,13 +3,13 @@ import { ActionFunctionArgs } from "@remix-run/node";
 import { isRouteErrorResponse, useFetcher, useRouteError } from "@remix-run/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { commentAction } from "~/api/comment-actions";
-import { CommentForm } from "~/components/comments";
-import { CommentTypes, FlatComment, FlatCommentServer } from "~/models/comment.server";
+import { commentAction } from "~/comments/comment-actions";
+import { CommentForm } from "~/comments/comment-form";
+import { CommentTypes, FlatComment, FlatCommentServer } from "~/comments/comment.server";
 import { useOptionalUser } from "~/utils";
 import { isValidString } from "~/utils/strings";
 
-import { RequireAuthenticatedUser } from "./api.restricted.route";
+import { RequireAuthenticatedUser } from "../users/api.restricted.route";
 
 export const action = async (args: ActionFunctionArgs) => {
   return await commentAction(args);
