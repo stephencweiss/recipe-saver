@@ -14,16 +14,16 @@ import {
   isFlatComment,
 } from "~/comments/api.comments.route";
 import { getComments } from "~/comments/comment.server";
+import { CollapsibleSection } from "~/components/collapsible";
 import { List } from "~/components/lists";
 import { Time } from "~/components/time";
+import TruncateText from "~/components/truncate-text";
 import { useKeyboardCombo } from "~/hooks/use-keyboard";
 import { loadSingleRecipe } from "~/recipes/recipe-loader";
 import { deleteRecipe } from "~/recipes/recipe.server";
 import { requireUserId } from "~/session.server";
 
 import { parseIngredients } from "./recipe-ingredient-utils";
-import { CollapsibleSection } from "~/components/collapsible";
-import TruncateText from "~/components/truncate-text";
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const recipeData = await loadSingleRecipe({ ...args, mode: "view" });
@@ -32,7 +32,6 @@ export const loader = async (args: LoaderFunctionArgs) => {
     commentType: "recipe",
     userId: recipeData.user?.id,
   });
-
   return json({ ...recipeData, comments });
 };
 
