@@ -57,7 +57,7 @@ const StandardHeader = ({ title, className }: Readonly<HeaderProps>) => {
         <div className="hidden md:flex">
           {user ? (
             <Link
-              to="/recipes/new?submissionStyle=create-manual"
+              to="/recipes/new?submissionStyle=create-from-url"
               className="
       px-4 py-2 rounded
       bg-blue-500 text-white text-xl
