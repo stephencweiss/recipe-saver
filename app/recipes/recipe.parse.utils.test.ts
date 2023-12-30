@@ -1,5 +1,5 @@
-import { _testing, parseIngredientsList } from "./recipe.parse.utils";
-const { parseIngredientQuantity, parseIngredientNotes, parseIngredientUnit, parseIngredientComponents } = _testing;
+import { _testing } from "./recipe.parse.utils";
+const { parseIngredientQuantity, parseIngredientNotes, parseIngredientUnit, parseIngredientComponents, parseIngredientsList } = _testing;
 describe("RecipeParseUtils", () => {
 
   describe("parseIngredientQuantity", () => {
@@ -77,9 +77,7 @@ describe("RecipeParseUtils", () => {
     })
   })
 
-
-
-  describe("parseIngredients", () => {
+  describe("parseIngredientsComponents", () => {
     const testCases = [
       {
         raw: "3 tablespoons neutral oil, such as sunflower or canola",
@@ -147,7 +145,6 @@ describe("RecipeParseUtils", () => {
       {
         raw: "2 to 3 tablespoons fresh lime juice, plus wedges for serving",
         ingredient: "fresh lime juice, plus wedges for serving",
-
       },
     ]
 

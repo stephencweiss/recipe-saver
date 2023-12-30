@@ -9,12 +9,10 @@ const COOKING_UNITS = new Set([
 /** Takes a list of ingredients which at least have a name property and return the pieces */
 export function parseIngredientsList(ingredientList: { name: string; }[]): Pick<RecipeIngredient, "name" | "note" | "quantity" | "rawIngredient" | "unit">[] {
   const parsedIngredients = [];
-
   for (const ingredient of ingredientList) {
     const parsedIngredient = parseIngredientComponents(ingredient.name);
     parsedIngredients.push({ ...parsedIngredient, rawIngredient: ingredient.name });
   }
-
   return parsedIngredients;
 };
 
@@ -27,9 +25,9 @@ function parseIngredientComponents(raw: string): Pick<RecipeIngredient, "name" |
   const strippedParensFromRaw = removeTextInParentheses(raw.toLowerCase());
 
   // Removes the quantity and unit from the raw string and also removes extra spaces
-  const ingredient = removeExtraSpaces(strippedParensFromRaw.replace(quantity, "").replace(unit, ""));
+  const ingredientName = removeExtraSpaces(strippedParensFromRaw.replace(quantity, "").replace(unit, ""));
 
-  return { quantity, unit, name: ingredient, note };
+  return { quantity, unit, name: ingredientName, note };
 }
 
 /**
