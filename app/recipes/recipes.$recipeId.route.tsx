@@ -82,7 +82,7 @@ export default function RecipeDetailsPage() {
       {isUsersRecipe ? (
         <div className="flex justify-between gap-4 flex-col lg:flex-row">
           <h2 className="text-4xl font-bold">{data.recipe.title}</h2>
-          <div className="flex flex-col gap-2 justify-between sm:flex-row">
+          <div className="flex flex-col-reverse gap-2 justify-between sm:flex-row">
             <Form method="post" className="flex flex-col gap-2 sm:flex-row">
               <button
                 type="submit"
