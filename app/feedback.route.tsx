@@ -8,14 +8,15 @@ export default function FeedbackPage() {
         <p className="text-xl text-bold text-gray-700 py-4">
           We&apos;d love to hear from you!
         </p>
-
-        <CreateCommentForm
-          allowAnonymous={true}
-          associatedId=""
-          commentType="feedback-comment"
-          placeholder="What's on your mind?"
-          hidePrivateCheckbox={true}
-        />
+        <div className="md:min-w-[400px] lg:min-w-[500px]">
+          <CreateCommentForm
+            allowAnonymous={true}
+            associatedId=""
+            commentType="feedback-comment"
+            placeholder="What's on your mind?"
+            hidePrivateCheckbox={true}
+          />
+        </div>
       </div>
     </Layout>
   );

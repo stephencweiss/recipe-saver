@@ -29,7 +29,7 @@ export const CommentForm = ({
     (allowAnonymous === true || userId !== null) && isValidString(note);
 
   return (
-    <>
+    <div className="max-w-[500px]">
       {children}
       <input type="hidden" name="isPrivate" value={String(isPrivate)} />
       <input type="hidden" name="allowAnonymous" value={String(allowAnonymous)} />
@@ -113,7 +113,7 @@ export const CommentForm = ({
           </InvisibleTooltip>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
