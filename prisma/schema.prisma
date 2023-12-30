@@ -248,9 +248,11 @@ model Tag {
 model UserRecipe {
   userId      String // Foreign key for User
   recipeId    String // Foreign key for Recipe
-  category    String?
-  tags        String?
-  notes       String?
+  // category    String?
+  // tags        String?
+  // notes       String?
+  cookCount   Int?      @default(0) @map("cook_count")
+  lastCooked  DateTime? @map("last_cooked")
   createdDate DateTime? @default(now()) @map("created_date")
   updatedDate DateTime? @default(now()) @map("updated_date")
   user        User      @relation(fields: [userId], references: [id])
