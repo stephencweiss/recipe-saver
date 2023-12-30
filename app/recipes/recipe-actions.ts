@@ -6,7 +6,7 @@ import { requireUserId } from "~/session.server";
 
 import { createJSONErrorResponse } from "./recipe-errors";
 import { SUPPORTED_SUBMISSION_STYLES, SubmissionStyles } from "./recipe-form-constants";
-import { extractIngredientsFromFormData } from "./recipe-ingredient-form-data-extraction";
+import { extractIngredientsFromFormData } from "./recipe-ingredient-utils";
 
 export async function recipeAction({ request }: ActionFunctionArgs) {
   const userId = await requireUserId(request);

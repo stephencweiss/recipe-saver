@@ -118,10 +118,11 @@ export default function EditRecipePage() {
 
   return (
     <Form method="post" id="edit-form" className="flex flex-col gap-4 w-full">
-      <div className="text-right">
+      <div className="flex justify-between flex-col gap-4 md:flex-row">
+        <p className="text-xl text-center font-bold sm:text-2xl md:text-left ">Edit</p>
         <button
           type="submit"
-          className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-400"
+          className="rounded bg-yellow-500 px-4 py-2 text-white hover:bg-yellow-600 active:bg-yellow-400 focus:bg-yellow-400"
         >
           Save
         </button>
@@ -232,6 +233,12 @@ export default function EditRecipePage() {
         error={actionData?.errors.sourceUrl}
         defaultValue={defaultValues.sourceUrl}
       />
+      <button
+        type="submit"
+        className="rounded bg-yellow-500 px-4 py-2 text-white hover:bg-yellow-600 active:bg-yellow-400 focus:bg-yellow-400"
+      >
+        Save
+      </button>
     </Form>
   );
 }

@@ -2,6 +2,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import {
   Form,
+  Link,
   isRouteErrorResponse,
   useLoaderData,
   useRouteError,
@@ -13,12 +14,16 @@ import {
   isFlatComment,
 } from "~/comments/api.comments.route";
 import { getComments } from "~/comments/comment.server";
+import { CollapsibleSection } from "~/components/collapsible";
 import { List } from "~/components/lists";
 import { Time } from "~/components/time";
+import TruncateText from "~/components/truncate-text";
 import { useKeyboardCombo } from "~/hooks/use-keyboard";
 import { loadSingleRecipe } from "~/recipes/recipe-loader";
 import { deleteRecipe } from "~/recipes/recipe.server";
 import { requireUserId } from "~/session.server";
+
+import { parseIngredients } from "./recipe-ingredient-utils";
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const recipeData = await loadSingleRecipe({ ...args, mode: "view" });
@@ -71,49 +76,45 @@ export default function RecipeDetailsPage() {
   );
   const isUsersRecipe = data.user?.id === data.recipe.submittedBy;
 
-  const parsedIngredients = data.recipe.recipeIngredients.map((ingredient) => {
-    const { quantity, unit, name, note } = ingredient;
-    const q = quantity != null && quantity != "null" ? quantity : "";
-    const u = unit != null && unit != "null" ? unit : "";
-    const nt = note != null && note != "null" ? note : "";
-    const nm = name != null && name != "null" ? name : "";
-    return (
-      <div key={`${q}-${u}-${nm}`.trim()}>
-        <span>{`${q} ${u} ${nm} `}</span>
-        <span className="text-red-500 font-bold">
-          {nt != "" ? `-- ${nt}` : ""}
-        </span>
-      </div>
-    );
-  });
+  const parsedIngredients = parseIngredients(data.recipe.recipeIngredients);
   return (
     <div>
       {isUsersRecipe ? (
         <div className="flex justify-between gap-4 flex-col lg:flex-row">
           <h2 className="text-4xl font-bold">{data.recipe.title}</h2>
-          <Form method="post" className="flex flex-row gap-2">
-            <button
-              type="submit"
-              value="edit-recipe"
-              name="action"
-              className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-700 disabled:bg-gray-400"
-              disabled={!isUsersRecipe}
-            >
-              Edit
+          <div className="flex flex-col gap-2 justify-between sm:flex-row">
+            <Form method="post" className="flex flex-col gap-2 sm:flex-row">
+              <button
+                type="submit"
+                value="edit-recipe"
+                name="action"
+                className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-700 disabled:bg-gray-400"
+                disabled={!isUsersRecipe}
+              >
+                Edit
+              </button>
+              <button
+                type="submit"
+                value="delete-recipe"
+                name="action"
+                disabled={!isUsersRecipe}
+                className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-700 disabled:bg-gray-400"
+              >
+                Delete
+              </button>
+            </Form>
+            <button className="rounded bg-yellow-500 px-4 py-2 text-white hover:bg-yellow-600 active:bg-yellow-400 focus:bg-yellow-700 disabled:bg-gray-400">
+              <Link to="cook">Cook!</Link>
             </button>
-            <button
-              type="submit"
-              value="delete-recipe"
-              name="action"
-              disabled={!isUsersRecipe}
-              className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-700 disabled:bg-gray-400"
-            >
-              Delete
-            </button>
-          </Form>
+          </div>
         </div>
       ) : (
-        <h2 className="text-4xl font-bold">{data.recipe.title}</h2>
+        <div className="flex justify-between gap-4 flex-col lg:flex-row">
+          <h2 className="text-4xl font-bold">{data.recipe.title}</h2>
+          <button className="rounded bg-yellow-500 px-4 py-2 text-white hover:bg-yellow-600 active:bg-yellow-400 focus:bg-yellow-700 disabled:bg-gray-400">
+            <Link to="cook">Cook!</Link>
+          </button>
+        </div>
       )}
 
       <div className="flex flex-row gap-4 px-2 py-4">
@@ -125,23 +126,61 @@ export default function RecipeDetailsPage() {
         title="Description"
         items={[data.recipe.description || "No Description"]}
       />
-      <List title="Steps" items={data.recipe.preparationSteps} ListType="ol" />
       <List title="Ingredients" items={parsedIngredients} />
-      <h2 className="text-xl font-bold py-4">Additional Details</h2>
-      <p className="pb-2">Source: {data.recipe.source || "User Submitted"}</p>
+      <List title="Steps" items={data.recipe.preparationSteps} ListType="ol" />
+      <CollapsibleSection title="Additional Detail">
+        <p className="pb-2">Source: {data.recipe.source || "User Submitted"}</p>
+        <p className="pb-2 flex items-center">
+          URL:&nbsp;
+          {data.recipe.sourceUrl ? (
+            <TruncateText>
+              <a
+                className="text-blue-700 inline-block align-middle"
+                href={data.recipe.sourceUrl}
+              >
+                {data.recipe.sourceUrl}
+              </a>
+            </TruncateText>
+          ) : (
+            "N/A"
+          )}
+        </p>
 
-      <p className="pb-2">
-        URL:{" "}
-        {data.recipe.sourceUrl ? (
-          <a className="text-blue-700" href={data.recipe.sourceUrl}>
-            {data.recipe.sourceUrl}
-          </a>
-        ) : (
-          "N/A"
-        )}
-      </p>
+        <p className="pb-2">Submitted by: {data.recipe.user?.username}</p>
+      </CollapsibleSection>
 
-      <p className="pb-2">Submitted by: {data.recipe.user?.username}</p>
+      <CollapsibleSection title="Cook Counts">
+        <div className="flex flex-col sm:flex-row justify-between gap-2">
+          {data.recipe.cookCounts.totalCookCount > 0 ? (
+            <div className="flex justify-between gap-2">
+              <p key="total" className="flex ">
+                Community Cook Count:{" "}
+                <span className="ml-2 mb-2 inline-block bg-gray-200 rounded px-3 py-1 text-sm font-semibold text-gray-700">
+                  {data.recipe.cookCounts.totalCookCount}
+                </span>
+              </p>
+              {data.user ? (
+                <p key="user" className="flex">
+                  Your Cook Count:{" "}
+                  <span className="ml-2 mb-2 inline-block bg-gray-200 rounded px-3 py-1 text-sm font-semibold text-gray-700">
+                    {data.recipe.cookCounts.userCookCount}
+                  </span>
+                </p>
+              ) : (
+                <></>
+              )}
+            </div>
+          ) : (
+            <p className="pb-2">
+              No one has cooked this recipe yet! Be the first!
+            </p>
+          )}
+          <button className="rounded bg-yellow-500 px-4 py-2 text-white hover:bg-yellow-600 active:bg-yellow-400 focus:bg-yellow-700 disabled:bg-gray-400">
+            <Link to="cook">Cook!</Link>
+          </button>
+        </div>
+      </CollapsibleSection>
+
       {data.recipe.recipeTags.map((tag) => (
         <span
           className="inline-block bg-gray-200 rounded px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2"

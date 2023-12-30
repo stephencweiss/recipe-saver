@@ -1,16 +1,17 @@
+import { CollapsibleSection } from "./collapsible";
+
 interface ListProps {
   title: string;
-  items: (JSX.Element | string)[];
+  items: (React.ReactNode | string)[];
   ListType?: "ol" | "ul";
   HeaderLevel?: "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
 }
 
 const List = (props: ListProps) => {
-  const { title, items, HeaderLevel = "h2", ListType = "ul" } = props;
+  const { title, items, HeaderLevel, ListType = "ul" } = props;
 
   return (
-    <>
-      <HeaderLevel className="text-xl font-bold py-4">{title}</HeaderLevel>
+    <CollapsibleSection title={title} HeaderLevel={HeaderLevel}>
       {items.length === 0 ? (
         <p className="pb-2">Nothing to see here!</p>
       ) : (
@@ -27,7 +28,7 @@ const List = (props: ListProps) => {
           })}
         </ListType>
       )}
-    </>
+    </CollapsibleSection>
   );
 };
 

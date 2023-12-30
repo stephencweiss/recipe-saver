@@ -36,8 +36,8 @@ export default function RecipesPage() {
 
   return (
     <Layout title="Recipes">
-      <main className="flex flex-col-reverse sm:flex-row">
-        <div className="max-h-screen overflow-scroll border-r bg-blue-50 w-full sm:min-w-150 sm:w-80 ">
+      <main className="flex flex-col-reverse md:flex-row">
+        <div className="max-h-screen overflow-scroll border-r bg-blue-50 w-full md:min-w-200 md:w-80 ">
           <Link
             to="new?submissionStyle=create-manual"
             className="

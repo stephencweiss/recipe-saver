@@ -3,6 +3,7 @@ import invariant from "tiny-invariant";
 
 import { RecipeUserArgs, getRecipeWithIngredients } from "~/recipes/recipe.server";
 import { getUser } from "~/session.server";
+import { getCookCounts } from "~/users/user.recipe.server";
 import { isNotPlaceholderIngredient, parsePreparationSteps } from "~/utils";
 
 /** A common loader for a specific recipe; include the requesting user */
@@ -26,10 +27,13 @@ export async function loadSingleRecipe({ params, request, mode }: Pick<LoaderFun
     throw new Response("Cannot edit a recipe owned by another user", { status: 401 });
   }
 
+  const cookCounts = await getCookCounts(params.recipeId, user?.id);
+
   const recipe = {
     ...rawRecipe,
     recipeIngredients: rawRecipe?.recipeIngredients.map(r => ({ ...r, isDeleted: false })).filter(isNotPlaceholderIngredient) ?? [],
     preparationSteps: parsePreparationSteps(rawRecipe.preparationSteps ?? ""),
+    cookCounts
   };
     return { recipe, user };
 }
