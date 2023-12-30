@@ -19,7 +19,6 @@ const BasicHeader = ({
   title,
   children,
 }: React.PropsWithChildren<Readonly<HeaderProps>>) => {
-  console.log("className", className);
   return (
     <header
       className={
