@@ -1,3 +1,9 @@
+import { LinksFunction } from "@remix-run/node";
+
+import styles from "./styles.css";
+
+export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
+
 export const CollapsibleSection = ({
   title,
   HeaderLevel = "h2",
@@ -8,7 +14,7 @@ export const CollapsibleSection = ({
 }>) => {
   return (
     // Open by default
-    <details open className="group my-2">
+    <details open className="group collapsible my-2">
       <summary className="flex justify-between cursor-pointer list-none items-center gap-4">
         <div className="flex gap-2 items-center">
           {/* <!-- notice here, we added our own triangle/arrow svg --> */}

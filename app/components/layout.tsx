@@ -1,9 +1,11 @@
 import { LinksFunction } from "@remix-run/node";
 
+import { links as collapsibleLinks } from "./collapsible";
 import { Header, links as headerLinks } from "./header";
 
 export const links: LinksFunction = () => [
   ...headerLinks(),
+  ...collapsibleLinks(),
 ];
 
 interface LayoutProps extends React.PropsWithChildren {

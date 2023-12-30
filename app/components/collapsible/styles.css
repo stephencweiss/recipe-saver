@@ -1,0 +1,7 @@
+.collapsible > summary {
+  list-style: none;
+}
+.collapsible > summary::marker, /* Latest Chrome, Edge, Firefox */
+.collapsible > summary::-webkit-details-marker /* Safari */ {
+  display: none;
+}
