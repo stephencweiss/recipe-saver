@@ -1,5 +1,7 @@
 import { RecipeIngredient } from "@prisma/client";
 
+import { removeExtraSpaces, removeTextInParentheses } from "~/utils/strings";
+
 const COOKING_UNITS = new Set([
   'can', 'clove', 'cup', 'cup ', 'fl oz', 'fluid ounce', 'gal', 'gallon', 'knob', 'lb', 'ounce', 'oz', 'pint ', 'pound', 'pt', 'qt', 'quart', 'tablespoon', 'tablespoon', 'tb', 'tbsp', 'tbsp', 'teaspoon', 'teaspoon', 'tsp', 'tsp', 'whole'
 ]);
@@ -102,28 +104,6 @@ function parseIngredientNotes(raw: string): string {
   }
 
   return notes.join('; ');
-}
-
-/**
- * A simple function to remove text in parentheses from a string.
- * @example "1/2 (and 1.5 here)" --> "1/2"
- * @example "1/2 (and 1.5 here), and 2.5 here" --> "1/2 , and 2.5 here"
- */
-function removeTextInParentheses(raw: string) {
-  return raw.replace(/\([^)]*\)/g, '');
-}
-
-function removeExtraSpaces(raw: string) {
-  // Remove spaces before punctuation
-  raw = raw.replace(/\s+([,.!?;:])/, '$1');
-
-  // Remove spaces after punctuation if it's not followed by a letter or number
-  raw = raw.replace(/([,.!?;:])\s+(?![a-zA-Z0-9])/, '$1');
-
-  // Replace multiple spaces with a single space
-  raw = raw.replace(/\s{2,}/g, ' ');
-
-  return raw.trim();
 }
 
 /**
