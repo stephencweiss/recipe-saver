@@ -43,10 +43,10 @@ export const CommentForm = ({
       />
       <div className="flex justify-between items-center mb-4">
         {hidePrivateCheckbox === false ? (
-          <div className="flex">
+          <div className="flex flex-col sm:flex-row">
             <button
               type="button"
-              className={`px-4 py-1 rounded-l-full ${
+              className={`px-4 py-1 rounded-t sm:rounded-none sm:rounded-l ${
                 isPrivate
                   ? "bg-slate-600 text-blue-100"
                   : "bg-blue-500 text-white"
@@ -57,7 +57,7 @@ export const CommentForm = ({
             </button>
             <button
               type="button"
-              className={`px-4 py-1 rounded-r-full ${
+              className={`px-4 py-1 rounded-b sm:rounded-none sm:rounded-r ${
                 !isPrivate
                   ? "bg-slate-600 text-blue-100"
                   : "bg-blue-500 text-white"
@@ -70,7 +70,7 @@ export const CommentForm = ({
         ) : (
           <div />
         )}
-        <div>
+        <div className="flex flex-col gap-2 sm:flex-row">
           <InvisibleTooltip
             displayMessage={!isValidString(note)}
             message="Cannot cancel without a note"
@@ -78,7 +78,7 @@ export const CommentForm = ({
             <button
               type="button"
               className="
-              px-3 py-1 rounded border mr-2
+              px-3 py-1 rounded border
               bg-slate-600 text-blue-100
               hover:bg-blue-500
               active:bg-blue-600
