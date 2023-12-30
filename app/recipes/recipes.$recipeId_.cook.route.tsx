@@ -7,6 +7,7 @@ import {
 } from "@remix-run/react";
 import { redirect } from "react-router";
 
+import { CreateCommentForm } from "~/comments/api.comments.route";
 import { Checklist } from "~/components/checklist";
 import { CollapsibleSection } from "~/components/collapsible";
 import { List } from "~/components/lists";
@@ -147,6 +148,12 @@ export default function RecipeCookPage() {
       </CollapsibleSection>
       <CollapsibleSection title={"Steps"}>
         <Checklist items={data.recipe.preparationSteps} />
+      </CollapsibleSection>
+      <CollapsibleSection title={"Cooking Notes"}>
+        <CreateCommentForm
+          commentType={"recipe"}
+          associatedId={data.recipe.id}
+        />
       </CollapsibleSection>
     </div>
   );
