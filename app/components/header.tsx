@@ -72,7 +72,7 @@ const StandardHeader = ({ title, className }: Readonly<HeaderProps>) => {
           ) : (
             <Link
               to="/explore"
-              className="rounded bg-slate-600 px-4 py-2 text-blue-100 text-xl hover:bg-blue-500 active:bg-blue-600"
+              className="rounded bg-slate-600 px-4 py-2 text-blue-100 text-xl hover:bg-blue-600 focus:bg-blue-400 active:bg-blue-700"
             >
               Explore
             </Link>
@@ -82,7 +82,7 @@ const StandardHeader = ({ title, className }: Readonly<HeaderProps>) => {
           <Form action="/logout" method="post">
             <button
               type="submit"
-              className="rounded bg-slate-600 px-4 py-2 text-blue-100 text-xl hover:bg-blue-500 active:bg-blue-600"
+              className="rounded bg-slate-600 px-4 py-2 text-blue-100 text-xl hover:bg-blue-600 focus:bg-blue-400 active:bg-blue-700"
             >
               Logout
             </button>

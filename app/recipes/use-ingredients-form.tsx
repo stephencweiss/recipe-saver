@@ -181,7 +181,7 @@ export const useIngredientsForm = (
           </details>
         ))}
       <button
-        className="flex-1 w-full rounded bg-blue-500 my-2 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
+        className="flex-1 w-full rounded bg-blue-500 my-2 px-4 py-2 text-white hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-700"
         onClick={handleAddIngredient}
       >
         Add Ingredient

@@ -89,14 +89,14 @@ export default function RecipeDetailsPage() {
   return (
     <div>
       {isUsersRecipe ? (
-        <div className="flex justify-between gap-4">
+        <div className="flex justify-between gap-4 flex-col lg:flex-row">
           <h2 className="text-4xl font-bold">{data.recipe.title}</h2>
-          <Form method="post">
+          <Form method="post" className="flex flex-row gap-2">
             <button
               type="submit"
               value="edit-recipe"
               name="action"
-              className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-700 mr-2 disabled:bg-gray-400"
+              className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-700 disabled:bg-gray-400"
               disabled={!isUsersRecipe}
             >
               Edit
@@ -106,7 +106,7 @@ export default function RecipeDetailsPage() {
               value="delete-recipe"
               name="action"
               disabled={!isUsersRecipe}
-              className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-700 disabled:bg-gray-400"
+              className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-700 disabled:bg-gray-400"
             >
               Delete
             </button>

@@ -77,7 +77,7 @@ export default function ExplorePage() {
               message={"No more recipes to load!"}
             >
               <button
-                className="rounded bg-slate-600 px-4 py-2 text-blue-100 text-xl hover:bg-blue-500 active:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                className="rounded bg-slate-600 px-4 py-2 text-blue-100 text-xl hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
                 disabled={!recipesAvailable}
               >
                 Load More

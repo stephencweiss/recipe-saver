@@ -42,7 +42,7 @@ export default function RecipesPage() {
             to="new?submissionStyle=create-manual"
             className="
           block p-4 text-xl text-blue-500
-          hover:bg-blue-500 hover:text-white
+          hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-700 hover:text-white
           "
           >
             + New Recipe
@@ -67,7 +67,7 @@ export default function RecipesPage() {
                         <NavLink
                           className={({ isActive }) =>
                             `block border-b p-4 text-xl
-                            hover:bg-blue-500 hover:text-white
+                            hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-700 hover:text-white
                             ${isActive ? "bg-blue-600 text-white" : ""}`
                           }
                           to={recipe.id}
