@@ -52,7 +52,7 @@ export const RequireAuthenticatedUser = ({
             Sign Up
           </button>
         </signUpFetcher.Form>
-        <loginFetcher.Form method="post" action="/api/restricted" class>
+        <loginFetcher.Form method="post" action="/api/restricted">
           {redirectTo ? (
             <input type="hidden" name="redirectTo" value={redirectTo} />
           ) : (
