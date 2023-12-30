@@ -8,13 +8,16 @@ import {
 } from "@remix-run/react";
 import invariant from "tiny-invariant";
 
-import { loadSingleRecipe } from "~/api/recipe-loader";
+import {
+  CommentListAndForm,
+  isFlatComment,
+} from "~/comments/api.comments.route";
+import { getComments } from "~/comments/comment.server";
 import { List } from "~/components/lists";
 import { Time } from "~/components/time";
-import { useKeyboardCombo } from "~/components/use-keyboard";
-import { getComments } from "~/models/comment.server";
-import { deleteRecipe } from "~/models/recipe.server";
-import { CommentListAndForm, isFlatComment } from "~/routes/api.comments";
+import { useKeyboardCombo } from "~/hooks/use-keyboard";
+import { loadSingleRecipe } from "~/recipes/recipe-loader";
+import { deleteRecipe } from "~/recipes/recipe.server";
 import { requireUserId } from "~/session.server";
 
 export const loader = async (args: LoaderFunctionArgs) => {
@@ -24,7 +27,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
     commentType: "recipe",
     userId: recipeData.user?.id,
   });
-  return json({...recipeData, comments});
+  return json({ ...recipeData, comments });
 };
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
@@ -41,21 +44,26 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     }
     case "edit-recipe": {
       const userId = await requireUserId(request);
-      const recipeData = await loadSingleRecipe({ params, request, mode: "view" });
+      const recipeData = await loadSingleRecipe({
+        params,
+        request,
+        mode: "view",
+      });
       if (recipeData.recipe.submittedBy !== userId) {
-        throw new Response("You do not have permission to edit this recipe", {status: 401});
+        throw new Response("You do not have permission to edit this recipe", {
+          status: 401,
+        });
       }
       return redirect(`/recipes/${params.recipeId}/edit`);
     }
     default:
-      throw new Response(`Unsupported action: ${action}`, {status: 400});
+      throw new Response(`Unsupported action: ${action}`, { status: 400 });
   }
 };
 
 export default function RecipeDetailsPage() {
   const data = useLoaderData<typeof loader>();
-  console.log(`loaded comments`,JSON.stringify({comments: data.comments},null,4))
-  const flatComments = data.comments.filter(isFlatComment)
+  const flatComments = data.comments.filter(isFlatComment);
   useKeyboardCombo(
     ["Shift", "Meta", "e"],
     "edit",
@@ -81,13 +89,14 @@ export default function RecipeDetailsPage() {
   return (
     <div>
       {isUsersRecipe ? (
-        <>
-          <Form method="post">
+        <div className="flex justify-between gap-4 flex-col lg:flex-row">
+          <h2 className="text-4xl font-bold">{data.recipe.title}</h2>
+          <Form method="post" className="flex flex-row gap-2">
             <button
               type="submit"
               value="edit-recipe"
               name="action"
-              className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400 mr-2 disabled:bg-gray-400"
+              className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-700 disabled:bg-gray-400"
               disabled={!isUsersRecipe}
             >
               Edit
@@ -97,16 +106,16 @@ export default function RecipeDetailsPage() {
               value="delete-recipe"
               name="action"
               disabled={!isUsersRecipe}
-              className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400 disabled:bg-gray-400"
+              className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-700 disabled:bg-gray-400"
             >
               Delete
             </button>
           </Form>
-        </>
+        </div>
       ) : (
-        <></>
+        <h2 className="text-4xl font-bold">{data.recipe.title}</h2>
       )}
-      <h2 className="text-4xl font-bold">{data.recipe.title}</h2>
+
       <div className="flex flex-row gap-4 px-2 py-4">
         <Time label={"Cook Time"} time={data.recipe.cookTime} />
         <Time label={"Prep Time"} time={data.recipe.prepTime} />
@@ -135,7 +144,7 @@ export default function RecipeDetailsPage() {
       <p className="pb-2">Submitted by: {data.recipe.user?.username}</p>
       {data.recipe.recipeTags.map((tag) => (
         <span
-          className="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2"
+          className="inline-block bg-gray-200 rounded px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2"
           key={tag.tag.id}
         >
           {tag.tag.name}

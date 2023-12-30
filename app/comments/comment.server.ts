@@ -3,16 +3,14 @@ import invariant from "tiny-invariant";
 
 import { prisma } from "~/db.server";
 
-import { getRecipeComments } from "./recipe.server";
+import { getRecipeComments } from "../recipes/recipe.server";
 
-/** TODO: Support other types */
-export type CommentTypes = "recipe";
+export type CommentTypes =
+  | "recipe"
+  | "feedback-comment";
 
-/**
- * TODO: Support other types
- */
 export const isValidCommentType = (commentType: string): commentType is CommentTypes => {
-  return commentType === "recipe";
+  return commentType === "recipe" || commentType === "feedback-comment";
 }
 export interface CreatableComment {
   comment: string,
@@ -31,22 +29,6 @@ export interface FlatCommentServer {
   associatedId: string; // e.g., recipeId, menuId, etc.
   commentType: CommentTypes;
 }
-
-export const flattenAndAssociateComment = (
-  comment: Comment & {
-    usefulCount?: number, // TODO: once this is included in the db, remove this
-    user: { id: string, username: string | null, },
-  },
-  { associatedId, commentType }: { associatedId: string; commentType: CommentTypes },
-): FlatCommentServer => ({
-  ...comment,
-  isPrivate: comment.isPrivate ?? false,
-  username: comment.user.username ?? "Anonymous",
-  commentId: comment.id,
-  usefulCount: comment.usefulCount ?? 0,
-  associatedId,
-  commentType,
-})
 
 export interface FlatComment extends FlatCommentServer {
   createdDate: string; // Date | null on the server, but jsonified becomes a string
@@ -87,7 +69,7 @@ export const getComments = async ({
   }
 };
 
-export async function createComment(CreatableComment: CreatableComment, requestingUserId: User["id"]): Promise<Comment> {
+export async function createComment(CreatableComment: CreatableComment, requestingUserId?: User["id"]): Promise<Comment> {
   const { comment, isPrivate } = CreatableComment;
   const recipeComment = await prisma.comment.create({
     data: {

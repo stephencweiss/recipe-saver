@@ -1,9 +1,12 @@
 import { ActionFunctionArgs, redirect } from "@remix-run/node";
 
-import { SUPPORTED_SUBMISSION_STYLES, SubmissionStyles, createJSONErrorResponse, extractIngredientsFromFormData } from "~/components/recipes";
-import { parseRecipeSite } from "~/models/parse.server";
-import { CreatableRecipe, createRecipe, disassociateIngredientsFromRecipe, isUpdatableRecipe, updateRecipeWithDetails } from "~/models/recipe.server";
+import { parseRecipeSite } from "~/recipes/recipe.parse.server";
+import { CreatableRecipe, createRecipe, disassociateIngredientsFromRecipe, isUpdatableRecipe, updateRecipeWithDetails } from "~/recipes/recipe.server";
 import { requireUserId } from "~/session.server";
+
+import { createJSONErrorResponse } from "./recipe-errors";
+import { SUPPORTED_SUBMISSION_STYLES, SubmissionStyles } from "./recipe-form-constants";
+import { extractIngredientsFromFormData } from "./recipe-ingredient-form-data-extraction";
 
 export async function recipeAction({ request }: ActionFunctionArgs) {
   const userId = await requireUserId(request);

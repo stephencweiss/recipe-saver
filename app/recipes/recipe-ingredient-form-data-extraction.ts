@@ -1,4 +1,4 @@
-import type { IngredientFormEntry } from "~/models/recipe.server";
+import type { IngredientFormEntry } from "~/recipes/recipe.server";
 import {
   extractGenericDataFromFormData,
   isNotPlaceholderIngredient,

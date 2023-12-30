@@ -1,39 +1,46 @@
-import { ActionFunctionArgs } from "@remix-run/node";
-import { useActionData, useLoaderData, Form } from "@remix-run/react";
+import { ActionFunctionArgs, LoaderFunction, json } from "@remix-run/node";
+import { useActionData, useLoaderData, Form, Link } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 
-import { recipeAction } from "~/api/recipe-actions";
+import { CreateCommentForm } from "~/comments/api.comments.route";
 import { FormTextAreaInput, FormTextInput } from "~/components/forms";
-import { SubmissionStyles } from "~/components/recipes";
-import { useIngredientsForm } from "~/components/recipes/use-ingredients-form";
-import { useModeSwitcher } from "~/components/recipes/use-mode-switcher";
+import Tooltip from "~/components/tooltip";
 import VisuallyHidden from "~/components/visually-hidden";
+import { recipeAction } from "~/recipes/recipe-actions";
+import { useIngredientsForm } from "~/recipes/use-ingredients-form";
+import { useModeSwitcher } from "~/recipes/use-mode-switcher";
+import { RequireAuthenticatedUser } from "~/users/api.restricted.route";
 import { getDefaultRecipeValues, useOptionalUser } from "~/utils";
 
-import { RequireAuthenticatedUser } from "./api.restricted";
+import { SubmissionStyles } from "./recipe-form-constants";
 
 /**
  * This loader is *unique* between recipes.new and recipes.edit
  */
-export const loader = async () => null;
+export const loader: LoaderFunction = async ({ request }) => {
+  const url = new URL(request.url);
+  const queryParam = url.searchParams.get("submissionStyle"); // Replace 'yourQueryParam' with your parameter key
+  return json({ queryParam });
+};
 
 export const action = async (actionArgs: ActionFunctionArgs) => {
   return await recipeAction(actionArgs);
 };
 
 export default function NewRecipePage() {
-  const { mode, ModeUi } = useModeSwitcher();
+  const data = useLoaderData<typeof loader>();
+  const { ModeUi: ModeSwitcher } = useModeSwitcher(data.queryParam);
   const user = useOptionalUser();
 
   /** The submissionType is the **only** unique value between recipes.new &
    * recipes.edit */
-  const submissionType: SubmissionStyles = mode;
+  const submissionType: SubmissionStyles = data.queryParam ?? "create-manual";
 
   /** From here through the mode specific markup should be **identical** between
    * recipes.new & recipes.edit
    */
   const actionData = useActionData<typeof action>();
-  const data = useLoaderData<typeof loader>();
+
   const titleRef = useRef<HTMLInputElement>(null);
   const prepTimeRef = useRef<HTMLInputElement>(null);
   const cookTimeRef = useRef<HTMLInputElement>(null);
@@ -107,6 +114,7 @@ export default function NewRecipePage() {
     titleRef.current?.focus();
   }, []);
 
+  // Early escape for unauthenticated users
   if (!user) {
     return (
       <div className="flex justify-between">
@@ -120,18 +128,68 @@ export default function NewRecipePage() {
 
   /** Mode specific markup */
   const URLSubmitForm = (
-    <FormTextInput
-      forwardRef={sourceUrlRef}
-      name="sourceUrl"
-      label="Source URL"
-      placeholder="https://cooking.nytimes.com/recipes/1015622-pumpkin-pie"
-      error={actionData?.errors.sourceUrl}
-      defaultValue={undefined}
-    />
+    <>
+      <RecipeSubmissionFormWrapper submissionType={submissionType}>
+        <FormTextInput
+          forwardRef={sourceUrlRef}
+          name="sourceUrl"
+          label={"Source URL".toUpperCase()}
+          placeholder="https://cooking.nytimes.com/recipes/1015622-pumpkin-pie"
+          error={actionData?.errors.sourceUrl}
+          defaultValue={undefined}
+        />
+      </RecipeSubmissionFormWrapper>
+
+      <div>
+        <div className="flex-1">
+          <span className="text-bold">A note on URL submitted recipes</span>
+          <Tooltip
+            message={
+              <>
+                <p>
+                  We are on a mission to make submitting recipes as easy as
+                  possible.
+                </p>
+                <p>
+                  We&apos;re always looking for new recipe sites to support.
+                </p>
+                <p>We currently support the following websites:</p>
+                <ul>
+                  <li>
+                    {" "}
+                    -{" "}
+                    <Link
+                      className="text-blue-500"
+                      to={"https://cooking.nytimes.com/"}
+                    >
+                      NYTimes Cooking
+                    </Link>
+                  </li>
+                </ul>
+                <p>
+                  Want to see a new website? Don&apos;t hesitate to leave a
+                  comment!
+                </p>
+              </>
+            }
+          />
+        </div>
+
+        <div>
+          <h2 className="text-xl font-semibold mb-3">Feedback</h2>
+          <CreateCommentForm
+            associatedId=""
+            commentType="feedback-comment"
+            placeholder="Have feedback about the automatic recipe loader? Want to request another site? Leave a comment!"
+            hidePrivateCheckbox={true}
+          />
+        </div>
+      </div>
+    </>
   );
 
   const ManualSubmitForm = (
-    <>
+    <RecipeSubmissionFormWrapper submissionType={submissionType}>
       <VisuallyHidden>
         <label>
           Recipe ID&nbsp;
@@ -190,7 +248,7 @@ export default function NewRecipePage() {
           <button
             type="button"
             onClick={addStep}
-            className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
+            className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-400"
           >
             Add Step
           </button>
@@ -232,36 +290,39 @@ export default function NewRecipePage() {
         error={actionData?.errors.sourceUrl}
         defaultValue={defaultValues.sourceUrl}
       />
-    </>
+    </RecipeSubmissionFormWrapper>
   );
 
-  const ModeSpecificForm =
-    mode === "create-manual" ? ManualSubmitForm : URLSubmitForm;
+  const ModeSpecificUi =
+    data.queryParam === "create-from-url" ? URLSubmitForm : ManualSubmitForm;
 
   return (
     <>
-      {ModeUi}
-      <Form method="post" className="flex flex-col gap-4 w-full">
-        <div className="text-right">
-          <button
-            type="submit"
-            className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
-          >
-            Save
-          </button>
-        </div>
-        <VisuallyHidden>
-          <label>
-            Submission Type&nbsp;
-            <input
-              name="submissionType"
-              readOnly={true}
-              value={submissionType}
-            />
-          </label>
-        </VisuallyHidden>
-        {ModeSpecificForm}
-      </Form>
+      {ModeSwitcher}
+      {ModeSpecificUi}
     </>
   );
 }
+
+const RecipeSubmissionFormWrapper = ({
+  submissionType,
+  children,
+}: React.PropsWithChildren<{ submissionType: SubmissionStyles }>) => (
+  <Form method="post" className="flex flex-col gap-4 w-full">
+    <div className="text-right">
+      <button
+        type="submit"
+        className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-400"
+      >
+        Save
+      </button>
+    </div>
+    <VisuallyHidden>
+      <label>
+        Submission Type&nbsp;
+        <input name="submissionType" readOnly={true} value={submissionType} />
+      </label>
+    </VisuallyHidden>
+    {children}
+  </Form>
+);

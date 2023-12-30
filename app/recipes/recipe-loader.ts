@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import invariant from "tiny-invariant";
 
-import { RecipeUserArgs, getRecipeWithIngredients } from "~/models/recipe.server";
+import { RecipeUserArgs, getRecipeWithIngredients } from "~/recipes/recipe.server";
 import { getUser } from "~/session.server";
 import { isNotPlaceholderIngredient, parsePreparationSteps } from "~/utils";
 

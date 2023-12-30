@@ -6,12 +6,13 @@ import {
   CommentTypes,
   editComment,
   isValidCommentType,
-} from "~/models/comment.server";
+} from "~/comments/comment.server";
+import { createFeedbackComment } from "~/comments/request-comment.server";
 import {
   createRecipeComment,
   deleteRecipeComment,
-} from "~/models/recipe.server";
-import { requireUserId } from "~/session.server";
+} from "~/recipes/recipe.server";
+import { getUserId, requireUserId } from "~/session.server";
 
 // Types
 type ActionType = "edit" | "create" | "delete";
@@ -68,18 +69,21 @@ const isEditFormDataDetails = (
 export const commentAction = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const action = String(formData.get("action"));
-  console.log(`action -->`, action);
+  const allowAnonymous = Boolean(formData.get("allowAnonymous") === "true");
   switch (request.method) {
     case "POST": {
       switch (action) {
         case "create-comment": {
-          const userId = await requireUserId(request);
+
+          const userId = allowAnonymous
+          ? await getUserId(request)
+          : await requireUserId(request);
           return await handleCreateComment(formData, userId);
         }
         case "useful-comment":
           return await handleUsefulComment(formData);
         default:
-          throw new Response(`Unsupported comment action: ${action}`, {status: 400});
+          throw new Response(`Unsupported comment action: ${action}`, { status: 400 });
       }
     }
     case "PUT":
@@ -106,41 +110,51 @@ export const commentAction = async ({ request }: ActionFunctionArgs) => {
 // Helpers
 const handleCreateComment = async (
   formData: FormData,
-  requestingUserId: User["id"],
+  requestingUserId?: User["id"],
 ) => {
   const details = getCreateDetailsFromFormData(formData);
   if (!isCreateFormDataDetails(details)) {
-    throw new Response(`Trying to create a comment with the wrong actionType`, {status: 400});
+    throw new Response(`Trying to create a comment with the wrong actionType`, { status: 400 });
   }
   const { commentType } = details;
-  if (commentType === "recipe") {
-    return await createRecipeComment(
-      { ...details, recipeId: details.associatedId },
-      requestingUserId,
-    );
-  } else {
-    throw new Response(`Unsupported comment type: ${commentType}`, {status: 400});
+  switch (commentType) {
+    case "recipe": {
+      invariant(details.associatedId, "associatedId not found");
+      return await createRecipeComment(
+        { ...details, recipeId: details.associatedId },
+        requestingUserId,
+      );
+    }
+    case "feedback-comment": {
+      return await createFeedbackComment(
+        { ...details },
+        requestingUserId,
+      )
+    }
+    default:
+      throw new Response(`Unsupported comment type: ${commentType}`, { status: 400 });
+
   }
 };
 
 const handleDeleteComment = async (formData: FormData, userId: User["id"]) => {
   const details = getDeleteDetailsFromFormData(formData);
   if (!isDeleteFormDataDetails(details)) {
-    throw new Response(`Trying to delete a comment with the wrong actionType`, {status: 400});
+    throw new Response(`Trying to delete a comment with the wrong actionType`, { status: 400 });
   }
   const { commentType, associatedId, commentId } = details;
   if (commentType === "recipe") {
     await deleteRecipeComment(associatedId, commentId, userId);
     return { status: 204 };
   } else {
-    throw new Response(`Unsupported comment type: ${commentType}`, {status: 400});
+    throw new Response(`Unsupported comment type: ${commentType}`, { status: 400 });
   }
 };
 
 const handleEditComment = async (formData: FormData, userId: User["id"]) => {
   const details = getEditDetailsFromFormData(formData);
   if (!isEditFormDataDetails(details)) {
-    throw new Response(`Trying to edit a comment with the wrong actionType: ${details.actionType}`, {status: 400});
+    throw new Response(`Trying to edit a comment with the wrong actionType: ${details.actionType}`, { status: 400 });
   }
   const { commentType } = details;
   if (commentType === "recipe") {
@@ -152,7 +166,7 @@ const handleEditComment = async (formData: FormData, userId: User["id"]) => {
       userId,
     );
   } else {
-    throw new Response(`Unsupported comment type: ${commentType}`, {status: 400});
+    throw new Response(`Unsupported comment type: ${commentType}`, { status: 400 });
   }
 };
 
@@ -164,20 +178,19 @@ const handleUsefulComment = async (formData: FormData) => {
 };
 
 const getCreateDetailsFromFormData = (formData: FormData): CommentFormData => {
-  const type = String(formData.get("comment-type"));
-  const associatedId = String(formData.get("associatedId"));
-  invariant(associatedId, "recipeId not found");
-  invariant(isValidCommentType(type), `Invalid comment type: ${type}`);
-  const comment = String(formData.get("comment"));
-  invariant(comment, "comment not found");
-  const isPrivate = Boolean(formData.get("isPrivate") === "true");
-  return {
-    actionType: "create",
-    commentType: type,
-    associatedId,
-    comment,
-    isPrivate,
+  const actionType: ActionType = "create";
+  const commentType = String(formData.get("comment-type"));
+  invariant(isValidCommentType(commentType), `Invalid comment type: ${commentType}`);
+  const details = {
+    actionType,
+    commentType,
+    associatedId: String(formData.get("associatedId")),
+    comment: String(formData.get("comment")),
+    isPrivate: Boolean(formData.get("isPrivate") === "true"),
   };
+
+  invariant(details.comment, "comment not found");
+  return details;
 };
 
 const getDeleteDetailsFromFormData = (formData: FormData): CommentFormData => {

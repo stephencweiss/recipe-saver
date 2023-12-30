@@ -1,11 +1,9 @@
 import { InfoCircledIcon } from "@radix-ui/react-icons";
 import * as RadixTooltip from "@radix-ui/react-tooltip";
 
-const Tooltip = ({ message }: { message: string }) => {
+const Tooltip = ({ message }: { message: React.ReactNode }) => {
   return (
-    <RadixTooltip.Provider>
-      <RadixTooltip.Root delayDuration={0}>
-        <RadixTooltip.Trigger asChild>
+    <InvisibleTooltip message={message}>
           <button
             className="
           inline-flex
@@ -13,14 +11,30 @@ const Tooltip = ({ message }: { message: string }) => {
           w-[35px]
           items-center
           justify-center
-          rounded-full
+          rounded
           bg-white
           hover:bg-blue-500
           active:bg-blue-600"
           >
             <InfoCircledIcon />
           </button>
-        </RadixTooltip.Trigger>
+    </InvisibleTooltip>
+  );
+};
+
+export const InvisibleTooltip = ({
+  children,
+  message,
+  displayMessage = true,
+}: React.PropsWithChildren<{ message: React.ReactNode; displayMessage?: boolean }>) => {
+
+  if (displayMessage == false) {
+    return <>{children}</>;
+  }
+  return (
+    <RadixTooltip.Provider>
+      <RadixTooltip.Root delayDuration={0}>
+        <RadixTooltip.Trigger asChild>{children}</RadixTooltip.Trigger>
         <RadixTooltip.Portal>
           <RadixTooltip.Content
             className="TooltipContent

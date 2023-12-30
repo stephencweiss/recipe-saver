@@ -22,17 +22,18 @@ generator client {
 // }
 
 model Comment {
-  id            String          @id @default(uuid())
-  submittedBy   String // Foreign key for User
-  comment       String
-  isPrivate     Boolean?        @default(false) @map("is_private")
-  createdDate   DateTime?       @default(now()) @map("created_date")
-  updatedDate   DateTime?       @default(now()) @map("updated_date")
-  user          User            @relation("UserComments", fields: [submittedBy], references: [id])
-  RecipeComment RecipeComment[]
-  MenuComments  MenuComments[]
-  EventComment  EventComment[]
-  UsefulComment UsefulComment[]
+  id              String            @id @default(uuid())
+  submittedBy     String? // Foreign key for User
+  comment         String
+  isPrivate       Boolean?          @default(false) @map("is_private")
+  createdDate     DateTime?         @default(now()) @map("created_date")
+  updatedDate     DateTime?         @default(now()) @map("updated_date")
+  user            User?             @relation("UserComments", fields: [submittedBy], references: [id])
+  RecipeComment   RecipeComment[]
+  MenuComments    MenuComments[]
+  EventComment    EventComment[]
+  UsefulComment   UsefulComment[]
+  FeedbackComment FeedbackComment[]
 
   @@map("comments")
 }
@@ -40,13 +41,21 @@ model Comment {
 model UsefulComment {
   id          String    @id @default(uuid())
   commentId   String // Foreign key for Comment
-  userId      String // Foreign key for User
+  userId      String? // Foreign key for User
   createdDate DateTime? @default(now()) @map("created_date")
   updatedDate DateTime? @default(now()) @map("updated_date")
   comment     Comment   @relation(fields: [commentId], references: [id])
-  user        User      @relation(fields: [userId], references: [id])
+  user        User?     @relation(fields: [userId], references: [id])
 
   @@map("useful_comments")
+}
+
+model FeedbackComment {
+  id        String  @id @default(uuid())
+  commentId String // Foreign key for Comment
+  comment   Comment @relation(fields: [commentId], references: [id])
+
+  @@map("feedback_comments")
 }
 
 model RecipeComment {

@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import VisuallyHidden from "~/components/visually-hidden";
-import { IngredientFormEntry } from "~/models/recipe.server";
+import { IngredientFormEntry } from "~/recipes/recipe.server";
 import { createPlaceholderIngredient } from "~/utils";
 
 export const useIngredientsForm = (
@@ -69,7 +69,7 @@ export const useIngredientsForm = (
         .filter((i) => !i.isDeleted)
         .filter((i): i is IngredientFormEntry & { id: string } => i.id != null)
         .map((ingredient, index) => (
-          <details key={ingredient.id} className="[&_svg]:open:-rotate-180">
+          <details key={ingredient.id} className="[&_svg]:open:-rotate-180 my-2">
             {/* <!-- notice here, we have disabled the summary's default triangle/arrow --> */}
             <summary className="flex justify-between cursor-pointer list-none items-center gap-4">
               <div className="flex gap-2">
@@ -181,7 +181,7 @@ export const useIngredientsForm = (
           </details>
         ))}
       <button
-        className="flex-1 w-full rounded bg-blue-500 my-2 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
+        className="flex-1 w-full rounded bg-blue-500 my-2 px-4 py-2 text-white hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-700"
         onClick={handleAddIngredient}
       >
         Add Ingredient

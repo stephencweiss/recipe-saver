@@ -8,15 +8,16 @@ import {
 } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 
-import { recipeAction } from "~/api/recipe-actions";
-import { loadSingleRecipe } from "~/api/recipe-loader";
 import { FormTextAreaInput, FormTextInput } from "~/components/forms";
-import { SubmissionStyles } from "~/components/recipes";
-import { useIngredientsForm } from "~/components/recipes/use-ingredients-form";
-import { useKeyboardSubmit } from "~/components/use-keyboard";
 import VisuallyHidden from "~/components/visually-hidden";
+import { useKeyboardSubmit } from "~/hooks/use-keyboard";
+import { recipeAction } from "~/recipes/recipe-actions";
+import { loadSingleRecipe } from "~/recipes/recipe-loader";
+import { useIngredientsForm } from "~/recipes/use-ingredients-form";
 import { getDefaultRecipeValues } from "~/utils";
 import { isValidString } from "~/utils/strings";
+
+import { SubmissionStyles } from "./recipe-form-constants";
 
 export const loader = async (args: LoaderFunctionArgs) => {
   return await loadSingleRecipe({ ...args, mode: "edit" });
@@ -120,7 +121,7 @@ export default function EditRecipePage() {
       <div className="text-right">
         <button
           type="submit"
-          className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
+          className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-400"
         >
           Save
         </button>
@@ -189,7 +190,7 @@ export default function EditRecipePage() {
           <button
             type="button"
             onClick={addStep}
-            className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:bg-blue-400"
+            className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-400"
           >
             Add Step
           </button>
