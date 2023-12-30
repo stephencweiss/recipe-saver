@@ -22,7 +22,9 @@ const BasicHeader = ({
   return (
     <header
       className={
-        `flex items-center justify-between bg-slate-800 p-4 text-white` +
+        `flex items-center justify-between bg-slate-800 p-4 text-white
+        sticky top-0
+        ` +
         " " +
         className
       }
