@@ -40,8 +40,6 @@ export async function markRecipeAsCooked(recipeId: Recipe["id"], userId: User["i
       cookCount: 1,
     },
   });
-
-
 }
 
 export async function getCookCounts(recipeId: Recipe["id"], userId?: User["id"]) {
