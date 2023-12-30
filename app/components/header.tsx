@@ -67,7 +67,7 @@ const StandardHeader = ({ title, className }: Readonly<HeaderProps>) => {
       disabled:bg-gray-400
       "
             >
-              Add Recipe
+              + New Recipe
             </Link>
           ) : (
             <Link
