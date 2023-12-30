@@ -26,7 +26,7 @@ disabled:bg-gray-400
 disabled:text-white
 `;
 
-export function HeaderNavMenu({ children }: React.PropsWithChildren<{  }>) {
+export function HeaderNavMenu({ children }: React.PropsWithChildren<unknown>) {
   const [open, setOpen] = useState(false);
   return (
     <DropdownMenu.Root open={open} onOpenChange={() => setOpen(!open)}>
