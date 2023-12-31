@@ -49,10 +49,7 @@ export default function ExploreRecipesPage() {
 
   return (
     <InfiniteScroller loading={fetcher.state === "loading"} loadNext={loadNext}>
-
         <main>
-          <h1>Explore</h1>
-          <p>This is the explore page. You can see all the recipes here.</p>
           <div className="grid md:grid-cols-3 md:gap-2">
             {recipes?.map((recipe) => {
               return (
@@ -84,7 +81,6 @@ export default function ExploreRecipesPage() {
             </InvisibleTooltip>
           </div>
         </main>
-
     </InfiniteScroller>
   );
 }
