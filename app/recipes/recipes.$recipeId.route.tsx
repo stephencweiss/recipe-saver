@@ -15,8 +15,8 @@ import {
 } from "~/comments/api.comments.route";
 import { getComments } from "~/comments/comment.server";
 import { CollapsibleSection } from "~/components/collapsible";
+import { Duration } from "~/components/duration";
 import { List } from "~/components/lists";
-import { Time } from "~/components/time";
 import TruncateText from "~/components/truncate-text";
 import { useKeyboardCombo } from "~/hooks/use-keyboard";
 import { loadSingleRecipe } from "~/recipes/recipe-loader";
@@ -118,9 +118,9 @@ export default function RecipeDetailsPage() {
       )}
 
       <div className="flex flex-row gap-4 px-2 py-4">
-        <Time label={"Cook Time"} time={data.recipe.cookTime} />
-        <Time label={"Prep Time"} time={data.recipe.prepTime} />
-        <Time label={"Total Time"} time={data.recipe.totalTime} />
+        <Duration label={"Cook Time"} time={data.recipe.cookTime} />
+        <Duration label={"Prep Time"} time={data.recipe.prepTime} />
+        <Duration label={"Total Time"} time={data.recipe.totalTime} />
       </div>
       <List
         title="Description"
