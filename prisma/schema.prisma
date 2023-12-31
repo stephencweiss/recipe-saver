@@ -279,7 +279,6 @@ model UserRecipeCollection {
   recipeId     String // Foreign key for Recipe
   collectionId String // Foreign key for Collection
   createdDate  DateTime?  @default(now()) @map("created_date")
-  updatedDate  DateTime?  @default(now()) @map("updated_date")
   user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   recipe       Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
