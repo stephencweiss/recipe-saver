@@ -141,15 +141,16 @@ model Menu {
 }
 
 model RecipeIngredient {
-  recipeId    String // Foreign key for Recipe
-  id          String    @id @default(uuid())
-  name        String
-  quantity    String?
-  unit        String?
-  note        String?
-  createdDate DateTime? @default(now()) @map("created_date")
-  updatedDate DateTime? @default(now()) @map("updated_date")
-  recipe      Recipe    @relation(fields: [recipeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  recipeId      String // Foreign key for Recipe
+  id            String    @id @default(uuid())
+  name          String
+  quantity      String?
+  unit          String?
+  note          String?
+  rawIngredient String? // When imported, this is what was originally surfaced in the recipe before parsing
+  createdDate   DateTime? @default(now()) @map("created_date")
+  updatedDate   DateTime? @default(now()) @map("updated_date")
+  recipe        Recipe    @relation(fields: [recipeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@index([name], name: "recipe_ingredients_name")
   @@map("recipe_ingredients")

@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import invariant from "tiny-invariant";
 
-import { RecipeUserArgs, getRecipeWithIngredients } from "~/recipes/recipe.server";
+import { getRecipeWithIngredients } from "~/recipes/recipe.server";
 import { getUser } from "~/session.server";
 import { getCookCounts } from "~/users/user.recipe.server";
 import { isNotPlaceholderIngredient, parsePreparationSteps } from "~/utils";
@@ -10,24 +10,20 @@ import { isNotPlaceholderIngredient, parsePreparationSteps } from "~/utils";
 export async function loadSingleRecipe({ params, request, mode }: Pick<LoaderFunctionArgs, "params" | "request"> & { mode: 'edit' | 'view';}) {
   invariant(params.recipeId, "recipeId not found");
   const user = await getUser(request);
+  const userId = user?.id
 
-  const args: RecipeUserArgs = { id: params.recipeId };
-  if (user) {
-    args['requestingUser'] = user
-  }
-
-  const rawRecipe = await getRecipeWithIngredients(args);
+  const rawRecipe = await getRecipeWithIngredients(params.recipeId, userId);
   if (!rawRecipe) {
     throw new Response("Not Found", { status: 404 });
   }
-  if (rawRecipe.isPrivate && rawRecipe.submittedBy !== user?.id) {
+  if (rawRecipe.isPrivate && rawRecipe.submittedBy !== userId) {
     throw new Response("Not Found", { status: 404 });
   }
-  if (mode == 'edit' && rawRecipe.submittedBy !== user?.id) {
+  if (mode == 'edit' && rawRecipe.submittedBy !== userId) {
     throw new Response("Cannot edit a recipe owned by another user", { status: 401 });
   }
 
-  const cookCounts = await getCookCounts(params.recipeId, user?.id);
+  const cookCounts = await getCookCounts(params.recipeId, userId);
 
   const recipe = {
     ...rawRecipe,

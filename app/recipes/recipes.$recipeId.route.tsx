@@ -82,7 +82,7 @@ export default function RecipeDetailsPage() {
       {isUsersRecipe ? (
         <div className="flex justify-between gap-4 flex-col lg:flex-row">
           <h2 className="text-4xl font-bold">{data.recipe.title}</h2>
-          <div className="flex flex-col gap-2 justify-between sm:flex-row">
+          <div className="flex flex-col-reverse gap-2 justify-between sm:flex-row">
             <Form method="post" className="flex flex-col gap-2 sm:flex-row">
               <button
                 type="submit"
@@ -130,7 +130,7 @@ export default function RecipeDetailsPage() {
       <List title="Steps" items={data.recipe.preparationSteps} ListType="ol" />
       <CollapsibleSection title="Additional Detail">
         <p className="pb-2">Source: {data.recipe.source || "User Submitted"}</p>
-        <p className="pb-2 flex items-center">
+        <p className="pb-2 flex items-center max-w-screen-sm">
           URL:&nbsp;
           {data.recipe.sourceUrl ? (
             <TruncateText>

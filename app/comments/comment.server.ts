@@ -59,10 +59,7 @@ export const getComments = async ({
   invariant(associatedId, "associatedId not found");
   switch (commentType) {
     case "recipe": {
-      return await getRecipeComments({
-        id: associatedId,
-        requestingUser: { id: userId },
-      });
+      return await getRecipeComments(associatedId, userId);
     }
     default:
       throw new Response(`Unsupported comment type: ${commentType}`, { status: 400 });

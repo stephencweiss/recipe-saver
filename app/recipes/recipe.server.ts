@@ -75,9 +75,8 @@ export async function getRecipeDetails({ id }: Pick<Recipe, "id">) {
   });
 }
 
-export interface RecipeUserArgs extends Pick<Recipe, "id"> { requestingUser?: Partial<Pick<User, "id">> }
 
-export async function getRecipeWithIngredients({ id, requestingUser }: RecipeUserArgs) {
+export async function getRecipeWithIngredients(id: Recipe["id"], requestingUserId?: User["id"]) {
   const recipe = await prisma.recipe.findFirst({
     select: {
       id: true,
@@ -117,7 +116,7 @@ export async function getRecipeWithIngredients({ id, requestingUser }: RecipeUse
 
   });
   if (!recipe) return null;
-  if (recipe.isPrivate && requestingUser?.id !== recipe.submittedBy) return null;
+  if (recipe.isPrivate && requestingUserId !== recipe.submittedBy) return null;
   return recipe;
 }
 
@@ -147,7 +146,7 @@ export async function deleteRecipeComment(recipeId: Recipe["id"], commentId: Com
   });
 };
 
-export async function getRecipeComments({ id, requestingUser }: RecipeUserArgs): Promise<FlatCommentServer[]> {
+export async function getRecipeComments( id: Recipe["id"], requestingUserId?: User["id"]): Promise<FlatCommentServer[]> {
   const recipeComments = await prisma.recipeComment.findMany({
     select: {
       comment: {
@@ -175,7 +174,7 @@ export async function getRecipeComments({ id, requestingUser }: RecipeUserArgs):
   const commentType: CommentTypes = "recipe";
   return recipeComments
     .map(({ comment }) => ({ ...comment }))
-    .filter(c => filterPrivateComments(c, requestingUser?.id ?? ""))
+    .filter(c => filterPrivateComments(c, requestingUserId ?? ""))
     .map((c) => flattenAndAssociateComment(c, { associatedId: id, commentType }))
 }
 
