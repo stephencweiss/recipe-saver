@@ -1,5 +1,6 @@
 import { ActionFunctionArgs, redirect } from "@remix-run/node";
 
+import { addRecipeToDefaultCollection } from "~/collections/recipe.collection.server";
 import { parseRecipeSite } from "~/recipes/recipe.parse.server";
 import { CreatableRecipe, createRecipe, disassociateIngredientsFromRecipe, isUpdatableRecipe, updateRecipeWithDetails } from "~/recipes/recipe.server";
 import { requireUserId } from "~/session.server";
@@ -80,6 +81,7 @@ const handleCreateManual = async (partialRecipe: CreatableRecipe) => {
   }
 
   const recipe = await createRecipe(partialRecipe);
+  await addRecipeToDefaultCollection(recipe.id, recipe.submittedBy)
   return redirect(`/recipes/${recipe.id}`);
 }
 
@@ -122,5 +124,6 @@ const handleCreateFromUrl = async (sourceUrl: string, userId: string) => {
 
   const parsedRecipe = await parseRecipeSite(sourceUrl ?? '');
   const recipe = await createRecipe({ ...parsedRecipe, submittedBy: userId });
+  await addRecipeToDefaultCollection(recipe.id, recipe.submittedBy)
   return redirect(`/recipes/${recipe.id}`);
 }

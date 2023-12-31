@@ -7,7 +7,7 @@ export async function markRecipeAsCooked(recipeId: Recipe["id"], userId: User["i
     throw new Error("Cannot mark recipe as cooked if recipeId or userId is missing");
   }
 
-  const existingUserRecipe = await prisma.userRecipe.findUnique({
+  const existingUserCookLog = await prisma.userCookLog.findUnique({
     where: {
       userId_recipeId: {
         recipeId,
@@ -15,8 +15,8 @@ export async function markRecipeAsCooked(recipeId: Recipe["id"], userId: User["i
       },
     },
   });
-  if (existingUserRecipe != null) {
-    const updatedRecipe = await prisma.userRecipe.update({
+  if (existingUserCookLog != null) {
+    const updatedRecipe = await prisma.userCookLog.update({
       where: {
         userId_recipeId: {
           recipeId,
@@ -25,14 +25,13 @@ export async function markRecipeAsCooked(recipeId: Recipe["id"], userId: User["i
       },
       data: {
         lastCooked: new Date(),
-        cookCount: (existingUserRecipe.cookCount ?? 0) + 1,
-        updatedDate: new Date(),
+        cookCount: (existingUserCookLog.cookCount ?? 0) + 1,
       },
     });
     return updatedRecipe;
   }
 
-  return await prisma.userRecipe.create({
+  return await prisma.userCookLog.create({
     data: {
       recipeId,
       userId,
@@ -53,7 +52,7 @@ export async function getCookCounts(recipeId: Recipe["id"], userId?: User["id"])
 }
 
 async function getUserRecipeCookCount(recipeId: Recipe["id"], userId: User["id"]) {
-  const userRecipe = await prisma.userRecipe.findUnique({
+  const userRecipe = await prisma.userCookLog.findUnique({
     where: {
       userId_recipeId: {
         recipeId,
@@ -65,10 +64,10 @@ async function getUserRecipeCookCount(recipeId: Recipe["id"], userId: User["id"]
 }
 
 async function getTotalCookCount(recipeId: Recipe["id"]) {
-  const userRecipes = await prisma.userRecipe.findMany({
+  const recipeCookLog = await prisma.userCookLog.findMany({
     where: {
       recipeId,
     },
   });
-  return userRecipes.reduce((acc, curr) => acc + (curr.cookCount ?? 0), 0);
+  return recipeCookLog.reduce((acc, curr) => acc + (curr.cookCount ?? 0), 0);
 }

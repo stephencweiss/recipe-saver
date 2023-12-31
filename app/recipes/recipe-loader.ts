@@ -3,7 +3,7 @@ import invariant from "tiny-invariant";
 
 import { getRecipeWithIngredients } from "~/recipes/recipe.server";
 import { getUser } from "~/session.server";
-import { getCookCounts } from "~/users/user.recipe.server";
+import { getCookCounts } from "~/users/user.cooklog.server";
 import { isNotPlaceholderIngredient, parsePreparationSteps } from "~/utils";
 
 /** A common loader for a specific recipe; include the requesting user */

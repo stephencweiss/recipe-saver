@@ -41,9 +41,9 @@ const RecipeCard = ({
 
   return (
     <Link to={`/recipes/${id}`} className="no-underline">
-      <div className="max-w-sm rounded overflow-hidden shadow-lg m-4 bg-white flex flex-col">
+      <div className="max-w-80 rounded overflow-hidden shadow-lg m-4 bg-white flex flex-col sm:max-w-sm">
         <h2 className="text-xl font-bold p-4">{title}</h2>
-        <img className="w-full" src={image} alt={title} />
+        <img className="w-80 sm:w-full" src={image} alt={title} />
         <p className="text-gray-700 text-base p-4">{finalDescription}</p>
         <div className="px-4 py-4">
           {tags.map((tag, index) => (

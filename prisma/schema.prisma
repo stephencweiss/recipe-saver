@@ -44,7 +44,7 @@ model UsefulComment {
   userId      String? // Foreign key for User
   createdDate DateTime? @default(now()) @map("created_date")
   updatedDate DateTime? @default(now()) @map("updated_date")
-  comment     Comment   @relation(fields: [commentId], references: [id])
+  comment     Comment   @relation(fields: [commentId], references: [id], onDelete: Cascade)
   user        User?     @relation(fields: [userId], references: [id])
 
   @@map("useful_comments")
@@ -53,7 +53,7 @@ model UsefulComment {
 model FeedbackComment {
   id        String  @id @default(uuid())
   commentId String // Foreign key for Comment
-  comment   Comment @relation(fields: [commentId], references: [id])
+  comment   Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
   @@map("feedback_comments")
 }
@@ -61,8 +61,8 @@ model FeedbackComment {
 model RecipeComment {
   recipeId  String // Foreign key for Recipe
   commentId String // Foreign key for Comment
-  recipe    Recipe  @relation(fields: [recipeId], references: [id])
-  comment   Comment @relation(fields: [commentId], references: [id])
+  recipe    Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  comment   Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
   @@id([recipeId, commentId])
   @@map("recipe_comments")
@@ -71,8 +71,8 @@ model RecipeComment {
 model MenuComments {
   menuId    String // Foreign key for Menu
   commentId String // Foreign key for Comment
-  menu      Menu    @relation(fields: [menuId], references: [id])
-  comment   Comment @relation(fields: [commentId], references: [id])
+  menu      Menu    @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  comment   Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
   @@id([menuId, commentId])
   @@map("menu_comments")
@@ -81,8 +81,8 @@ model MenuComments {
 model EventComment {
   eventId   String // Foreign key for Event
   commentId String // Foreign key for Comment
-  event     Event   @relation(fields: [eventId], references: [id])
-  comment   Comment @relation(fields: [commentId], references: [id])
+  event     Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  comment   Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
   @@id([eventId, commentId])
   @@map("event_comments")
@@ -114,8 +114,8 @@ model MenuRecipe {
   addedBy     String? // Foreign key for User
   createdDate DateTime? @default(now()) @map("created_date")
   updatedDate DateTime? @default(now()) @map("updated_date")
-  menu        Menu      @relation(fields: [menuId], references: [id])
-  recipe      Recipe    @relation(fields: [recipeId], references: [id])
+  menu        Menu      @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  recipe      Recipe    @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   addedByUser User?     @relation("UserAddedMenuRecipes", fields: [addedBy], references: [id])
 
   @@id([menuId, recipeId])
@@ -219,18 +219,19 @@ model Recipe {
   totalTime   String?  @map("total_time")
 
   // Relationships
-  user              User               @relation("UserSubmittedRecipes", fields: [submittedBy], references: [id])
-  menuRecipes       MenuRecipe[]
-  recipeRatings     RecipeRating[]
-  recipeTags        RecipeTag[]
+  user                  User                   @relation("UserSubmittedRecipes", fields: [submittedBy], references: [id])
+  menuRecipes           MenuRecipe[]
+  recipeRatings         RecipeRating[]
+  recipeTags            RecipeTag[]
   // categories and cuisines can be wrapped up in tags i think
   // recipeCategory    String?            @map("recipe_category")
   // recipeCuisine     String?            @map("recipe_cuisine")
-  userRecipes       UserRecipe[]
-  recipeIngredients RecipeIngredient[]
-  RecipeComment     RecipeComment[]
-  createdDate       DateTime?          @default(now()) @map("created_date")
-  updatedDate       DateTime?          @default(now()) @map("updated_date")
+  userRecipes           UserCookLog[]
+  recipeIngredients     RecipeIngredient[]
+  recipeComment         RecipeComment[]
+  userRecipeCollections UserRecipeCollection[]
+  createdDate           DateTime?              @default(now()) @map("created_date")
+  updatedDate           DateTime?              @default(now()) @map("updated_date")
 
   @@map("recipes")
 }
@@ -246,21 +247,58 @@ model Tag {
   @@map("tags")
 }
 
-model UserRecipe {
+model Collection {
+  id                   String                 @id @default(uuid())
+  userId               String // Foreign key for User
+  name                 String                 @unique
+  isPrivate            Boolean?               @default(false) @map("is_private")
+  isDefault            Boolean?               @default(false) @map("is_default")
+  createdDate          DateTime?              @default(now()) @map("created_date")
+  updatedDate          DateTime?              @default(now()) @map("updated_date")
+  user                 User                   @relation(fields: [userId], references: [id])
+  UserRecipeCollection UserRecipeCollection[]
+  CollectionAccess     CollectionAccess[]
+
+  @@map("collections")
+}
+
+model CollectionAccess {
+  collectionId String // Foreign key for Collection
+  userId       String // Foreign key for User
+  accessLevel  String     @default("read") // Access levels: read, write, admin
+  createdDate  DateTime?  @default(now()) @map("created_date")
+  updatedDate  DateTime?  @default(now()) @map("updated_date")
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, collectionId])
+  @@map("collection_access")
+}
+
+model UserRecipeCollection {
+  userId       String // Foreign key for User
+  recipeId     String // Foreign key for Recipe
+  collectionId String // Foreign key for Collection
+  createdDate  DateTime?  @default(now()) @map("created_date")
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe       Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+
+  @@id([userId, recipeId, collectionId])
+  @@map("user_recipe_collections")
+}
+
+model UserCookLog {
   userId      String // Foreign key for User
   recipeId    String // Foreign key for Recipe
-  // category    String?
-  // tags        String?
-  // notes       String?
   cookCount   Int?      @default(0) @map("cook_count")
   lastCooked  DateTime? @map("last_cooked")
-  createdDate DateTime? @default(now()) @map("created_date")
-  updatedDate DateTime? @default(now()) @map("updated_date")
+  firstCooked DateTime? @default(now()) @map("first_cooked")
   user        User      @relation(fields: [userId], references: [id])
-  recipe      Recipe    @relation(fields: [recipeId], references: [id])
+  recipe      Recipe    @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
   @@id([userId, recipeId])
-  @@map("user_recipes")
+  @@map("user_cook_logs")
 }
 
 model UserInvite {
@@ -277,27 +315,30 @@ model UserInvite {
 }
 
 model User {
-  id               String          @id @default(uuid())
-  username         String          @unique
-  email            String?         @unique
-  phoneNumber      String?         @unique
-  name             String?
-  status           String?         @default("pending") // Custom type conversion needed
-  createdDate      DateTime?       @default(now()) @map("created_date")
-  updatedDate      DateTime?       @default(now()) @map("updated_date")
-  lastLoginDate    DateTime?       @default(now()) @map("last_login_date")
-  comments         Comment[]       @relation("UserComments")
-  events           Event[]         @relation("UserEvents")
-  Menu             Menu[]
-  addedMenuRecipes MenuRecipe[]    @relation("UserAddedMenuRecipes")
-  MenuTag          MenuTag[]
-  submittedRecipes Recipe[]        @relation("UserSubmittedRecipes")
-  recipeRatings    RecipeRating[]  @relation("UserRecipeRatings")
-  RecipeTag        RecipeTag[]
-  password         Password?
-  userRecipes      UserRecipe[]
-  UserInvite       UserInvite[]
-  UsefulComment    UsefulComment[]
+  id                   String                 @id @default(uuid())
+  username             String                 @unique
+  email                String?                @unique
+  phoneNumber          String?                @unique
+  name                 String?
+  status               String?                @default("pending") // Custom type conversion needed
+  createdDate          DateTime?              @default(now()) @map("created_date")
+  updatedDate          DateTime?              @default(now()) @map("updated_date")
+  lastLoginDate        DateTime?              @default(now()) @map("last_login_date")
+  comments             Comment[]              @relation("UserComments")
+  events               Event[]                @relation("UserEvents")
+  Menu                 Menu[]
+  addedMenuRecipes     MenuRecipe[]           @relation("UserAddedMenuRecipes")
+  MenuTag              MenuTag[]
+  submittedRecipes     Recipe[]               @relation("UserSubmittedRecipes")
+  recipeRatings        RecipeRating[]         @relation("UserRecipeRatings")
+  RecipeTag            RecipeTag[]
+  password             Password?
+  userRecipes          UserCookLog[]
+  UserInvite           UserInvite[]
+  UsefulComment        UsefulComment[]
+  Collection           Collection[]
+  UserRecipeCollection UserRecipeCollection[]
+  CollectionAccess     CollectionAccess[]
 
   @@map("users")
 }

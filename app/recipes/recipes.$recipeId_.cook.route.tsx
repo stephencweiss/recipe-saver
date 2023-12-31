@@ -13,7 +13,7 @@ import { CollapsibleSection } from "~/components/collapsible";
 import { List } from "~/components/lists";
 import { requireUserId } from "~/session.server";
 import { RequireAuthenticatedUser } from "~/users/api.restricted.route";
-import { markRecipeAsCooked } from "~/users/user.recipe.server";
+import { markRecipeAsCooked } from "~/users/user.cooklog.server";
 import { isValidString } from "~/utils/strings";
 
 import { parseIngredients } from "./recipe-ingredient-utils";
