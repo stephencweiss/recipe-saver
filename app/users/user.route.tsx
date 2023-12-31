@@ -7,7 +7,7 @@ export default function UserProfile() {
   const user = useUser();
   return (
     <Layout title="Profile">
-      <main className="flex flex-col gap-4">
+      <main className="flex flex-col gap-4 p-4">
         <h2 className="text-4xl font-bold py-4 px-2">
           User Profile for {user.username}
         </h2>

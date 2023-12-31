@@ -22,13 +22,20 @@ export default function UserProfile() {
   const user = useUser();
 
   return (
-    <div className="flex h-full min-h-screen flex-col">
-      <div className="flex h-full min-h-screen flex-col">
+    <div className="flex h-full min-h-screen flex-col gap-4">
+      <div className="flex justify-end gap-4">
         <button>
           <Link to="edit?update=profile"
           className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-700 disabled:bg-gray-400"
-          >Edit</Link>
+          >Edit Profile</Link>
         </button>
+
+        <button>
+          <Link to="edit?update=password"
+          className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-700 disabled:bg-gray-400"
+          >Change Password</Link>
+        </button>
+        </div>
         <CollapsibleSection title="Basic User Info">
           <p>Username: {user.username}</p>
           <p>Email: {user.email ?? "Unknown"}</p>
@@ -54,14 +61,6 @@ export default function UserProfile() {
             </p>
           ) : null}
         </CollapsibleSection>
-        <button>
-          <Link to="edit?update=password"
-          className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-700 disabled:bg-gray-400"
-          >Change Password</Link>
-        </button>
-
-        <p></p>
-      </div>
     </div>
   );
 }

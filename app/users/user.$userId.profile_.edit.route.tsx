@@ -4,7 +4,12 @@ import { useActionData, Form, useLoaderData } from "@remix-run/react";
 import { FormTextInput } from "~/components/forms";
 import { requireUserId } from "~/session.server";
 
-import { User, getUserById, updateUser, updateUserPassword } from "./user.server";
+import {
+  User,
+  getUserById,
+  updateUser,
+  updateUserPassword,
+} from "./user.server";
 import {
   isUpdatablePasswordErrorResponse,
   isUpdatableUserErrorResponse,
@@ -21,6 +26,7 @@ export const loader = async ({ params, request }: ActionFunctionArgs) => {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const requestingUserId = await requireUserId(request);
+  // You can only call request.formData() once per request
   const formData = await request.formData();
   const action = formData.get("action");
   switch (request.method) {
@@ -45,7 +51,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 };
 
-const handleUpdateUserProfile = async (formData: FormData, requestingUserId: User["id"]) => {
+const handleUpdateUserProfile = async (
+  formData: FormData,
+  requestingUserId: User["id"],
+) => {
   const partialUser = {
     username: String(formData.get("username")),
     email: String(formData.get("email")),
@@ -61,7 +70,10 @@ const handleUpdateUserProfile = async (formData: FormData, requestingUserId: Use
   return redirect(`/user/${updatedUser.id}/profile`);
 };
 
-const handleUpdateUserPassword = async (formData: FormData, requestingUserId: User["id"]) => {
+const handleUpdateUserPassword = async (
+  formData: FormData,
+  requestingUserId: User["id"],
+) => {
   // You can only update your own password.
   if (requestingUserId !== String(formData.get("userId"))) {
     throw new Error("User id mismatch");
@@ -85,8 +97,8 @@ export default function UserProfileEdit() {
 
   const actionData = useActionData<typeof action>();
   const userErrors = isUpdatableUserErrorResponse(actionData)
-  ? actionData?.errors
-  : null;
+    ? actionData?.errors
+    : null;
   const passwordErrors = isUpdatablePasswordErrorResponse(actionData)
     ? actionData?.errors
     : null;
@@ -141,6 +153,7 @@ export default function UserProfileEdit() {
       <FormTextInput
         label="Phone Number"
         name="phoneNumber"
+        type="tel"
         defaultValue={user?.phoneNumber ?? ""}
         error={userErrors?.phoneNumber}
       />
@@ -159,13 +172,21 @@ const UserProfilesSubmissionFormWrapper = ({
   userId: string | undefined;
 }>) => {
   return (
-    <Form method="post">
-      <button
-        type="submit"
-        className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-400"
-      >
-        Submit
-      </button>
+    <Form method="post" className="flex flex-col gap-4 w-full">
+      <div className="flex justify-end flex-col-reverse gap-4 md:flex-row">
+        <button
+          onClick={() => history.back()}
+          className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-400"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          className="rounded bg-yellow-500 px-4 py-2 text-white hover:bg-yellow-600 active:bg-yellow-400 focus:bg-yellow-400"
+        >
+          Submit
+        </button>
+      </div>
       <input type="hidden" name="userId" value={userId} />
       <input type="hidden" name="action" value={action} />
       <input
