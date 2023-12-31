@@ -58,7 +58,7 @@ export default function Index() {
               </div>
               <div className="mx-auto mt-10 max-w-sm sm:flex sm:max-w-none sm:justify-center gap-x-4">
                   <Link
-                    to="/explore"
+                    to="/recipes/explore"
                     className="flex items-center justify-center rounded-md border border-transparent bg-yellow-500 px-4 py-3 text-base font-medium text-white shadow-sm hover:bg-yellow-600 sm:px-8"
                   >
                     Explore
