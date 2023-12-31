@@ -3,6 +3,8 @@ import bcrypt from "bcryptjs";
 
 import { prisma } from "~/db.server";
 
+import { UpdatableUserError, createUserJSONErrorResponse, isFieldValueIsAvailable } from "./user.utils.server";
+
 export type { User } from "@prisma/client";
 
 export async function getUserById(id: User["id"]) {
@@ -22,7 +24,7 @@ export async function createEmailUser(email: User["email"], password: string) {
   if (!email || !hashedPassword) {
     throw new Response(
       "Cannot create email user if email and password are missing",
-      { status: 400}
+      { status: 400 }
     );
   }
 
@@ -46,7 +48,7 @@ export async function createEmailUser(email: User["email"], password: string) {
 
 export async function deleteUserByEmail(email: User["email"]) {
   if (!email) {
-    throw new Response("Cannot delete user by email if email is missing", {status: 400});
+    throw new Response("Cannot delete user by email if email is missing", { status: 400 });
   }
   return prisma.user.deleteMany({ where: { email } });
 }
@@ -88,14 +90,28 @@ export async function verifyLogin(
   return userWithoutPassword;
 }
 
-export async function updateUser(user: Partial<User> & {id: User["id"]}, requestingUserId: User["id"]): Promise<User> {
-  if (user.id !== requestingUserId) {
+export async function updateUser(user: Partial<User> & { id: User["id"] }, requestingUserId: User["id"]
+): Promise<Pick<User, "id"> | UpdatableUserError> {
+  const { id, ...data } = user
+  if (id !== requestingUserId) {
     throw new Response("You are not authorized to edit this user", { status: 401 });
   }
 
-  const { id, ...data } = user;
-  return prisma.user.update({
+  const { email, phoneNumber, username } = data;
+  if (email && !(await isFieldValueIsAvailable("email", email, id))) {
+    return createUserJSONErrorResponse("email", "Email is already taken")
+  }
+  if (phoneNumber && !(await isFieldValueIsAvailable("phoneNumber", phoneNumber, id))) {
+    return createUserJSONErrorResponse("phoneNumber", "Phone number is already taken")
+
+  }
+  if (username && !(await isFieldValueIsAvailable("username", username, id))) {
+    return createUserJSONErrorResponse("username", "Username is already taken")
+  }
+
+  const updatedUser = await prisma.user.update({
     where: { id },
     data,
   });
+  return { id: updatedUser.id };
 }

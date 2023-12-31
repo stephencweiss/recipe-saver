@@ -82,7 +82,7 @@ export function HeaderNavMenu({ children }: React.PropsWithChildren<unknown>) {
 
 const ProfileOrLoginMenuItem = () => {
   const user = useOptionalUser();
-  const displayName = user?.name || user?.email;
+  const displayName = user?.username
   return (
     <DropdownMenu.Item className={menuItemClasses}>
       {displayName ? (

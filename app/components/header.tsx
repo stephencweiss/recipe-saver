@@ -40,7 +40,7 @@ const BasicHeader = ({
 
 const StandardHeader = ({ title, className }: Readonly<HeaderProps>) => {
   const user = useOptionalUser();
-  const displayName = user?.name || user?.email;
+  const displayName = user?.username
   return (
     <BasicHeader title={title} className={className}>
       <div className="items-center hidden md:flex">

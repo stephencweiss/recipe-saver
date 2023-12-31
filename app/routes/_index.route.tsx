@@ -37,7 +37,7 @@ export default function Index() {
                     to="/recipes"
                     className="flex items-center justify-center rounded-md border border-transparent bg-white px-4 py-3 text-base font-medium text-yellow-700 shadow-sm hover:bg-yellow-50 sm:px-8"
                   >
-                    View Recipes for {user.username ?? user.email}
+                    View Recipes for {user.username}
                   </Link>
                 ) : (
                   <div className="space-y-4 sm:mx-auto sm:inline-grid sm:grid-cols-2 sm:gap-5 sm:space-y-0">
