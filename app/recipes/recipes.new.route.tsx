@@ -19,7 +19,7 @@ import { SubmissionStyles } from "./recipe-form-constants";
  */
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
-  const queryParam = url.searchParams.get("submissionStyle"); // Replace 'yourQueryParam' with your parameter key
+  const queryParam = url.searchParams.get("submissionStyle");
   return json({ queryParam });
 };
 
