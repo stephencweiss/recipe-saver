@@ -130,7 +130,7 @@ export default function RecipeDetailsPage() {
       <List title="Steps" items={data.recipe.preparationSteps} ListType="ol" />
       <CollapsibleSection title="Additional Detail">
         <p className="pb-2">Source: {data.recipe.source || "User Submitted"}</p>
-        <p className="pb-2 flex items-center">
+        <p className="pb-2 flex items-center max-w-screen-sm">
           URL:&nbsp;
           {data.recipe.sourceUrl ? (
             <TruncateText>
