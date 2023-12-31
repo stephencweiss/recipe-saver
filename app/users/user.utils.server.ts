@@ -3,28 +3,31 @@ import { User } from "@prisma/client";
 import { prisma } from "~/db.server";
 import { isValidString } from "~/utils/strings";
 
-export interface UpdatableUserError {
-  errors: {
-    global: string | null;
-    username: string | null;
-    email: string | null;
-    phoneNumber: string | null;
-  };
-  status: number
-}
+import { UpdatablePasswordError, UpdatableUserError } from "./user.types";
 
 export const createUserJSONErrorResponse = (
   errorKey: string,
   errorMessage: string,
   status = 400,
-) => {
+): UpdatableUserError => {
   const defaultErrors: UpdatableUserError["errors"] = {
     global: null,
     username: null,
     email: null,
     phoneNumber: null,
   };
-  return ({ errors: { ...defaultErrors, [errorKey]: errorMessage }, status })
+  return ({type: 'UpdatableUserError', errors: { ...defaultErrors, [errorKey]: errorMessage }, status })
+}
+
+export const createPasswordJSONErrorResponse = (
+  errorKey: string,
+  errorMessage: string,
+  status = 400,
+): UpdatablePasswordError => {
+  const defaultErrors: UpdatablePasswordError["errors"] = {
+    global: null,
+  };
+  return ({ type: 'UpdatablePasswordError', errors: { ...defaultErrors, [errorKey]: errorMessage }, status })
 }
 
 /**

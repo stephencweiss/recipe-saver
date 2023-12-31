@@ -18,7 +18,6 @@ export const loader = async ({ params }: ActionFunctionArgs) => {
   return json({user})
 }
 
-
 export default function UserProfile() {
   const user = useUser();
 
@@ -26,7 +25,7 @@ export default function UserProfile() {
     <div className="flex h-full min-h-screen flex-col">
       <div className="flex h-full min-h-screen flex-col">
         <button>
-          <Link to="edit"
+          <Link to="edit?update=profile"
           className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-700 disabled:bg-gray-400"
           >Edit</Link>
         </button>
@@ -55,6 +54,12 @@ export default function UserProfile() {
             </p>
           ) : null}
         </CollapsibleSection>
+        <button>
+          <Link to="edit?update=password"
+          className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-700 disabled:bg-gray-400"
+          >Change Password</Link>
+        </button>
+
         <p></p>
       </div>
     </div>

@@ -2,8 +2,10 @@ import type { Password, User } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 import { prisma } from "~/db.server";
+import { isValidString } from "~/utils/strings";
 
-import { UpdatableUserError, createUserJSONErrorResponse, isFieldValueIsAvailable } from "./user.utils.server";
+import { UpdatablePasswordError, UpdatableUserError } from "./user.types";
+import { createPasswordJSONErrorResponse, createUserJSONErrorResponse, isFieldValueIsAvailable } from "./user.utils.server";
 
 export type { User } from "@prisma/client";
 
@@ -44,6 +46,29 @@ export async function createEmailUser(email: User["email"], password: string) {
       },
     },
   });
+}
+
+export async function updateUserPassword(
+  userId: User["id"],
+  password: Password["encryptedPassword"],
+  confirmPassword: Password["encryptedPassword"],
+): Promise<unknown | UpdatablePasswordError> {
+  if (!isValidString(password)) {
+    throw new Response("Cannot update user password", { status: 400 });
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const confirmPasswordHashed = await bcrypt.hash(confirmPassword, 10);
+
+  if (hashedPassword !== confirmPasswordHashed) {
+    return createPasswordJSONErrorResponse("global", "Passwords do not match")
+  }
+
+  await prisma.password.update({
+    where: { userId },
+    data: { encryptedPassword: hashedPassword },
+  });
+  return {};
 }
 
 export async function deleteUserByEmail(email: User["email"]) {
