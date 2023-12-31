@@ -63,6 +63,35 @@ export async function deleteCollection(id: Collection["id"], requestingUserId: U
   });
 }
 
+// Collection Helpers
+export async function makeCollectionDefault(collectionId: Collection["id"], userId: User["id"]) {
+  const userCollections = await getUserCollections(userId);
+  const defaultCollection = userCollections.find((collection) => collection.isDefault);
+
+  if (defaultCollection) {
+    await prisma.collection.update({
+      where: { id: defaultCollection.id },
+      data: { isDefault: false },
+    });
+  }
+
+  await prisma.collection.update({
+    where: { id: collectionId },
+    data: { isDefault: true },
+  });
+}
+
+export async function getDefaultCollectionId(userId: User["id"]) {
+  const defaultCollection = await prisma.collection.findFirst({
+    where: {
+      userId,
+      isDefault: true,
+    }
+  });
+
+  return defaultCollection?.id;
+}
+
 // Collection Access
 type CollectionAccessLevel = 'read' | 'write' | 'admin';
 const isCollectionAccessLevel = (accessLevel: string): accessLevel is CollectionAccessLevel => {
