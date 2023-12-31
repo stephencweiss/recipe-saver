@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 async function createEmailUser() {
   const email = "rachel@remix.run";
   // cleanup the existing database
-  await prisma.user.delete({ where: { email } }).catch(() => {
+  await prisma.user.deleteMany({ where: { email } }).catch(() => {
     // no worries if it doesn't exist yet
   });
   const hashedPassword = await bcrypt.hash("racheliscool", 10);
@@ -27,7 +27,7 @@ async function createEmailUser() {
 async function createEmailUserTwo() {
   const email = "kate@remix.run";
   // cleanup the existing database
-  await prisma.user.delete({ where: { email } }).catch(() => {
+  await prisma.user.deleteMany({ where: { email } }).catch(() => {
     // no worries if it doesn't exist yet
   });
   const hashedPassword = await bcrypt.hash("katerox", 10);

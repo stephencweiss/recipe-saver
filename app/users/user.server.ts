@@ -13,7 +13,7 @@ export async function getUserByEmail(email: User["email"]) {
   if (!email) {
     return null;
   }
-  return prisma.user.findUnique({ where: { email } });
+  return prisma.user.findFirst({ where: { email } });
 }
 
 export async function createEmailUser(email: User["email"], password: string) {
@@ -25,6 +25,12 @@ export async function createEmailUser(email: User["email"], password: string) {
       { status: 400}
     );
   }
+
+  const maybeExistingUser = await getUserByEmail(email);
+  if (maybeExistingUser) {
+    throw new Response("User already exists", { status: 400 });
+  }
+
   return prisma.user.create({
     data: {
       username: email,
@@ -42,7 +48,7 @@ export async function deleteUserByEmail(email: User["email"]) {
   if (!email) {
     throw new Response("Cannot delete user by email if email is missing", {status: 400});
   }
-  return prisma.user.delete({ where: { email } });
+  return prisma.user.deleteMany({ where: { email } });
 }
 
 export async function deleteUserByUsername(username: User["username"]) {
@@ -56,7 +62,7 @@ export async function verifyLogin(
   if (!email || !password) {
     return null;
   }
-  const userWithPassword = await prisma.user.findUnique({
+  const userWithPassword = await prisma.user.findFirst({
     where: { email },
     include: {
       password: true,
@@ -80,4 +86,16 @@ export async function verifyLogin(
   const { password: _password, ...userWithoutPassword } = userWithPassword;
 
   return userWithoutPassword;
+}
+
+export async function updateUser(user: Partial<User> & {id: User["id"]}, requestingUserId: User["id"]): Promise<User> {
+  if (user.id !== requestingUserId) {
+    throw new Response("You are not authorized to edit this user", { status: 401 });
+  }
+
+  const { id, ...data } = user;
+  return prisma.user.update({
+    where: { id },
+    data,
+  });
 }
