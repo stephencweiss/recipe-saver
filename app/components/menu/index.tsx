@@ -59,7 +59,7 @@ export function HeaderNavMenu({ children }: React.PropsWithChildren<unknown>) {
           tabIndex={-1}
         >
           <DropdownMenu.Item className={menuItemClasses}>
-            <Link className="w-full px-4 py-2" to="/explore">
+            <Link className="w-full px-4 py-2" to="/recipes/explore">
               Explore
             </Link>
           </DropdownMenu.Item>
@@ -132,7 +132,7 @@ export function HamburgerNavMenu() {
           tabIndex={-1}
         >
           <DropdownMenu.Item className={menuItemClasses}>
-            <Link className="w-full px-4 py-2" to="/explore">
+            <Link className="w-full px-4 py-2" to="/recipes/explore">
               Explore
             </Link>
           </DropdownMenu.Item>

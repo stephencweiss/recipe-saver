@@ -71,7 +71,7 @@ const StandardHeader = ({ title, className }: Readonly<HeaderProps>) => {
             </Link>
           ) : (
             <Link
-              to="/explore"
+              to="/recipes/explore"
               className="rounded bg-slate-600 px-4 py-2 text-blue-100 text-xl hover:bg-blue-600 focus:bg-blue-400 active:bg-blue-700"
             >
               Explore
