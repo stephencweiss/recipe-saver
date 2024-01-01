@@ -120,12 +120,14 @@ export default function UserProfileEdit() {
       )}
       <FormTextInput
         label="New Password"
+        error={passwordErrors ? passwordErrors?.password : null}
         defaultValue=""
         name="password"
         type="password"
       />
       <FormTextInput
         label="Confirm Password"
+        error={passwordErrors ? passwordErrors?.confirmPassword : null}
         defaultValue=""
         name="confirmPassword"
         type="password"
@@ -173,18 +175,18 @@ const UserProfilesSubmissionFormWrapper = ({
 }>) => {
   return (
     <Form method="post" className="flex flex-col gap-4 w-full">
-      <div className="flex justify-end flex-col-reverse gap-4 md:flex-row">
-        <button
-          onClick={() => history.back()}
-          className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-400"
-        >
-          Cancel
-        </button>
+      <div className="flex justify-start flex-col gap-4 md:flex-row-reverse">
         <button
           type="submit"
           className="rounded bg-yellow-500 px-4 py-2 text-white hover:bg-yellow-600 active:bg-yellow-400 focus:bg-yellow-400"
         >
           Submit
+        </button>
+        <button
+          onClick={() => history.back()}
+          className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-400"
+        >
+          Cancel
         </button>
       </div>
       <input type="hidden" name="userId" value={userId} />
