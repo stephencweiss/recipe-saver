@@ -54,13 +54,20 @@ export async function updateUserPassword(
   confirmPassword: Password["encryptedPassword"],
 ): Promise<unknown | UpdatablePasswordError> {
   if (!isValidString(password)) {
-    throw new Response("Cannot update user password", { status: 400 });
+    return createPasswordJSONErrorResponse("password", "Password is required")
+  }
+  if (!isValidString(confirmPassword)) {
+    return createPasswordJSONErrorResponse("confirmPassword", "Confirm Password is required")
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
-  const confirmPasswordHashed = await bcrypt.hash(confirmPassword, 10);
 
-  if (hashedPassword !== confirmPasswordHashed) {
+  const isValid = await bcrypt.compare(
+    confirmPassword,
+    hashedPassword
+  );
+
+  if (!isValid) {
     return createPasswordJSONErrorResponse("global", "Passwords do not match")
   }
 
@@ -82,7 +89,39 @@ export async function deleteUserByUsername(username: User["username"]) {
   return prisma.user.delete({ where: { username } });
 }
 
-export async function verifyLogin(
+export async function verifyUsernameLogin(
+  username: User["username"],
+  password: Password["encryptedPassword"],
+) {
+  if (!username || !password) {
+    return null;
+  }
+  const userWithPassword = await prisma.user.findFirst({
+    where: { username },
+    include: {
+      password: true,
+    },
+  });
+
+  if (!userWithPassword?.password) {
+    return null;
+  }
+
+  const isValid = await bcrypt.compare(
+    password,
+    userWithPassword.password.encryptedPassword,
+  );
+
+  if (!isValid) {
+    return null;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { password: _password, ...userWithoutPassword } = userWithPassword;
+  return userWithoutPassword;
+}
+
+export async function verifyEmailLogin(
   email: User["email"],
   password: Password["encryptedPassword"],
 ) {
@@ -111,7 +150,6 @@ export async function verifyLogin(
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { password: _password, ...userWithoutPassword } = userWithPassword;
-
   return userWithoutPassword;
 }
 
