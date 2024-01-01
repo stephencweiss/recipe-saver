@@ -14,6 +14,7 @@ import {
   isUpdatablePasswordErrorResponse,
   isUpdatableUserErrorResponse,
 } from "./user.utils";
+import VisuallyHidden from "~/components/visually-hidden";
 
 export const loader = async ({ params, request }: ActionFunctionArgs) => {
   const userId = params.userId;
@@ -189,13 +190,15 @@ const UserProfilesSubmissionFormWrapper = ({
           Cancel
         </button>
       </div>
-      <input type="hidden" name="userId" value={userId} />
-      <input type="hidden" name="action" value={action} />
-      <input
-        type="hidden"
-        name="redirectTo"
-        value={`/user/${userId}/profile`}
-      />
+      <VisuallyHidden>
+        <input name="userId" value={userId} />
+      </VisuallyHidden>
+      <VisuallyHidden>
+        <input name="action" value={action} />
+      </VisuallyHidden>
+      <VisuallyHidden>
+        <input name="redirectTo" value={`/user/${userId}/profile`} />
+      </VisuallyHidden>
       {children}
     </Form>
   );
