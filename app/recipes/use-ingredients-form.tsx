@@ -42,9 +42,7 @@ export const useIngredientsForm = (
   const renderIngredients = (
     <div>
       <VisuallyHidden>
-        <div className="font-bold">
-          Deleted Ingredients
-        </div>
+        <div className="font-bold">Deleted Ingredients</div>
         {ingredients
           .filter((i) => i.isDeleted)
           .filter(
@@ -69,7 +67,10 @@ export const useIngredientsForm = (
         .filter((i) => !i.isDeleted)
         .filter((i): i is IngredientFormEntry & { id: string } => i.id != null)
         .map((ingredient, index) => (
-          <details key={ingredient.id} className="[&_svg]:open:-rotate-180 my-2">
+          <details
+            key={ingredient.id}
+            className="[&_svg]:open:-rotate-180 my-2"
+          >
             {/* <!-- notice here, we have disabled the summary's default triangle/arrow --> */}
             <summary className="flex justify-between cursor-pointer list-none items-center gap-4">
               <div className="flex gap-2">
@@ -101,12 +102,9 @@ export const useIngredientsForm = (
                 </button>
               </div>
             </summary>
-
-            <input
-              type="hidden"
-              name={`ingredients[${index}][id]`}
-              value={ingredient.id}
-            />
+            <VisuallyHidden>
+              <input name={`ingredients[${index}][id]`} value={ingredient.id} />
+            </VisuallyHidden>
             <div>
               <label>
                 Name
