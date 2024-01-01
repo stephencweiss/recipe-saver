@@ -2,6 +2,7 @@ import { ActionFunctionArgs, json, redirect } from "@remix-run/node";
 import { useActionData, Form, useLoaderData } from "@remix-run/react";
 
 import { FormTextInput } from "~/components/forms";
+import VisuallyHidden from "~/components/visually-hidden";
 import { requireUserId } from "~/session.server";
 
 import {
@@ -14,7 +15,6 @@ import {
   isUpdatablePasswordErrorResponse,
   isUpdatableUserErrorResponse,
 } from "./user.utils";
-import VisuallyHidden from "~/components/visually-hidden";
 
 export const loader = async ({ params, request }: ActionFunctionArgs) => {
   const userId = params.userId;
