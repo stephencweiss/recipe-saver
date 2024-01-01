@@ -1,5 +1,5 @@
 import { parseISO8601Duration, prettyPrintDuration } from "~/utils/time";
-export const Time = ({
+export const Duration = ({
   label,
   time,
 }: {

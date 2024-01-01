@@ -14,6 +14,7 @@ import {
   FlatComment,
   FlatCommentServer,
 } from "~/comments/comment.server";
+import VisuallyHidden from "~/components/visually-hidden";
 import { useOptionalUser } from "~/utils";
 import { isValidString } from "~/utils/strings";
 
@@ -85,7 +86,9 @@ const Comment = ({
       <p className="text-gray-700 mb-1">{comment}</p>
       <div className="flex justify-between items-center mb-1">
         <usefulFetcher.Form method="post">
-          <input type="hidden" name="action" value="useful-comment" />
+          <VisuallyHidden>
+            <input name="action" value="useful-comment" />
+          </VisuallyHidden>
           <div className="flex items-center text-sm">
             <span>Is this helpful?</span>
             <button
@@ -123,12 +126,24 @@ const Comment = ({
               Edit
             </button>
             <deleteFetcher.Form method="delete">
-              <input type="hidden" name="action" value="delete-comment" />
-              <input type="hidden" name="comment-type" value={commentType} />
-              <input type="hidden" name="associatedId" value={associatedId} />
-              <input type="hidden" name="commentId" value={commentId} />
-              <input type="hidden" name="submittedBy" value={submittedBy} />
-              <input type="hidden" name="isDeleted" value="true" />
+              <VisuallyHidden>
+                <input name="action" value="delete-comment" />
+              </VisuallyHidden>
+              <VisuallyHidden>
+                <input name="comment-type" value={commentType} />
+              </VisuallyHidden>
+              <VisuallyHidden>
+                <input name="associatedId" value={associatedId} />
+              </VisuallyHidden>
+              <VisuallyHidden>
+                <input name="commentId" value={commentId} />
+              </VisuallyHidden>
+              <VisuallyHidden>
+                <input name="submittedBy" value={submittedBy} />
+              </VisuallyHidden>
+              <VisuallyHidden>
+                <input name="isDeleted" value="true" />
+              </VisuallyHidden>
               <button
                 name="action"
                 value="delete-comment"
@@ -156,11 +171,21 @@ const Comment = ({
         reset={reset}
         userId={userId}
       >
-        <input type="hidden" name="action" value={"edit-comment"} />
-        <input type="hidden" name="comment-type" value={commentType} />
-        <input type="hidden" name="associatedId" value={associatedId} />
-        <input type="hidden" name="commentId" value={commentId} />
-        <input type="hidden" name="userId" value={userId} />
+        <VisuallyHidden>
+          <input name="action" value={"edit-comment"} />
+        </VisuallyHidden>
+        <VisuallyHidden>
+          <input name="comment-type" value={commentType} />
+        </VisuallyHidden>
+        <VisuallyHidden>
+          <input name="associatedId" value={associatedId} />
+        </VisuallyHidden>
+        <VisuallyHidden>
+          <input name="commentId" value={commentId} />
+        </VisuallyHidden>
+        <VisuallyHidden>
+          <input name="userId" value={userId} />
+        </VisuallyHidden>
       </CommentForm>
     </editFetcher.Form>
   );
@@ -192,7 +217,7 @@ export const CreateCommentForm = ({
   associatedId,
   commentType,
   placeholder,
-  hidePrivateCheckbox = false
+  hidePrivateCheckbox = false,
 }: {
   allowAnonymous?: boolean;
   associatedId: string;
@@ -244,14 +269,24 @@ export const CreateCommentForm = ({
         setIsPrivate={setIsPrivate}
         userId={user?.id}
       >
-        <input type="hidden" name="action" value={"create-comment"} />
-        <input type="hidden" name="comment-type" value={commentType} />
-        <input type="hidden" name="associatedId" value={associatedId} />
-        <input type="hidden" name="userId" value={user?.id} />
+        <VisuallyHidden>
+          <input name="action" value={"create-comment"} />
+        </VisuallyHidden>
+        <VisuallyHidden>
+          <input name="comment-type" value={commentType} />
+        </VisuallyHidden>
+        <VisuallyHidden>
+          <input name="associatedId" value={associatedId} />
+        </VisuallyHidden>
+        <VisuallyHidden>
+          <input name="userId" value={user?.id} />
+        </VisuallyHidden>
       </CommentForm>
     </commentFormFetcher.Form>
   );
-  return allowAnonymous || user != null ? loggedInView : loggedOutView(commentType, associatedId);
+  return allowAnonymous || user != null
+    ? loggedInView
+    : loggedOutView(commentType, associatedId);
 };
 
 type CommentListViews = "all" | "helpful" | "personal";
@@ -265,11 +300,7 @@ const commentCounts = (comments: FlatComment[], userId?: User["id"]) => {
   return counts;
 };
 
-const CommentList = ({
-  comments = [],
-}: {
-  comments: FlatComment[];
-}) => {
+const CommentList = ({ comments = [] }: { comments: FlatComment[] }) => {
   const user = useOptionalUser();
 
   const [view, setView] = useState<CommentListViews>("all");
@@ -330,11 +361,7 @@ const CommentList = ({
               new Date(a.createdDate).getTime(),
           )
           .map((commentData, index) => (
-            <Comment
-              key={index}
-              userId={user?.id}
-              {...commentData}
-            />
+            <Comment key={index} userId={user?.id} {...commentData} />
           ))}
       </div>
     </div>
@@ -354,7 +381,13 @@ export const CommentListAndForm = ({
     <>
       <div className="border-t border-gray-300 pt-4 pb-6">
         <h2 className="text-xl font-semibold mb-3">Cooking Notes</h2>
-        <CreateCommentForm associatedId={associatedId} commentType={type} placeholder={"Share your notes with other cooks or make a private note for yourself..."}/>
+        <CreateCommentForm
+          associatedId={associatedId}
+          commentType={type}
+          placeholder={
+            "Share your notes with other cooks or make a private note for yourself..."
+          }
+        />
       </div>
       <CommentList comments={comments} />
     </>

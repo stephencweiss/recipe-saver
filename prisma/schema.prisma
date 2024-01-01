@@ -317,8 +317,8 @@ model UserInvite {
 model User {
   id                   String                 @id @default(uuid())
   username             String                 @unique
-  email                String?                @unique
-  phoneNumber          String?                @unique
+  email                String?
+  phoneNumber          String?
   name                 String?
   status               String?                @default("pending") // Custom type conversion needed
   createdDate          DateTime?              @default(now()) @map("created_date")

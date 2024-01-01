@@ -11,6 +11,7 @@ import { CreateCommentForm } from "~/comments/api.comments.route";
 import { Checklist } from "~/components/checklist";
 import { CollapsibleSection } from "~/components/collapsible";
 import { List } from "~/components/lists";
+import VisuallyHidden from "~/components/visually-hidden";
 import { requireUserId } from "~/session.server";
 import { RequireAuthenticatedUser } from "~/users/api.restricted.route";
 import { markRecipeAsCooked } from "~/users/user.cooklog.server";
@@ -98,7 +99,7 @@ export default function RecipeCookPage() {
           )}
           {data.user ? (
             <Form method="POST" className="flex flex-col">
-              <input type="hidden" name="action" value="cook-recipe" />
+              <VisuallyHidden><input name="action" value="cook-recipe" /></VisuallyHidden>
               <button className="rounded bg-yellow-500 px-4 py-2 text-white hover:bg-yellow-600 active:bg-yellow-400 focus:bg-yellow-700 disabled:bg-gray-400">
                 Mark as Cooked
               </button>

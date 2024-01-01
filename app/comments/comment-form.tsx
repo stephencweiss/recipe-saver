@@ -1,4 +1,5 @@
 import { InvisibleTooltip } from "~/components/tooltip";
+import VisuallyHidden from "~/components/visually-hidden";
 import { isValidString } from "~/utils/strings";
 
 interface CommentFormProps {
@@ -31,8 +32,8 @@ export const CommentForm = ({
   return (
     <div className="max-w-[500px]">
       {children}
-      <input type="hidden" name="isPrivate" value={String(isPrivate)} />
-      <input type="hidden" name="allowAnonymous" value={String(allowAnonymous)} />
+      <VisuallyHidden><input name="isPrivate" value={String(isPrivate)} /></VisuallyHidden>
+      <VisuallyHidden><input name="allowAnonymous" value={String(allowAnonymous)} /></VisuallyHidden>
       <textarea
         name="comment"
         className="w-full p-2 border border-gray-300 rounded mb-2"

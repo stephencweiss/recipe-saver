@@ -2,7 +2,6 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import {
   Form,
-  Link,
   isRouteErrorResponse,
   useLoaderData,
   useRouteError,
@@ -15,8 +14,8 @@ import {
 } from "~/comments/api.comments.route";
 import { getComments } from "~/comments/comment.server";
 import { CollapsibleSection } from "~/components/collapsible";
+import { Duration } from "~/components/duration";
 import { List } from "~/components/lists";
-import { Time } from "~/components/time";
 import TruncateText from "~/components/truncate-text";
 import { useKeyboardCombo } from "~/hooks/use-keyboard";
 import { loadSingleRecipe } from "~/recipes/recipe-loader";
@@ -42,6 +41,9 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   const action = formData.get("action");
 
   switch (action) {
+    case "cook-recipe": {
+      return redirect("cook");
+    }
     case "delete-recipe": {
       const userId = await requireUserId(request);
       await deleteRecipe({ id: params.recipeId, userId });
@@ -82,45 +84,62 @@ export default function RecipeDetailsPage() {
       {isUsersRecipe ? (
         <div className="flex justify-between gap-4 flex-col lg:flex-row">
           <h2 className="text-4xl font-bold">{data.recipe.title}</h2>
-          <div className="flex flex-col-reverse gap-2 justify-between sm:flex-row">
-            <Form method="post" className="flex flex-col gap-2 sm:flex-row">
-              <button
-                type="submit"
-                value="edit-recipe"
-                name="action"
-                className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-700 disabled:bg-gray-400"
-                disabled={!isUsersRecipe}
-              >
-                Edit
-              </button>
-              <button
-                type="submit"
-                value="delete-recipe"
-                name="action"
-                disabled={!isUsersRecipe}
-                className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-700 disabled:bg-gray-400"
-              >
-                Delete
-              </button>
-            </Form>
-            <button className="rounded bg-yellow-500 px-4 py-2 text-white hover:bg-yellow-600 active:bg-yellow-400 focus:bg-yellow-700 disabled:bg-gray-400">
-              <Link to="cook">Cook!</Link>
+
+          <Form
+            method="post"
+            className="flex flex-col gap-2 justify-between sm:flex-row-reverse"
+          >
+            <button
+              type="submit"
+              value="cook-recipe"
+              name="action"
+              className="rounded bg-yellow-500 px-4 py-2 text-white hover:bg-yellow-600 active:bg-yellow-400 focus:bg-yellow-700 disabled:bg-gray-400"
+            >
+              Cook!
             </button>
-          </div>
+            <button
+              type="submit"
+              value="edit-recipe"
+              name="action"
+              className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-700 disabled:bg-gray-400"
+              disabled={!isUsersRecipe}
+            >
+              Edit
+            </button>
+            <button
+              type="submit"
+              value="delete-recipe"
+              name="action"
+              disabled={!isUsersRecipe}
+              className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-700 disabled:bg-gray-400"
+            >
+              Delete
+            </button>
+          </Form>
         </div>
       ) : (
         <div className="flex justify-between gap-4 flex-col lg:flex-row">
           <h2 className="text-4xl font-bold">{data.recipe.title}</h2>
-          <button className="rounded bg-yellow-500 px-4 py-2 text-white hover:bg-yellow-600 active:bg-yellow-400 focus:bg-yellow-700 disabled:bg-gray-400">
-            <Link to="cook">Cook!</Link>
-          </button>
+          <Form
+            method="post"
+            className="flex flex-col gap-2 justify-between sm:flex-row-reverse"
+          >
+            <button
+              type="submit"
+              value="cook-recipe"
+              name="action"
+              className="rounded bg-yellow-500 px-4 py-2 text-white hover:bg-yellow-600 active:bg-yellow-400 focus:bg-yellow-700 disabled:bg-gray-400"
+            >
+              Cook!
+            </button>
+          </Form>
         </div>
       )}
 
       <div className="flex flex-row gap-4 px-2 py-4">
-        <Time label={"Cook Time"} time={data.recipe.cookTime} />
-        <Time label={"Prep Time"} time={data.recipe.prepTime} />
-        <Time label={"Total Time"} time={data.recipe.totalTime} />
+        <Duration label={"Cook Time"} time={data.recipe.cookTime} />
+        <Duration label={"Prep Time"} time={data.recipe.prepTime} />
+        <Duration label={"Total Time"} time={data.recipe.totalTime} />
       </div>
       <List
         title="Description"
@@ -175,9 +194,19 @@ export default function RecipeDetailsPage() {
               No one has cooked this recipe yet! Be the first!
             </p>
           )}
-          <button className="rounded bg-yellow-500 px-4 py-2 text-white hover:bg-yellow-600 active:bg-yellow-400 focus:bg-yellow-700 disabled:bg-gray-400">
-            <Link to="cook">Cook!</Link>
-          </button>
+          <Form
+            method="post"
+            className="flex flex-col gap-2 justify-between sm:flex-row-reverse"
+          >
+            <button
+              type="submit"
+              value="cook-recipe"
+              name="action"
+              className="rounded bg-yellow-500 px-4 py-2 text-white hover:bg-yellow-600 active:bg-yellow-400 focus:bg-yellow-700 disabled:bg-gray-400"
+            >
+              Cook!
+            </button>
+          </Form>
         </div>
       </CollapsibleSection>
 

@@ -8,7 +8,7 @@ import Tooltip from "~/components/tooltip";
 import VisuallyHidden from "~/components/visually-hidden";
 import { recipeAction } from "~/recipes/recipe-actions";
 import { useIngredientsForm } from "~/recipes/use-ingredients-form";
-import { useModeSwitcher } from "~/recipes/use-mode-switcher";
+import { useRecipeSubmissionModeSwitcher } from "~/recipes/use-recipe-submission-mode-switcher";
 import { RequireAuthenticatedUser } from "~/users/api.restricted.route";
 import { getDefaultRecipeValues, useOptionalUser } from "~/utils";
 
@@ -19,7 +19,7 @@ import { SubmissionStyles } from "./recipe-form-constants";
  */
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
-  const queryParam = url.searchParams.get("submissionStyle"); // Replace 'yourQueryParam' with your parameter key
+  const queryParam = url.searchParams.get("submissionStyle");
   return json({ queryParam });
 };
 
@@ -29,7 +29,7 @@ export const action = async (actionArgs: ActionFunctionArgs) => {
 
 export default function NewRecipePage() {
   const data = useLoaderData<typeof loader>();
-  const { ModeUi: ModeSwitcher } = useModeSwitcher(data.queryParam);
+  const { ModeUi: ModeSwitcher } = useRecipeSubmissionModeSwitcher(data.queryParam);
   const user = useOptionalUser();
 
   /** The submissionType is the **only** unique value between recipes.new &

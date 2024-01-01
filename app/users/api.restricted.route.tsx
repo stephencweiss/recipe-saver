@@ -1,6 +1,7 @@
 import { ActionFunctionArgs } from "@remix-run/node";
 import { useFetcher } from "@remix-run/react";
 
+import VisuallyHidden from "~/components/visually-hidden";
 import { requireUserId } from "~/session.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -42,11 +43,11 @@ export const RequireAuthenticatedUser = ({
       <div className="flex gap-2 justify-center shrink-0">
         <signUpFetcher.Form method="post" action="/api/restricted">
           {redirectTo ? (
-            <input type="hidden" name="redirectTo" value={redirectTo} />
+            <VisuallyHidden><input name="redirectTo" value={redirectTo} /></VisuallyHidden>
           ) : (
             <></>
           )}
-          <input type="hidden" name="action" value="sign-up-comment" />
+          <VisuallyHidden><input name="action" value="sign-up-comment" /></VisuallyHidden>
 
           <button className="rounded bg-slate-600 px-4 py-2 text-blue-100 hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-700 disabled:bg-gray-400">
             Sign Up
@@ -54,12 +55,12 @@ export const RequireAuthenticatedUser = ({
         </signUpFetcher.Form>
         <loginFetcher.Form method="post" action="/api/restricted">
           {redirectTo ? (
-            <input type="hidden" name="redirectTo" value={redirectTo} />
+            <VisuallyHidden><input name="redirectTo" value={redirectTo} /></VisuallyHidden>
           ) : (
             <></>
           )}
 
-          <input type="hidden" name="action" value="login-comment" />
+          <VisuallyHidden><input name="action" value="login-comment" /></VisuallyHidden>
           <button
             type="submit"
             className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-700 disabled:bg-gray-400"
