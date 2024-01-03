@@ -32,6 +32,17 @@ export async function getUserCollections(userId: Collection["userId"]): Promise<
 }
 
 export async function createCollection(collection: Omit<Collection, "id" | "createdDate" | "updatedDate">): Promise<Collection> {
+  // check for user/name combo
+  const existingCollection = await prisma.collection.findFirst({
+    where: {
+      userId: collection.userId,
+      name: collection.name,
+    }
+  });
+  if (existingCollection) {
+    throw new Response("You already have a collection with that name", { status: 400 });
+  }
+
   const createdCollection = await prisma.collection.create({
     data: collection,
   });
