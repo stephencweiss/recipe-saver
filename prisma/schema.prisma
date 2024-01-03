@@ -250,7 +250,7 @@ model Tag {
 model Collection {
   id                   String                 @id @default(uuid())
   userId               String // Foreign key for User
-  name                 String                 @unique
+  name                 String
   isPrivate            Boolean?               @default(false) @map("is_private")
   isDefault            Boolean?               @default(false) @map("is_default")
   createdDate          DateTime?              @default(now()) @map("created_date")
@@ -259,6 +259,7 @@ model Collection {
   UserRecipeCollection UserRecipeCollection[]
   CollectionAccess     CollectionAccess[]
 
+  @@unique([name, userId]) // May ultimately loosen this, but seems like a reasonable constraint right now.
   @@map("collections")
 }
 
