@@ -51,29 +51,16 @@ export async function createEmailUser(email: User["email"], password: string) {
 export async function updateUserPassword(
   userId: User["id"],
   password: Password["encryptedPassword"],
-  confirmPassword: Password["encryptedPassword"],
 ): Promise<unknown | UpdatablePasswordError> {
   if (!isValidString(password)) {
     return createPasswordJSONErrorResponse("password", "Password is required")
   }
-  if (!isValidString(confirmPassword)) {
-    return createPasswordJSONErrorResponse("confirmPassword", "Confirm Password is required")
-  }
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  const isValid = await bcrypt.compare(
-    confirmPassword,
-    hashedPassword
-  );
-
-  if (!isValid) {
-    return createPasswordJSONErrorResponse("global", "Passwords do not match")
-  }
-
   await prisma.password.update({
     where: { userId },
-    data: { encryptedPassword: hashedPassword },
+    data: { encryptedPassword: hashedPassword, updatedDate: new Date() },
   });
   return {};
 }

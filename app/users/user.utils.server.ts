@@ -27,7 +27,6 @@ export const createPasswordJSONErrorResponse = (
   const defaultErrors: UpdatablePasswordError["errors"] = {
     global: null,
     password: null,
-    confirmPassword: null,
   };
   return ({ type: 'UpdatablePasswordError', errors: { ...defaultErrors, [errorKey]: errorMessage }, status })
 }

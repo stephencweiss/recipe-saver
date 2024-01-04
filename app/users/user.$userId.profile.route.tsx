@@ -1,12 +1,6 @@
 import { ActionFunctionArgs, json } from "@remix-run/node";
-import {
-  Link,
-  isRouteErrorResponse,
+import { Link, isRouteErrorResponse, useRouteError } from "@remix-run/react";
 
-  useRouteError,
-} from "@remix-run/react";
-
-import { CollapsibleSection } from "~/components/collapsible";
 import { useUser } from "~/utils";
 import { isValidString } from "~/utils/strings";
 
@@ -15,8 +9,8 @@ import { getUserById } from "./user.server";
 export const loader = async ({ params }: ActionFunctionArgs) => {
   const userId = params.userId;
   const user = await getUserById(userId ?? "");
-  return json({user})
-}
+  return json({ user });
+};
 
 export default function UserProfile() {
   const user = useUser();
@@ -24,43 +18,47 @@ export default function UserProfile() {
   return (
     <div className="flex h-full min-h-screen flex-col gap-4">
       <div className="flex justify-end gap-4">
-        <button>
-          <Link to="edit?update=profile"
-          className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-700 disabled:bg-gray-400"
-          >Edit Profile</Link>
-        </button>
 
-        <button>
-          <Link to="edit?update=password"
-          className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-700 disabled:bg-gray-400"
-          >Change Password</Link>
-        </button>
-        </div>
-        <CollapsibleSection title="Basic User Info">
-          <p>Username: {user.username}</p>
-          <p>Email: {user.email ?? "Unknown"}</p>
-          <p>Phone: {user.phoneNumber ?? "Unknown"}</p>
-          {user.createdDate ? (
-            <p>
-              Created:{" "}
-              {new Date(user.createdDate).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-            </p>
-          ) : null}
-          {user.updatedDate ? (
-            <p>
-              Created:{" "}
-              {new Date(user.updatedDate).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-            </p>
-          ) : null}
-        </CollapsibleSection>
+          <Link
+            to="edit?update=profile"
+            className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-700 disabled:bg-gray-400"
+          >
+            Edit Profile
+          </Link>
+
+          <Link
+            to="edit?update=password"
+            className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 active:bg-blue-400 focus:bg-blue-700 disabled:bg-gray-400"
+          >
+            Change Password
+          </Link>
+
+      </div>
+
+      <h2 className="text-xl font-bold py-4">Basic User Info</h2>
+      <p className="pb-2">Username: {user.username}</p>
+      <p className="pb-2">Email: {user.email ?? "Unknown"}</p>
+      <p className="pb-2">Phone: {user.phoneNumber ?? "Unknown"}</p>
+      {user.createdDate ? (
+        <p className="pb-2">
+          Created:{" "}
+          {new Date(user.createdDate).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })}
+        </p>
+      ) : null}
+      {user.updatedDate ? (
+        <p className="pb-2">
+          Created:{" "}
+          {new Date(user.updatedDate).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })}
+        </p>
+      ) : null}
     </div>
   );
 }
