@@ -15,6 +15,8 @@ import {
   isUpdatablePasswordErrorResponse,
   isUpdatableUserErrorResponse,
 } from "./user.utils";
+import { createJSONErrorResponse } from "~/recipes/recipe-errors";
+import { createPasswordJSONErrorResponse } from "./user.utils.server";
 
 export const loader = async ({ params, request }: ActionFunctionArgs) => {
   const userId = params.userId;
@@ -77,13 +79,15 @@ const handleUpdateUserPassword = async (
 ) => {
   // You can only update your own password.
   if (requestingUserId !== String(formData.get("userId"))) {
-    throw new Error("User id mismatch");
+    return createPasswordJSONErrorResponse("global", "User id mismatch", 400);
+  }
+  if (formData.get("password") !== formData.get("confirmPassword")) {
+    return createPasswordJSONErrorResponse("password","Passwords do not match", 400)
   }
 
   const updatedPassword = await updateUserPassword(
     String(formData.get("userId")),
     String(formData.get("password")),
-    String(formData.get("confirmPassword")),
   );
   if (isUpdatablePasswordErrorResponse(updatedPassword)) {
     const errors = updatedPassword;
@@ -128,7 +132,6 @@ export default function UserProfileEdit() {
       />
       <FormTextInput
         label="Confirm Password"
-        error={passwordErrors ? passwordErrors?.confirmPassword : null}
         defaultValue=""
         name="confirmPassword"
         type="password"

@@ -14,7 +14,6 @@ export interface UpdatablePasswordError {
   errors: {
     global: string | null;
     password: string | null;
-    confirmPassword: string | null;
   };
   status: number
 }
