@@ -18,6 +18,7 @@ import VisuallyHidden from "~/components/visually-hidden";
 import { createUserSession, getUserId } from "~/session.server";
 import {
   User,
+  updateUser,
   verifyEmailLogin,
   verifyUsernameLogin,
 } from "~/users/user.server";
@@ -135,6 +136,8 @@ const handleUsernameLogin = async (
 const handleLogin =
   async (redirectTo: string, request: Request, remember: string) =>
   async (userId: User["id"]): Promise<TypedResponse<never>> => {
+    await updateUser({ id: userId, lastLoginDate: new Date() }, userId);
+
     return createUserSession({
       redirectTo,
       remember: remember === "on" ? true : false,

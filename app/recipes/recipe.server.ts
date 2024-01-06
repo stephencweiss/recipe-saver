@@ -120,6 +120,8 @@ export async function getRecipeWithIngredients(id: Recipe["id"], requestingUserI
   return recipe;
 }
 
+
+/** RecipeComments */
 export interface CreatableRecipeComment extends CreatableComment {
   recipeId: Recipe["id"],
 }
@@ -146,7 +148,7 @@ export async function deleteRecipeComment(recipeId: Recipe["id"], commentId: Com
   });
 };
 
-export async function getRecipeComments( id: Recipe["id"], requestingUserId?: User["id"]): Promise<FlatCommentServer[]> {
+export async function getRecipeComments(id: Recipe["id"], requestingUserId?: User["id"]): Promise<FlatCommentServer[]> {
   const recipeComments = await prisma.recipeComment.findMany({
     select: {
       comment: {
@@ -177,6 +179,99 @@ export async function getRecipeComments( id: Recipe["id"], requestingUserId?: Us
     .filter(c => filterPrivateComments(c, requestingUserId ?? ""))
     .map((c) => flattenAndAssociateComment(c, { associatedId: id, commentType }))
 }
+
+/** Recipe Ratings */
+/**
+ * There's no *hard* reason why a user cannot rate a recipe multiple times, but
+ * it doesn't make sense to allow it. So, we'll just update the existing rating
+ * if it exists.
+ */
+export async function submitRecipeRating({
+  recipeId,
+  userId,
+  rating,
+}: { recipeId: Recipe["id"]; rating: number; userId?: User["id"] }) {
+
+  // Check to see if there already exists a rating for this user and recipe...
+  const currentRating = await prisma.recipeRating.findFirst({
+    where: { userId, recipeId },
+  });
+  // If so, update it
+  if (currentRating) {
+    return await prisma.rating.update({
+      where: { id: currentRating.ratingId },
+      data: { rating, updatedDate: new Date() },
+    })
+  }
+
+  // If no current rating, we'll create a new one...
+  const createdRating = await prisma.rating.create({
+    data: {
+      rating, submittedBy: userId
+    },
+  })
+  console.log(JSON.stringify({ createdRating, recipeId },null,4))
+  // And then associate it with the recipe as a recipe rating.
+  return await prisma.recipeRating.create({
+    data: {
+      recipeId,
+      ratingId: createdRating.id,
+      userId,
+    },
+  });
+}
+
+
+/**
+ * Get the rating of a particular user for a recipe
+ */
+export async function getUserRecipeRating({
+  recipeId,
+  userId,
+}: { recipeId: Recipe["id"]; userId?: User["id"] }): Promise<number | null> {
+  if (!userId) return null;
+
+  const userRatings = await prisma.recipeRating.findMany({
+    where: { recipeId, userId },
+    include: {
+      rating: {
+        select: {
+          rating: true,
+        },
+      }
+    }
+  });
+
+  if (userRatings.length === 0) return null;
+  if (userRatings.length > 1) throw new Error("User should only have one rating per recipe");
+  // Calculate the average of the particular user's rating for the recipe
+  return userRatings[0].rating.rating;
+};
+
+/**
+ * Get the averaged rating for a recipe for all users
+ */
+export async function getRecipeRatings({
+  recipeId,
+}: { recipeId: Recipe["id"] }): Promise<number | null> {
+  const allUserRatings = await prisma.recipeRating.findMany({
+    where: { recipeId },
+    include: {
+      rating: {
+        select: {
+          rating: true,
+          submittedBy: true,
+        },
+      }
+    },
+  });
+  if (allUserRatings.length === 0) return null;
+  // Calculate the average of all users' rating for the recipe
+  return allUserRatings.reduce((acc, cur) => acc + cur.rating.rating, 0) / allUserRatings.length;
+}
+
+/** Recipes */
+
 
 export interface RecipesResponse {
   id: string;
@@ -212,7 +307,9 @@ export async function getRecipes(query: Options): Promise<RecipesResponse[]> {
       title: true,
       description: true,
       recipeTags: { select: { tag: { select: { name: true, id: true } } } },
-      recipeRatings: { select: { rating: true } },
+      recipeRating: { select: { rating: {
+        select: { rating: true }
+      } } },
       user: { select: { id: true, name: true, username: true } }
     },
     orderBy: { createdDate: "desc" },
@@ -220,7 +317,7 @@ export async function getRecipes(query: Options): Promise<RecipesResponse[]> {
   return recipes.map((recipe) => ({
     ...recipe,
     tags: recipe.recipeTags.map((tag) => tag.tag),
-    rating: recipe.recipeRatings.reduce((acc, cur) => acc + cur.rating, 0) / recipe.recipeRatings.length,
+    rating: recipe.recipeRating.reduce((acc, cur) => acc + cur.rating.rating, 0) / recipe.recipeRating.length,
   }))
 }
 
