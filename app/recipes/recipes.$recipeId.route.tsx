@@ -3,7 +3,6 @@ import { json, redirect } from "@remix-run/node";
 import {
   Form,
   isRouteErrorResponse,
-  useFetcher,
   useLoaderData,
   useRouteError,
   useRouteLoaderData,
@@ -20,8 +19,8 @@ import { Duration } from "~/components/duration";
 import { List } from "~/components/lists";
 import TruncateText from "~/components/truncate-text";
 import { useKeyboardCombo } from "~/hooks/use-keyboard";
-import { useStarRating } from "~/rating/use-star-rating";
 import { getRatings } from "~/rating/rating.server";
+import { useStarRating } from "~/rating/use-star-rating";
 import { loadSingleRecipe } from "~/recipes/recipe-loader";
 import { deleteRecipe } from "~/recipes/recipe.server";
 import { type loader as rootLoader } from "~/root";
