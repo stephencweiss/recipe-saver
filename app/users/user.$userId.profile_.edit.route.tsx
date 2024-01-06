@@ -15,7 +15,6 @@ import {
   isUpdatablePasswordErrorResponse,
   isUpdatableUserErrorResponse,
 } from "./user.utils";
-import { createJSONErrorResponse } from "~/recipes/recipe-errors";
 import { createPasswordJSONErrorResponse } from "./user.utils.server";
 
 export const loader = async ({ params, request }: ActionFunctionArgs) => {
