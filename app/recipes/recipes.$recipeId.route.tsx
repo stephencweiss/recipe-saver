@@ -82,10 +82,6 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 export default function RecipeDetailsPage() {
   const data = useLoaderData<typeof loader>();
   const { user } = useRouteLoaderData<typeof rootLoader>("root") ?? {};
-  // const { StarRatingUi } = useStarRating({
-  //   type: "view-only",
-  //   originalRating: data.rating,
-  // });
   const flatComments = data.comments.filter(isFlatComment);
   useKeyboardCombo(
     ["Shift", "Meta", "e"],
@@ -100,7 +96,11 @@ export default function RecipeDetailsPage() {
       {isUsersRecipe ? (
         <div className="flex justify-between gap-4 flex-col lg:flex-row">
           <h2 className="text-4xl font-bold">{data.recipe.title}</h2>
-          <StarRating ratingType="recipe" associatedId={data.recipe.id} originalRating={data.rating}/>
+          <StarRating
+            ratingType="recipe"
+            associatedId={data.recipe.id}
+            originalRating={data.rating}
+          />
           <Form
             method="post"
             className="flex flex-col gap-2 justify-between lg:flex-row-reverse"
