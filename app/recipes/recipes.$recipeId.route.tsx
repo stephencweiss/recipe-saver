@@ -3,8 +3,10 @@ import { json, redirect } from "@remix-run/node";
 import {
   Form,
   isRouteErrorResponse,
+  useFetcher,
   useLoaderData,
   useRouteError,
+  useRouteLoaderData,
 } from "@remix-run/react";
 import invariant from "tiny-invariant";
 
@@ -18,20 +20,27 @@ import { Duration } from "~/components/duration";
 import { List } from "~/components/lists";
 import TruncateText from "~/components/truncate-text";
 import { useKeyboardCombo } from "~/hooks/use-keyboard";
+import { useStarRating } from "~/rating/use-star-rating";
+import { getRatings } from "~/rating/rating.server";
 import { loadSingleRecipe } from "~/recipes/recipe-loader";
 import { deleteRecipe } from "~/recipes/recipe.server";
+import { type loader as rootLoader } from "~/root";
 import { requireUserId } from "~/session.server";
 
 import { parseIngredients } from "./recipe-ingredient-utils";
 
 export const loader = async (args: LoaderFunctionArgs) => {
-  const recipeData = await loadSingleRecipe({ ...args, mode: "view" });
+  const { recipe, user } = await loadSingleRecipe({ ...args, mode: "view" });
   const comments = await getComments({
-    associatedId: recipeData.recipe.id,
+    associatedId: recipe.id,
     commentType: "recipe",
-    userId: recipeData.user?.id,
+    userId: user?.id,
   });
-  return json({ ...recipeData, comments });
+  const rating = await getRatings({
+    ratingType: "recipe",
+    associatedId: recipe.id,
+  });
+  return json({ recipe, user, comments, rating });
 };
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
@@ -41,6 +50,9 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   const action = formData.get("action");
 
   switch (action) {
+    case "rate-recipe": {
+      return redirect(`rate`);
+    }
     case "cook-recipe": {
       return redirect("cook");
     }
@@ -70,13 +82,18 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 
 export default function RecipeDetailsPage() {
   const data = useLoaderData<typeof loader>();
+  const { user } = useRouteLoaderData<typeof rootLoader>("root") ?? {};
+  const { StarRatingUi } = useStarRating({
+    type: "view-only",
+    originalRating: data.rating,
+  });
   const flatComments = data.comments.filter(isFlatComment);
   useKeyboardCombo(
     ["Shift", "Meta", "e"],
     "edit",
     `/recipes/${data.recipe.id}`,
   );
-  const isUsersRecipe = data.user?.id === data.recipe.submittedBy;
+  const isUsersRecipe = user?.id === data.recipe.submittedBy;
 
   const parsedIngredients = parseIngredients(data.recipe.recipeIngredients);
   return (
@@ -85,9 +102,15 @@ export default function RecipeDetailsPage() {
         <div className="flex justify-between gap-4 flex-col lg:flex-row">
           <h2 className="text-4xl font-bold">{data.recipe.title}</h2>
 
+          <Form method="post">
+            <button type="submit" value="rate-recipe" name="action">
+            <StarRatingUi />
+            </button>
+          </Form>
+
           <Form
             method="post"
-            className="flex flex-col gap-2 justify-between sm:flex-row-reverse"
+            className="flex flex-col gap-2 justify-between lg:flex-row-reverse"
           >
             <button
               type="submit"
@@ -178,7 +201,7 @@ export default function RecipeDetailsPage() {
                   {data.recipe.cookCounts.totalCookCount}
                 </span>
               </p>
-              {data.user ? (
+              {user ? (
                 <p key="user" className="flex">
                   Your Cook Count:{" "}
                   <span className="ml-2 mb-2 inline-block bg-gray-200 rounded px-3 py-1 text-sm font-semibold text-gray-700">

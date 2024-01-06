@@ -63,7 +63,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
               { status: 400 },
             );
           await markRecipeAsCooked(recipeId, userId);
-          return redirect(`/recipes/${recipeId}`);
+          return redirect(`/recipes/${recipeId}/rate`);
         }
         default: {
           throw new Response(`Unknown action ${action}`, { status: 400 });
@@ -79,6 +79,7 @@ export default function RecipeCookPage() {
   return (
     <div className="text-xl sm:text-lg">
       <div className="flex flex-col sm:flex-row justify-between gap-2">
+      <h2 className="text-4xl font-bold">{data.recipe.title}</h2>
         <p className="text-xl sm:text-lg font-bold">Cook Statistics</p>
 
         <div className="flex gap-2 mb-2 flex-col sm:flex-row ">
