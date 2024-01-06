@@ -1,7 +1,8 @@
 repo_name: stephencweiss/recipe-saver
-report_id: 9b20d2704ed6da0c3e61aa678f735847
+report_id: be056883aaaa7e4f3b2806d12770296e
+version: 0.1
 repo_type: Public
-timestamp: '2023-12-14T10:23:28+00:00'
+timestamp: '2024-01-05T08:52:20+00:00'
 requested_by: stephencweiss
 provider: github
 branch: main
@@ -15,6 +16,7 @@ tools:
   category: Languages & Frameworks
   sub_category: Languages
   image_url: https://img.stackshare.io/service/6727/css.png
+  detection_source_url: https://github.com/stephencweiss/recipe-saver
   detection_source: Repo Metadata
 - name: JavaScript
   description: Lightweight, interpreted, object-oriented language with first-class
@@ -25,6 +27,7 @@ tools:
   category: Languages & Frameworks
   sub_category: Languages
   image_url: https://img.stackshare.io/service/1209/javascript.jpeg
+  detection_source_url: https://github.com/stephencweiss/recipe-saver
   detection_source: Repo Metadata
 - name: SQL
   description: It is a domain-specific language used in programming
@@ -34,6 +37,7 @@ tools:
   category: Languages & Frameworks
   sub_category: Languages
   image_url: https://img.stackshare.io/service/2271/default_068d33483bba6b81ee13fbd4dc7aab9780896a54.png
+  detection_source_url: https://github.com/stephencweiss/recipe-saver/blob/main/prisma/migrations/20220713162558_init/migration.sql
   detection_source: prisma/migrations/20220713162558_init/migration.sql
   last_updated_by: Stephen Weiss
   last_updated_on: 2023-11-08 03:31:21.000000000 Z
@@ -46,6 +50,7 @@ tools:
   category: Languages & Frameworks
   sub_category: Languages
   image_url: https://img.stackshare.io/service/1612/bynNY5dJ.jpg
+  detection_source_url: https://github.com/stephencweiss/recipe-saver
   detection_source: Repo Metadata
 - name: Autoprefixer
   description: PostCSS plugin to parse CSS and add vendor prefixes to CSS rules
@@ -55,6 +60,7 @@ tools:
   category: Languages & Frameworks
   sub_category: CSS Pre-processors / Extensions
   image_url: https://img.stackshare.io/service/2202/72d087642cfce6fef6f2dabec5bf49e8_400x400.png
+  detection_source_url: https://github.com/stephencweiss/recipe-saver/blob/main/package.json
   detection_source: package.json
   last_updated_by: Stephen Weiss
   last_updated_on: 2023-11-08 03:31:21.000000000 Z
@@ -81,6 +87,7 @@ tools:
   category: Languages & Frameworks
   sub_category: CSS Pre-processors / Extensions
   image_url: https://img.stackshare.io/service/3339/rlFcjEdI.png
+  detection_source_url: https://github.com/stephencweiss/recipe-saver/blob/main/package.json
   detection_source: package.json
   last_updated_by: Stephen Weiss
   last_updated_on: 2023-11-08 03:31:21.000000000 Z
@@ -107,6 +114,7 @@ tools:
   category: Languages & Frameworks
   sub_category: Front-End Frameworks
   image_url: https://img.stackshare.io/service/8158/default_660b7c41c3ba489cb581eec89c04655404258c19.png
+  detection_source_url: https://github.com/stephencweiss/recipe-saver/blob/main/package.json
   detection_source: package.json
   last_updated_by: Stephen Weiss
   last_updated_on: 2023-11-10 20:03:14.000000000 Z
@@ -148,6 +156,7 @@ tools:
   category: Build, Test, Deploy
   sub_category: Virtual Machine Platforms & Containers
   image_url: https://img.stackshare.io/service/586/n4u37v9t_400x400.png
+  detection_source_url: https://github.com/stephencweiss/recipe-saver
   detection_source: Repo Metadata
 - name: ESLint
   description: The fully pluggable JavaScript code quality tool
@@ -158,6 +167,7 @@ tools:
   category: Build, Test, Deploy
   sub_category: Code Review
   image_url: https://img.stackshare.io/service/3337/Q4L7Jncy.jpg
+  detection_source_url: https://github.com/stephencweiss/recipe-saver/blob/main/package.json
   detection_source: package.json
   last_updated_by: Stephen Weiss
   last_updated_on: 2023-11-08 03:31:21.000000000 Z
@@ -169,6 +179,7 @@ tools:
   category: Build, Test, Deploy
   sub_category: Version Control System
   image_url: https://img.stackshare.io/service/1046/git.png
+  detection_source_url: https://github.com/stephencweiss/recipe-saver
   detection_source: Repo Metadata
 - name: GitHub Actions
   description: Automate your workflow from idea to production
@@ -178,6 +189,7 @@ tools:
   category: Build, Test, Deploy
   sub_category: Continuous Integration
   image_url: https://img.stackshare.io/service/11563/actions.png
+  detection_source_url: https://github.com/stephencweiss/recipe-saver/blob/main/.github/workflows/deploy.yml
   detection_source: ".github/workflows/deploy.yml"
   last_updated_by: dependabot[bot]
   last_updated_on: 2023-11-23 21:40:31.000000000 Z
@@ -190,6 +202,7 @@ tools:
   category: Build, Test, Deploy
   sub_category: Javascript Testing Framework
   image_url: https://img.stackshare.io/service/830/jest.png
+  detection_source_url: https://github.com/stephencweiss/recipe-saver/blob/main/package.json
   detection_source: package.json
   last_updated_by: Stephen Weiss
   last_updated_on: 2023-11-08 03:31:21.000000000 Z
@@ -216,6 +229,7 @@ tools:
   category: Build, Test, Deploy
   sub_category: JS Build Tools / JS Task Runners
   image_url: https://img.stackshare.io/service/21547/default_1aeac791cde11ff66cc0b20dcc6144eeb185c905.png
+  detection_source_url: https://github.com/stephencweiss/recipe-saver/blob/main/package.json
   detection_source: package.json
   last_updated_by: Stephen Weiss
   last_updated_on: 2023-11-08 03:31:21.000000000 Z
@@ -227,6 +241,7 @@ tools:
   category: Build, Test, Deploy
   sub_category: Front End Package Manager
   image_url: https://img.stackshare.io/service/1120/lejvzrnlpb308aftn31u.png
+  detection_source_url: https://github.com/stephencweiss/recipe-saver/blob/main/package.json
   detection_source: package.json
   last_updated_by: Stephen Weiss
   last_updated_on: 2023-11-08 03:31:21.000000000 Z
@@ -239,6 +254,7 @@ tools:
   category: Languages & Frameworks
   sub_category: Languages
   image_url: https://img.stackshare.io/service/4631/default_c2062d40130562bdc836c13dbca02d318205a962.png
+  detection_source_url: https://github.com/stephencweiss/recipe-saver
   detection_source: Repo Metadata
 - name: "@testing-library/jest-dom"
   description: Custom jest matchers to test the state of the DOM
