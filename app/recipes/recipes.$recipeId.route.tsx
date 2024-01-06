@@ -210,20 +210,20 @@ export default function RecipeDetailsPage() {
               No one has cooked this recipe yet! Be the first!
             </p>
           )}
-          <Form
-            method="post"
-            className="flex flex-col gap-2 justify-between sm:flex-row-reverse"
-          >
-            <button
-              type="submit"
-              value="cook-recipe"
-              name="action"
-              className="rounded bg-yellow-500 px-4 py-2 text-white hover:bg-yellow-600 active:bg-yellow-400 focus:bg-yellow-700 disabled:bg-gray-400"
-            >
-              Cook!
-            </button>
-          </Form>
         </div>
+        <Form
+          method="post"
+          className="flex flex-col gap-2 justify-between sm:flex-row my-2"
+        >
+          <button
+            type="submit"
+            value="cook-recipe"
+            name="action"
+            className="w-full rounded bg-yellow-500 px-4 py-2 text-white hover:bg-yellow-600 active:bg-yellow-400 focus:bg-yellow-700 disabled:bg-gray-400"
+          >
+            Cook!
+          </button>
+        </Form>
       </CollapsibleSection>
 
       {data.recipe.recipeTags.map((tag) => (
