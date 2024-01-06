@@ -226,14 +226,16 @@ export default function RecipeDetailsPage() {
         </Form>
       </CollapsibleSection>
 
-      {data.recipe.recipeTags.map((tag) => (
-        <span
-          className="inline-block bg-gray-200 rounded px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2"
-          key={tag.tag.id}
-        >
-          {tag.tag.name}
-        </span>
-      ))}
+      <CollapsibleSection title="Tags">
+        {data.recipe.recipeTags.map((tag) => (
+          <span
+            className="inline-block bg-gray-200 rounded px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2"
+            key={tag.tag.id}
+          >
+            {tag.tag.name}
+          </span>
+        ))}
+      </CollapsibleSection>
       <CommentListAndForm
         type="recipe"
         associatedId={data.recipe.id}
