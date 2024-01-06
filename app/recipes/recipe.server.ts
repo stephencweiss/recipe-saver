@@ -120,6 +120,8 @@ export async function getRecipeWithIngredients(id: Recipe["id"], requestingUserI
   return recipe;
 }
 
+
+/** RecipeComments */
 export interface CreatableRecipeComment extends CreatableComment {
   recipeId: Recipe["id"],
 }
@@ -146,7 +148,7 @@ export async function deleteRecipeComment(recipeId: Recipe["id"], commentId: Com
   });
 };
 
-export async function getRecipeComments( id: Recipe["id"], requestingUserId?: User["id"]): Promise<FlatCommentServer[]> {
+export async function getRecipeComments(id: Recipe["id"], requestingUserId?: User["id"]): Promise<FlatCommentServer[]> {
   const recipeComments = await prisma.recipeComment.findMany({
     select: {
       comment: {
@@ -212,7 +214,9 @@ export async function getRecipes(query: Options): Promise<RecipesResponse[]> {
       title: true,
       description: true,
       recipeTags: { select: { tag: { select: { name: true, id: true } } } },
-      recipeRatings: { select: { rating: true } },
+      recipeRating: { select: { rating: {
+        select: { rating: true }
+      } } },
       user: { select: { id: true, name: true, username: true } }
     },
     orderBy: { createdDate: "desc" },
@@ -220,7 +224,7 @@ export async function getRecipes(query: Options): Promise<RecipesResponse[]> {
   return recipes.map((recipe) => ({
     ...recipe,
     tags: recipe.recipeTags.map((tag) => tag.tag),
-    rating: recipe.recipeRatings.reduce((acc, cur) => acc + cur.rating, 0) / recipe.recipeRatings.length,
+    rating: recipe.recipeRating.reduce((acc, cur) => acc + cur.rating.rating, 0) / recipe.recipeRating.length,
   }))
 }
 
