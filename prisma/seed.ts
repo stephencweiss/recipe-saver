@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 async function createEmailUser() {
   const email = "rachel@remix.run";
   // cleanup the existing database
-  await prisma.user.delete({ where: { email } }).catch(() => {
+  await prisma.user.deleteMany({ where: { email } }).catch(() => {
     // no worries if it doesn't exist yet
   });
   const hashedPassword = await bcrypt.hash("racheliscool", 10);
@@ -27,7 +27,7 @@ async function createEmailUser() {
 async function createEmailUserTwo() {
   const email = "kate@remix.run";
   // cleanup the existing database
-  await prisma.user.delete({ where: { email } }).catch(() => {
+  await prisma.user.deleteMany({ where: { email } }).catch(() => {
     // no worries if it doesn't exist yet
   });
   const hashedPassword = await bcrypt.hash("katerox", 10);
@@ -50,44 +50,31 @@ async function createPumpkinPieRecipe(submitter: { id: string }) {
   const pieIngredientsObj = [
     {
       name: "pumpkin puree",
-      quantity: 15,
+      quantity: '15',
       unit: "oz",
     },
     {
       name: "sweetened condensed milk",
-      quantity: 14,
+      quantity: '14',
       unit: "oz",
     },
     {
       name: "eggs",
-      quantity: 2,
+      quantity: '2',
       unit: "",
     },
     {
       name: "pumpkin pie spice",
-      quantity: 1,
+      quantity: '1/3',
       unit: "tbsp",
     },
     {
       name: "pie crust",
-      quantity: 1,
-      unit: "",
+      quantity: '1',
+      unit: "whole",
     },
   ];
-  const pieIngredientNames = pieIngredientsObj.map(
-    (ingredient) => ingredient.name,
-  );
-  const pieIngredients = await Promise.all(
-    pieIngredientNames.map(async (name) => {
-      const ingredient = await prisma.ingredient.findUnique({
-        where: { name },
-      });
-      if (ingredient) {
-        return ingredient;
-      }
-      return await prisma.ingredient.create({ data: { name } });
-    }),
-  );
+
   const pieTagNames = ["pumpkin", "pie", "dessert", "thanksgiving"];
   const pieTags = await Promise.all(
     pieTagNames.map(async (name) => {
@@ -124,16 +111,14 @@ async function createPumpkinPieRecipe(submitter: { id: string }) {
     }),
   );
   await Promise.all(
-    pieIngredients.map((ingredient) => {
-      const ingredientObj = pieIngredientsObj.find(
-        (obj) => obj.name === ingredient.name,
-      );
+    pieIngredientsObj.map((ingredient) => {
+
       return prisma.recipeIngredient.create({
         data: {
           recipeId: pieRecipe.id,
-          ingredientId: ingredient.id,
-          quantity: ingredientObj?.quantity ?? null,
-          unit: ingredientObj?.unit ?? null,
+          name: ingredient.name,
+          quantity: ingredient?.quantity ?? null,
+          unit: ingredient?.unit ?? null,
         },
       });
     }),
@@ -145,74 +130,60 @@ async function createCaesarSaladRecipe(submitter: { id: string }) {
   const saladIngredientsObj = [
     {
       name: "romaine lettuce",
-      quantity: 1,
+      quantity: '1',
       unit: "head",
     },
     {
       name: "croutons",
-      quantity: 1,
+      quantity: '1',
       unit: "cup",
     },
     {
       name: "parmesan cheese",
-      quantity: 1,
+      quantity: '1',
       unit: "cup",
     },
     {
       name: "lemon juice",
-      quantity: 1,
+      quantity: '1',
       unit: "tbsp",
     },
     {
       name: "olive oil",
-      quantity: 1,
+      quantity: '1',
       unit: "tbsp",
     },
     {
       name: "garlic",
-      quantity: 1,
+      quantity: '1',
       unit: "clove",
     },
     {
       name: "salt",
-      quantity: 1,
+      quantity: '1',
       unit: "tsp",
     },
     {
       name: "pepper",
-      quantity: 1,
+      quantity: '1',
       unit: "tsp",
     },
     {
       name: "egg yolk",
-      quantity: 1,
+      quantity: '1',
       unit: "",
     },
     {
       name: "dijon mustard",
-      quantity: 1,
+      quantity: '1',
       unit: "tsp",
     },
     {
       name: "anchovy paste",
-      quantity: 1,
-      unit: "tsp",
+      quantity: '1/4',
+      unit: "cup",
     },
   ];
-  const saladIngredientNames = saladIngredientsObj.map(
-    (ingredient) => ingredient.name,
-  );
-  const saladIngredients = await Promise.all(
-    saladIngredientNames.map(async (name) => {
-      const ingredient = await prisma.ingredient.findUnique({
-        where: { name },
-      });
-      if (ingredient) {
-        return ingredient;
-      }
-      return await prisma.ingredient.create({ data: { name } });
-    }),
-  );
   const saladTagNames = ["salad", "dinner", "lunch", "vegetarian"];
   const saladTags = await Promise.all(
     saladTagNames.map(async (name) => {
@@ -249,16 +220,14 @@ async function createCaesarSaladRecipe(submitter: { id: string }) {
     }),
   );
   await Promise.all(
-    saladIngredients.map((ingredient) => {
-      const ingredientObj = saladIngredientsObj.find(
-        (obj) => obj.name === ingredient.name,
-      );
+    saladIngredientsObj.map((ingredient) => {
+
       return prisma.recipeIngredient.create({
         data: {
           recipeId: saladRecipe.id,
-          ingredientId: ingredient.id,
-          quantity: ingredientObj?.quantity ?? null,
-          unit: ingredientObj?.unit ?? null,
+          name: ingredient.name,
+          quantity: ingredient?.quantity ?? null,
+          unit: ingredient?.unit ?? null,
         },
       });
     }),
@@ -271,7 +240,6 @@ async function wipeSeededDatabase() {
   await prisma.recipeIngredient.deleteMany({});
   await prisma.recipeTag.deleteMany({});
   await prisma.recipe.deleteMany({});
-  await prisma.ingredient.deleteMany({});
   await prisma.tag.deleteMany({});
   await prisma.user.deleteMany({});
 }

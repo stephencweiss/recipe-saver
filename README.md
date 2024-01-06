@@ -60,11 +60,13 @@ Current functionality is creating users, logging in and out, and creating and de
 
 ### Database
 
-We're using a sqlite database.
+We're using a sqlite database
 While this is not based on the epic-stack, that project has a good write up articulating their [decision to use sqlite](https://github.com/epicweb-dev/epic-stack/blob/main/docs/decisions/003-sqlite.md).
 
 The ORM of Prisma manages most of the interface with the database.
 Docs are [here](https://www.prisma.io/docs).
+
+The [Prisma CLI reference is here](https://www.prisma.io/docs/orm/reference/prisma-cli-reference).
 
 Prototyping changes: use `prisma db push`.
 
@@ -78,6 +80,109 @@ Via the command line:
 ```
 
 You can also connect the database to your favorite GUI, e.g., DBeaver
+
+#### Working with Deployed Databases
+
+**Update**: After all of my experimentation, @JacobParis pointed me to: [Connecting to your production database | Epic Stack](https://github.com/epicweb-dev/epic-stack/blob/main/docs/database.md#connecting-to-your-production-database) which rehashes a lot of what I'd learned about the sqlite3 CLI step, but also shows how to use Prisma Studio!
+
+Since we're using a sqlite database and fly.io doesn't expose its databases to a public internet, we have several options:
+
+1. Build an SSH tunnel and expose the proxy, then use Prisma Studio
+1. Keep it old school, using `fly sftp`.
+1. Access it via the sqlite3 CLI
+1. Use something hosted and queryable, e.g., litefs and query ([example repo](https://github.com/gc-victor/query)) (I never actually got this working because, among other things, it would have required a hosted database)
+
+##### SSH Tunnel & Prisma Studio
+
+General instructions are [here](https://github.com/epicweb-dev/epic-stack/blob/main/docs/database.md#connecting-to-your-production-database), however, I found there were a few modifications necessary:
+
+1. Connect to Prisma in one terminal.
+   The instructions call for using `npm run db:studio`, however, that seems to require that prisma is installed globally.
+   Using `npx` we get around that issue.
+
+   ```shell
+   fly ssh console -C "npx prisma studio" --app recipe-saver-0dec-staging
+   Connecting to fdaa:0:6aff:a7b:8c31:370d:b9f6:2... complete
+   Prisma schema loaded from prisma/schema.prisma
+   Prisma Studio is up on http://localhost:5555
+   ```
+
+1. Create the Proxy between local port `5556` and the server's port `5555`.
+
+   ```shell
+   fly proxy 5556:5555 --app recipe-saver-0dec-staging
+   Proxying local port 5556 to remote [recipe-saver-0dec-staging.internal]:5555
+   ```
+
+1. Visit Prisma Studio at `localhost:5556`.
+
+##### SFTP Access
+
+When would we use SFTP?
+
+If we want to pull the database down to analyze it, this is probably our go to solution as we'll be able to easily plug it into DBeaver for a GUI experience.
+
+We _are_ able to modify it too, though, since this involves a snapshot of data, there's the chance of data loss.
+
+Pulling Data:
+
+```shell
+# fly sftp shell -a <app name>
+% fly sftp shell -a recipe-saver-0dec-staging
+fly sftp shell -a recipe-saver-0dec-staging
+» cd data/
+» get sqlite.db
+get /data/sqlite.db -> sqlite.db
+wrote 233472 bytes
+```
+
+This _gets_ the data down so that it can be easily analyzed in DBeaver.
+Since it's just a file, create a new database connection in DBeaver that points to the file.
+Et voila.
+
+Pushing Data:
+
+Getting the data back up onto the server is slightly more involved. It's a three step process:
+
+1. Use SFTP to put a copy of the modified database back on the server
+
+   ```shell
+   # fly sftp shell -a <app name>
+   % fly sftp shell -a recipe-saver-0dec-staging
+   » put ./sqlite.db
+   233472 bytes written
+   ```
+
+1. Use an SSH Console to replace the existing database
+
+   ```shell
+   # fly ssh console -a <app-name>
+   % fly ssh console -a recipe-saver-0dec-staging
+   Connecting to fdaa:0:6aff:a7b:8c31:370d:b9f6:2... complete
+   root@3287353f470378:/myapp# cd ..
+   root@3287353f470378:/# rm data/sqlite.db # as part of the deployment, we move the database to data/ from prisma/
+   root@3287353f470378:/# mv sqlite.db data/sqlite.db # assumes that the put db file is in the root
+   ```
+
+1. Restart the application (in order to reestablish the database connection)
+
+   ```shell
+   # fly app restart <app-name>
+   % fly app restart recipe-saver-0dec-staging
+   ```
+
+##### Shell Access
+
+We can also use the same `sqlite3` CLI to access and interrogate the database on the server as we can locally.
+
+```shell
+# fly ssh console -a <app-name>
+% fly ssh console -a recipe-saver-0dec-staging
+Connecting to fdaa:0:6aff:a7b:8c31:370d:b9f6:2... complete
+root@3287353f470378:/myapp# cd ..
+root@3287353f470378:/# sqlite3 data/sqlite.db
+root@3287353f470378:/# mv sqlite.db data/sqlite.db # assumes that the put db file is in the root
+```
 
 ## Deployment
 
@@ -126,6 +231,13 @@ Prior to your first deployment, you'll need to do a few things:
   ```
 
   If you don't have openssl installed, you can also use [1Password](https://1password.com/password-generator) to generate a random secret, just replace `$(openssl rand -hex 32)` with the generated secret.
+
+- Add a `JWT_SECRET` to your fly app secrets, to do this you can run the following commands:
+
+  ```sh
+  fly secrets set JWT_SECRET=$(openssl rand -hex 32) --app recipe-saver-0dec
+  fly secrets set JWT_SECRET=$(openssl rand -hex 32) --app recipe-saver-0dec-staging
+  ```
 
 - Create a persistent volume for the sqlite database for both your staging and production environments. Run the following:
 
