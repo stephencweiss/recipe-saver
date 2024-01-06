@@ -79,8 +79,7 @@ export default function RecipeCookPage() {
   return (
     <div className="text-xl sm:text-lg">
       <div className="flex flex-col sm:flex-row justify-between gap-2">
-      <h2 className="text-4xl font-bold">{data.recipe.title}</h2>
-        <p className="text-xl sm:text-lg font-bold">Cook Statistics</p>
+        <h2 className="text-4xl font-bold">{data.recipe.title}</h2>
 
         <div className="flex gap-2 mb-2 flex-col sm:flex-row ">
           {isUsersRecipe ? (
@@ -100,7 +99,9 @@ export default function RecipeCookPage() {
           )}
           {data.user ? (
             <Form method="POST" className="flex flex-col">
-              <VisuallyHidden><input name="action" value="cook-recipe" /></VisuallyHidden>
+              <VisuallyHidden>
+                <input name="action" value="cook-recipe" />
+              </VisuallyHidden>
               <button className="rounded bg-yellow-500 px-4 py-2 text-white hover:bg-yellow-600 active:bg-yellow-400 focus:bg-yellow-700 disabled:bg-gray-400">
                 Mark as Cooked
               </button>
@@ -115,31 +116,34 @@ export default function RecipeCookPage() {
           )}
         </div>
       </div>
-      <div className="flex flex-col sm:flex-row justify-between gap-2">
-        {data.recipe.cookCounts.totalCookCount > 0 ? (
-          <div className="flex justify-between gap-2">
-            <p key="total" className="flex ">
-              Community Cook Count:{" "}
-              <span className="ml-2 mb-2 inline-block bg-gray-200 rounded px-3 py-1 text-sm font-semibold text-gray-700">
-                {data.recipe.cookCounts.totalCookCount}
-              </span>
-            </p>
-            {data.user ? (
-              <p key="user" className="flex">
-                Your Cook Count:{" "}
+      <div className="flex flex-col gap-2">
+        <p className="text-xl sm:text-lg font-bold">Cook Statistics</p>
+        <div className="flex flex-col sm:flex-row justify-between gap-2">
+          {data.recipe.cookCounts.totalCookCount > 0 ? (
+            <div className="flex justify-between gap-2">
+              <p key="total" className="flex ">
+                Community Cook Count:{" "}
                 <span className="ml-2 mb-2 inline-block bg-gray-200 rounded px-3 py-1 text-sm font-semibold text-gray-700">
-                  {data.recipe.cookCounts.userCookCount}
+                  {data.recipe.cookCounts.totalCookCount}
                 </span>
               </p>
-            ) : (
-              <></>
-            )}
-          </div>
-        ) : (
-          <p className="pb-2 text-xl sm:text-lg">
-            No one has cooked this recipe yet! Be the first!
-          </p>
-        )}
+              {data.user ? (
+                <p key="user" className="flex">
+                  Your Cook Count:{" "}
+                  <span className="ml-2 mb-2 inline-block bg-gray-200 rounded px-3 py-1 text-sm font-semibold text-gray-700">
+                    {data.recipe.cookCounts.userCookCount}
+                  </span>
+                </p>
+              ) : (
+                <></>
+              )}
+            </div>
+          ) : (
+            <p className="pb-2 text-xl sm:text-lg">
+              No one has cooked this recipe yet! Be the first!
+            </p>
+          )}
+        </div>
       </div>
       <List
         title="Description"

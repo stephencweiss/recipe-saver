@@ -87,7 +87,7 @@ const ProfileOrLoginMenuItem = () => {
     <DropdownMenu.Item className={menuItemClasses}>
       {displayName ? (
         <Link to={`/user/${user.id}/profile`} className="w-full px-4 py-2">
-          {displayName}
+          Profile ({displayName})
         </Link>
       ) : (
         <Link to="/login" className="w-full px-4 py-2">
