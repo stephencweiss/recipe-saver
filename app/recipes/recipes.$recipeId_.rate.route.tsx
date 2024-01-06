@@ -9,12 +9,11 @@ import {
   useRouteError,
 } from "@remix-run/react";
 
-import VisuallyHidden from "~/components/visually-hidden";
+import { StarRating } from "~/rating/api.rate.route";
 import {
   getUserRatingsForAssociatedId,
   submitRating,
 } from "~/rating/rating.server";
-import { useStarRating } from "~/rating/use-star-rating";
 import { getUserId } from "~/session.server";
 import { isValidString } from "~/utils/strings";
 
@@ -73,36 +72,17 @@ async function handleRecipeRating(args: ActionFunctionArgs) {
 export default function RecipeRatingPage() {
   const data = useLoaderData<typeof loader>();
 
-  const { rating, StarRatingUi } = useStarRating({
-    type: "interactive",
-    ratingType: "recipe",
-    associatedId: data.recipe.id,
-    originalRating: data.rating,
-  });
-
   return (
     <div className="text-xl sm:text-lg">
       <div className="flex flex-col justify-between gap-4">
         <h2 className="text-4xl font-bold">{data.recipe?.title}</h2>
 
-        <h1 className="text-xl sm:text-lg font-bold">Recipe Rating: {rating}</h1>
+        <h1 className="text-xl sm:text-lg font-bold">Recipe Rating: {data.rating ?? "Unrated"}</h1>
         <div className="flex flex-col gap-2 sm:flex-row">
-          <StarRatingUi />
+          <StarRating ratingType="recipe" associatedId={data.recipe.id} originalRating={data.rating} redirectTo={`/recipes/${data.recipe.id}`}/>
 
           <form method="post">
             <div className="flex flex-col gap-2 sm:flex-row-reverse">
-              <VisuallyHidden>
-                {rating}
-                <input type="hidden" readOnly name="rating" value={rating} />
-              </VisuallyHidden>
-              <button
-                type="submit"
-                value="rate-recipe"
-                name="action"
-                className="rounded bg-yellow-500 px-4 py-2 text-white hover:bg-yellow-600 active:bg-yellow-400 focus:bg-yellow-700 disabled:bg-gray-400"
-              >
-                Rate
-              </button>
               <button
                 type="submit"
                 value="skip-rating"

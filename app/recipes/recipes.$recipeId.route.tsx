@@ -19,8 +19,8 @@ import { Duration } from "~/components/duration";
 import { List } from "~/components/lists";
 import TruncateText from "~/components/truncate-text";
 import { useKeyboardCombo } from "~/hooks/use-keyboard";
+import { StarRating } from "~/rating/api.rate.route";
 import { getRatings } from "~/rating/rating.server";
-import { useStarRating } from "~/rating/use-star-rating";
 import { loadSingleRecipe } from "~/recipes/recipe-loader";
 import { deleteRecipe } from "~/recipes/recipe.server";
 import { type loader as rootLoader } from "~/root";
@@ -82,10 +82,10 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
 export default function RecipeDetailsPage() {
   const data = useLoaderData<typeof loader>();
   const { user } = useRouteLoaderData<typeof rootLoader>("root") ?? {};
-  const { StarRatingUi } = useStarRating({
-    type: "view-only",
-    originalRating: data.rating,
-  });
+  // const { StarRatingUi } = useStarRating({
+  //   type: "view-only",
+  //   originalRating: data.rating,
+  // });
   const flatComments = data.comments.filter(isFlatComment);
   useKeyboardCombo(
     ["Shift", "Meta", "e"],
@@ -100,13 +100,7 @@ export default function RecipeDetailsPage() {
       {isUsersRecipe ? (
         <div className="flex justify-between gap-4 flex-col lg:flex-row">
           <h2 className="text-4xl font-bold">{data.recipe.title}</h2>
-
-          <Form method="post">
-            <button type="submit" value="rate-recipe" name="action">
-            <StarRatingUi />
-            </button>
-          </Form>
-
+          <StarRating ratingType="recipe" associatedId={data.recipe.id} originalRating={data.rating}/>
           <Form
             method="post"
             className="flex flex-col gap-2 justify-between lg:flex-row-reverse"
